@@ -8,7 +8,7 @@ const WhatsAppWidget = () => {
       accountName="Rinors Corporation"
       avatar="/favicon.ico"
     />
-  );
+  );   //#endregiona
 };
 
 export default WhatsAppWidget;
