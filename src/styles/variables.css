@@ -1,8 +1,8 @@
 /* Centralized CSS Variables for the entire application */
 :root {
   /* Brand Colors */
-  --brand-primary: #F97316;   /* #ff3131 */
-  --brand-secondary: #c63500;
+  --brand-primary: #e8240f;   /* #ff3131 */
+  --brand-secondary: #f89960;
   --brand-accent: #621028;
 
   /* Semantic Colors */

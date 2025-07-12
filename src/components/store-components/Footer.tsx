@@ -1,8 +1,14 @@
+"use client";
+
+import { api } from "@/trpc/react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaLocationDot } from "react-icons/fa6";
 
 const Footer = () => {
+  const [categories] = api.category.getAll.useSuspenseQuery();
+  // Get first 5 top-level categories
+  const topCategories = categories.filter((cat) => !cat.parentId).slice(0, 5);
+
   return (
     <>
       <div id="footer" className="footer mt-5 bg-white">
@@ -27,10 +33,10 @@ const Footer = () => {
                     <span className="text-button mt-3">Address:</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="">contact@rinors.com</span>
+                    <span className="">contact@packetbd.com</span>
                     <span className="mt-3">01824443227</span>
                     <span className="mt-3 pt-px">
-                      41/5 East Badda Dhaka, Bangladesh
+                      Plot-1832, Bir Uttam Rafiqul Islam Ave, Dhaka, Bangladesh
                     </span>
                   </div>
                 </div>
@@ -71,36 +77,15 @@ const Footer = () => {
                 </div>
                 <div className="item flex basis-1/3 flex-col">
                   <div className="text-button-uppercase pb-3">Quick Shop</div>
-                  <Link
-                    className="caption1 has-line-before w-fit duration-300"
-                    href={"/products?category=cmbb6pxmn000gpfkk10p0fv0l&page=0"}
-                  >
-                    Home Electricals
-                  </Link>
-                  <Link
-                    className="caption1 has-line-before w-fit pt-2 duration-300"
-                    href={"/products?category=cmbb6dq3y000epfkkjn0sie9j&page=0"}
-                  >
-                    Energy Solutions
-                  </Link>
-                  <Link
-                    className="caption1 has-line-before w-fit pt-2 duration-300"
-                    href={"/products?category=cmbb78cte000mpfkkt0cyt53d&page=0"}
-                  >
-                    Smart Gadget
-                  </Link>
-                  <Link
-                    className="caption1 has-line-before w-fit pt-2 duration-300"
-                    href={"/products?category=cmbb7dno0000opfkk9ttqrmxj&page=0"}
-                  >
-                    Health and Fitness
-                  </Link>
-                  <Link
-                    className="caption1 has-line-before w-fit pt-2 duration-300"
-                    href={"/products?category=cmbb6x8b3000ipfkkcas967g6&page=0"}
-                  >
-                    Smart Appliances
-                  </Link>
+                  {topCategories.map((cat, idx) => (
+                    <Link
+                      key={cat.id}
+                      className={`caption1 has-line-before w-fit${idx !== 0 ? "pt-2" : ""} duration-300`}
+                      href={`/products?category=${cat.id}&page=0`}
+                    >
+                      {cat.name}
+                    </Link>
+                  ))}
                 </div>
                 <div className="item flex basis-1/3 flex-col">
                   <div className="text-button-uppercase pb-3">
@@ -150,7 +135,7 @@ const Footer = () => {
                     </div>
                   </Link>
                 </div>
-                <a
+                {/* <a
                   href="https://g.co/kgs/MX7BqyL"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -165,7 +150,7 @@ const Footer = () => {
                       Find Our Store
                     </h3>
                   </div>
-                </a>
+                </a> */}
               </div>
             </div>
             <div className="footer-bottom flex items-center justify-between gap-5 border-t border-[#ddd] py-3 focus:border-[#ddd] max-lg:flex-col max-lg:justify-center">

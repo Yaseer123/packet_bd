@@ -56,10 +56,10 @@ export default function VerifyRequiredPage() {
               <span className="mb-1 block">
                 Mail us at
                 <a
-                  href="mailto:contact@rinors.com"
+                  href="mailto:contact@packetbd.com"
                   className="ml-1 font-semibold text-blue-700 underline transition-colors hover:text-blue-900"
                 >
-                  contact@rinors.com
+                  contact@packetbd.com
                 </a>
               </span>
               <span className="block">
