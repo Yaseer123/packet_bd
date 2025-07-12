@@ -5,7 +5,6 @@ import FeaturedProducts from "@/components/store-components/FeaturedProducts";
 import NewsInsight from "@/components/store-components/NewsInsight";
 import Newsletter from "@/components/store-components/Newsletter";
 import Slider from "@/components/store-components/Slider";
-import TrendingNow from "@/components/store-components/TrendingNow";
 
 export default function HomeEleven() {
   return (
