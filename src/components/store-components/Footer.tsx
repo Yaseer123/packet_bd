@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FaLocationDot, FaXTwitter } from "react-icons/fa6";
-import { SiTiktok } from "react-icons/si";
+import { FaLocationDot } from "react-icons/fa6";
 
 const Footer = () => {
   return (
@@ -29,7 +28,7 @@ const Footer = () => {
                   </div>
                   <div className="flex flex-col">
                     <span className="">contact@rinors.com</span>
-                    <span className="mt-3">01312223452</span>
+                    <span className="mt-3">01824443227</span>
                     <span className="mt-3 pt-px">
                       41/5 East Badda Dhaka, Bangladesh
                     </span>
@@ -137,7 +136,7 @@ const Footer = () => {
                 <div>
                   <h4 className="mb-4 text-lg font-semibold">Support</h4>
                   <Link
-                    href="tel:01312223452"
+                    href="tel:01824443227"
                     className="helpline-btn footer-big-btn mb-4 flex items-center gap-4 rounded-3xl border border-[#ddd] bg-[#f2f4f8] p-4 transition hover:bg-[#e6e8ee] focus:border-[#ddd]"
                   >
                     <div className="ic border- border-[#ddd] text-2xl text-[#ef4a23]">
@@ -146,7 +145,7 @@ const Footer = () => {
                     <div className="flex flex-col border-l-2 border-[#ddd] pl-4">
                       <p className="text-xs text-[#838383]">9 AM - 8 PM</p>
                       <h5 className="text-lg font-bold text-[#081621]">
-                        01312223452
+                        01824443227
                       </h5>
                     </div>
                   </Link>
@@ -171,8 +170,7 @@ const Footer = () => {
             </div>
             <div className="footer-bottom flex items-center justify-between gap-5 border-t border-[#ddd] py-3 focus:border-[#ddd] max-lg:flex-col max-lg:justify-center">
               <div className="copyright caption1 text-secondary">
-                ©{new Date().getFullYear()} Rinors Corporation. All Rights
-                Reserved.
+                ©{new Date().getFullYear()} Packet BD. All Rights Reserved.
               </div>
               <div className="list-social flex items-center gap-4">
                 <Link
@@ -189,7 +187,7 @@ const Footer = () => {
                 >
                   <div className="icon-instagram text-2xl text-black transition hover:text-[#e4405f]"></div>
                 </Link>
-                
+
                 {/* <Link href={"https://x.com/Rinors_Corpor"} target="_blank">
                   <FaXTwitter className="text-xl text-black transition hover:text-[#1da1f2]" />
                 </Link>

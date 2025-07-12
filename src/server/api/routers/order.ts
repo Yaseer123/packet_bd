@@ -16,7 +16,7 @@ const emailHeader = `
 `;
 const contactInfo = `
   <div style="text-align: center; font-size: 14px; color: #333; margin-bottom: 12px;">
-    <strong>Contact:</strong> contact@rinors.com | <strong>Phone:</strong> 01312223452<br/>
+    <strong>Contact:</strong> contact@rinors.com | <strong>Phone:</strong> 01824443227<br/>
     <span>41/5 East Badda Dhaka, Bangladesh</span>
   </div>
 `;
@@ -50,7 +50,7 @@ const importantLinks = `
 `;
 const emailFooter = `
   <div style="background: #f7f7f7; color: #888; text-align: center; padding: 12px 0; font-size: 13px;">
-    &copy; 2024 Rinors Corporation. All Rights Reserved.
+    &copy; 2024 Packet BD. All Rights Reserved.
   </div>
 `;
 // --- END Branded Email Components ---

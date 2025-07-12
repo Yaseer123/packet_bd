@@ -181,7 +181,7 @@ export default function Menu({
                   width={260}
                   height={80}
                   priority
-                  className="h-auto w-[300px] lg:ml-[-40px] object-contain"
+                  className="h-auto w-[300px] object-contain lg:ml-[-40px]"
                 />
               </Link>
               <div className="form-search relative flex h-[44px] w-2/3 items-center pl-8 max-lg:hidden">
@@ -492,7 +492,7 @@ export default function Menu({
             <div className="right mr-3 flex items-center gap-2 border-l border-gray-100 pl-4">
               <div className="text-sm text-gray-500">Hotline:</div>
               <div className="text-sm font-semibold transition-colors hover:text-brand-primary">
-                +8801312223452
+                +8801824443227
               </div>
             </div>
           </div>
