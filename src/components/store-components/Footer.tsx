@@ -27,10 +27,10 @@ const Footer = () => {
                     <span className="text-button mt-3">Address:</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="">contact@rinors.com</span>
+                    <span className="">contact@packetbd.com</span>
                     <span className="mt-3">01824443227</span>
                     <span className="mt-3 pt-px">
-                      41/5 East Badda Dhaka, Bangladesh
+                    Plot-1832, Bir Uttam Rafiqul Islam Ave, Dhaka, Bangladesh
                     </span>
                   </div>
                 </div>

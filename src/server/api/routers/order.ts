@@ -16,7 +16,7 @@ const emailHeader = `
 `;
 const contactInfo = `
   <div style="text-align: center; font-size: 14px; color: #333; margin-bottom: 12px;">
-    <strong>Contact:</strong> contact@rinors.com | <strong>Phone:</strong> 01824443227<br/>
+    <strong>Contact:</strong> contact@packetbd.com | <strong>Phone:</strong> 01824443227<br/>
     <span>41/5 East Badda Dhaka, Bangladesh</span>
   </div>
 `;
@@ -381,7 +381,7 @@ export const orderRouter = createTRPCRouter({
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
         from: "no-reply@rinors.com",
-        to: "contact@rinors.com",
+        to: "contact@packetbd.com",
         subject: "New Order Placed",
         html,
       });
@@ -836,7 +836,7 @@ export const orderRouter = createTRPCRouter({
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
         from: "no-reply@rinors.com",
-        to: "contact@rinors.com",
+        to: "contact@packetbd.com",
         subject: "New Guest Order Placed",
         html,
       });
