@@ -154,7 +154,7 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                   <div className="list-social mt-4 flex items-center gap-6">
                     <Link
                       href={
-                        "https://www.facebook.com/profile.php?id=61572946813700"
+                        "https://www.facebook.com/people/Packet-BD/61578171175015/"
                       }
                       target="_blank"
                     >
@@ -162,13 +162,13 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                     </Link>
                     <Link
                       href={
-                        "https://www.instagram.com/rinors_electronic_store/"
+                        "https://www.instagram.com/packetbd3"
                       }
                       target="_blank"
                     >
                       <div className="icon-instagram text-2xl text-black"></div>
                     </Link>
-                    <Link href={"https://x.com/Rinors_Corpor"} target="_blank">
+                    {/* <Link href={"https://x.com/Rinors_Corpor"} target="_blank">
                       <FaXTwitter className="text-xl text-black" />
                     </Link>
                     <Link
@@ -182,7 +182,7 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                       target="_blank"
                     >
                       <div className="icon-youtube text-3xl text-black"></div>
-                    </Link>
+                    </Link> */}
                   </div>
                 </li>
               </ul>

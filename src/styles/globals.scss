@@ -2,7 +2,17 @@
 
 /* Main color */
 :root {
-  /* All variables are now imported from variables.css */
+    --brand-primary: #F9BF80;
+  --brand-secondary: #E84E2B;
+
+  /* Optional: set text, background, or foreground versions if needed */
+  --brand-primary-foreground: #000000;
+  --brand-secondary-foreground: #ffffff;
+}
+
+.dark {
+  --brand-primary: #F9BF80;
+  --brand-secondary: #E84E2B;
 }
 
 /* Reset */

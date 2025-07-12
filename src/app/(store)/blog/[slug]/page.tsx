@@ -96,20 +96,20 @@ export default async function BlogDetailsPage({
                 <p>Share:</p>
                 <div className="list flex flex-wrap items-center gap-3">
                   <Link
-                    href={"https://www.facebook.com/"}
+                    href={"https://www.facebook.com/people/Packet-BD/61578171175015/"}
                     target="_blank"
                     className="bg-surface flex h-10 w-10 items-center justify-center rounded-full duration-300 hover:bg-black hover:bg-black/75 hover:text-white"
                   >
                     <div className="icon-facebook duration-100"></div>
                   </Link>
                   <Link
-                    href={"https://www.instagram.com/"}
+                    href={"https://www.instagram.com/packetbd3"}
                     target="_blank"
                     className="bg-surface flex h-10 w-10 items-center justify-center rounded-full duration-300 hover:bg-black hover:bg-black/75 hover:text-white"
                   >
                     <div className="icon-instagram duration-100"></div>
                   </Link>
-                  <Link
+                  {/* <Link
                     href={"https://www.twitter.com/"}
                     target="_blank"
                     className="bg-surface flex h-10 w-10 items-center justify-center rounded-full duration-300 hover:bg-black hover:bg-black/75 hover:text-white"
@@ -129,7 +129,7 @@ export default async function BlogDetailsPage({
                     className="bg-surface flex h-10 w-10 items-center justify-center rounded-full duration-300 hover:bg-black hover:bg-black/75 hover:text-white"
                   >
                     <div className="icon-pinterest duration-100"></div>
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
             </div>

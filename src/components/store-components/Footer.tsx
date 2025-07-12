@@ -13,12 +13,12 @@ const Footer = () => {
               <div className="company-infor basis-1/4 pr-7 max-lg:basis-full">
                 <Link href={"/"} className="logo">
                   <Image
-                    src="/images/brand/RINORS.png"
+                    src="/light.png"
                     alt="Rinors"
                     width={120}
                     height={40}
                     priority
-                    className="h-auto w-[120px] object-contain"
+                    className="h-auto w-[220px] object-contain"
                   />
                 </Link>
                 <div className="mt-3 flex gap-3">
@@ -177,19 +177,20 @@ const Footer = () => {
               <div className="list-social flex items-center gap-4">
                 <Link
                   href={
-                    "https://www.facebook.com/profile.php?id=61572946813700"
+                    "https://www.facebook.com/people/Packet-BD/61578171175015/"
                   }
                   target="_blank"
                 >
                   <div className="icon-facebook text-2xl text-black transition hover:text-[#1877f3]"></div>
                 </Link>
                 <Link
-                  href={"https://www.instagram.com/rinors_electronic_store/"}
+                  href={"https://www.instagram.com/packetbd3"}
                   target="_blank"
                 >
                   <div className="icon-instagram text-2xl text-black transition hover:text-[#e4405f]"></div>
                 </Link>
-                <Link href={"https://x.com/Rinors_Corpor"} target="_blank">
+                
+                {/* <Link href={"https://x.com/Rinors_Corpor"} target="_blank">
                   <FaXTwitter className="text-xl text-black transition hover:text-[#1da1f2]" />
                 </Link>
                 <Link
@@ -203,7 +204,7 @@ const Footer = () => {
                   target="_blank"
                 >
                   <div className="icon-youtube text-3xl text-black transition hover:text-[#ff0000]"></div>
-                </Link>
+                </Link> */}
               </div>
             </div>
           </div>

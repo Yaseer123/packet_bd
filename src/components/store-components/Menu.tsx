@@ -176,12 +176,12 @@ export default function Menu({
                 className="flex items-center max-lg:absolute max-lg:left-1/2 max-lg:z-10 max-lg:-translate-x-1/2 lg:relative lg:left-0 lg:transform-none"
               >
                 <Image
-                  src="/images/brand/RINORS.png"
+                  src="/light.png"
                   alt="Rinors"
-                  width={120}
-                  height={40}
+                  width={260}
+                  height={80}
                   priority
-                  className="h-auto w-[120px] object-contain"
+                  className="h-auto w-[300px] lg:ml-[-40px] object-contain"
                 />
               </Link>
               <div className="form-search relative flex h-[44px] w-2/3 items-center pl-8 max-lg:hidden">

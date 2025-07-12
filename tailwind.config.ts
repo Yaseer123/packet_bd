@@ -27,7 +27,12 @@ export default {
           primary: "var(--brand-primary)",
           secondary: "var(--brand-secondary)",
           accent: "var(--brand-accent)",
+          foreground: {
+            primary: "var(--brand-primary-foreground)",
+            secondary: "var(--brand-secondary-foreground)",
+          },
         },
+
         // Semantic colors
         semantic: {
           success: "var(--semantic-success)",
