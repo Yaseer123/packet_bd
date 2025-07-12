@@ -13,7 +13,7 @@ export default function HomeEleven() {
       <div id="header" className="relative w-full">
         <Slider />
       </div>
-      <TrendingNow />
+      {/* <TrendingNow /> */}
       <FeaturedProducts />
       <RecentlyAdded />
       <Benefit props="md:mt-20 mt-10 py-10 px-2.5 bg-surface rounded-[32px]" />
