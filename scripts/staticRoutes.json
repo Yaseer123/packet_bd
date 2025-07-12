@@ -1,0 +1,19 @@
+[
+  "about",
+  "blog",
+  "blog/[slug]",
+  "cart",
+  "checkout",
+  "contact",
+  "faqs",
+  "forgot-password",
+  "login",
+  "my-account",
+  "order-tracking",
+  "products",
+  "products/[slug]",
+  "register",
+  "reset-password",
+  "search-result",
+  "wishlist"
+]

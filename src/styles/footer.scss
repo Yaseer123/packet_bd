@@ -1,0 +1,73 @@
+.style-watch {
+  .footer {
+    .footer-main {
+      background: var(--surface1);
+      color: var(--white);
+    }
+
+    .has-line-before {
+      &::before {
+        background-color: var(--white);
+      }
+    }
+
+    .input-block {
+      input {
+        background: rgba($color: #ffffff, $alpha: 0.2);
+      }
+    }
+
+    .text-black {
+      color: var(--white);
+    }
+
+    .text-secondary {
+      color: var(--white);
+    }
+
+    svg {
+      fill: var(--white);
+    }
+  }
+}
+
+.support-block {
+  h4 {
+    color: var(--s-primary);
+    margin-bottom: 1rem;
+  }
+}
+
+.footer-big-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--s-b-bg);
+  transition: background 0.2s;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  &:hover {
+    background: #e6e8ee;
+  }
+}
+
+.helpline-btn .ic {
+  color: var(--s-primary);
+}
+
+.store-locator-btn .ic {
+  color: var(--s-secondary);
+}
+
+.support-block h5 {
+  color: var(--s-hf-bg);
+  font-weight: bold;
+  font-size: 1.125rem;
+}
+
+.support-block p {
+  color: var(--s-tertiary);
+  font-size: 0.875rem;
+}

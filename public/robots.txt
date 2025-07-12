@@ -1,0 +1,14 @@
+# *
+User-agent: *
+Allow: /
+
+# *
+User-agent: *
+Disallow: /admin
+Disallow: /admin/*
+
+# Host
+Host: https://rinors.com
+
+# Sitemaps
+Sitemap: https://rinors.com/sitemap.xml

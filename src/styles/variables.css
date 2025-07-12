@@ -1,0 +1,70 @@
+/* Centralized CSS Variables for the entire application */
+:root {
+  /* Brand Colors */
+  --brand-primary: #F97316;   /* #ff3131 */
+  --brand-secondary: #c63500;
+  --brand-accent: #621028;
+
+  /* Semantic Colors */
+  --semantic-success: #3dab25;
+  --semantic-warning: #ecb018;
+  --semantic-error: #db4444;
+  --semantic-info: #4856da;
+
+  /* Neutral Colors */
+  --neutral-white: #ffffff;
+  --neutral-black: #1f1f1f;
+  --neutral-gray-50: #f9f9f9;
+  --neutral-gray-100: #f7f7f7;
+  --neutral-gray-200: #e9e9e9;
+  --neutral-gray-300: #d1d5db;
+  --neutral-gray-400: #a0a0a0;
+  --neutral-gray-500: #696c70;
+  --neutral-gray-600: #4b5563;
+  --neutral-gray-700: #374151;
+  --neutral-gray-800: #1f2937;
+  --neutral-gray-900: #111827;
+
+  /* Surface Colors */
+  --surface-primary: #f7f7f7;
+  --surface-secondary: rgba(255, 255, 255, 0.1);
+  --surface-tertiary: rgba(255, 255, 255, 0.2);
+
+  /* Text Colors */
+  --text-primary: #1f1f1f;
+  --text-secondary: #696c70;
+  --text-tertiary: #a0a0a0;
+  --text-inverse: #ffffff;
+
+  /* Border Colors */
+  --border-primary: #e9e9e9;
+  --border-secondary: rgba(0, 0, 0, 0.15);
+
+  /* Legacy compatibility - map old variables to new ones */
+  --green: var(--brand-secondary);
+  --black: var(--neutral-black);
+  --secondary: var(--text-secondary);
+  --secondary2: var(--text-tertiary);
+  --white: var(--neutral-white);
+  --surface: var(--surface-primary);
+  --red: var(--semantic-error);
+  --purple: var(--brand-accent);
+  --success: var(--semantic-success);
+  --yellow: var(--semantic-warning);
+  --pink: #f4407d;
+  --line: var(--border-primary);
+  --outline: var(--border-secondary);
+  --surface1: var(--surface-secondary);
+  --surface2: var(--surface-tertiary);
+}
+
+/* Dark mode variables (if needed) */
+.dark {
+  --brand-primary: #ffffff;
+  --brand-secondary: #d2ef9a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --surface-primary: #1f1f1f;
+  --border-primary: #374151;
+  /* Add more dark mode overrides as needed */
+}
