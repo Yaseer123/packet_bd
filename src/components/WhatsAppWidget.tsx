@@ -8,7 +8,7 @@ const WhatsAppWidget = () => {
       accountName="Packet BD"
       avatar="/images/brand/packetbd.jpg"
     />
-  );
+  ); 
 };
 
 export default WhatsAppWidget;
