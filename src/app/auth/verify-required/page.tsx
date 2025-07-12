@@ -65,10 +65,10 @@ export default function VerifyRequiredPage() {
               <span className="block">
                 or call us at
                 <a
-                  href="tel:+8801312223452"
+                  href="tel:+8801824443227"
                   className="ml-1 font-semibold text-green-700 underline transition-colors hover:text-green-900"
                 >
-                  +8801312223452
+                  +8801824443227
                 </a>
               </span>
               <span className="mt-2 block text-xs text-muted-foreground">

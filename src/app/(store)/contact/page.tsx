@@ -198,7 +198,7 @@ const ContactUs = () => {
                 <p className="mt-3">41/5 East Badda Dhaka, Bangladesh</p>
                 <p className="mt-3">
                   Phone:{" "}
-                  <span className="whitespace-nowrap">+8801312223452</span>
+                  <span className="whitespace-nowrap">+8801824443227</span>
                 </p>
                 <p className="mt-1">
                   Email:{" "}
