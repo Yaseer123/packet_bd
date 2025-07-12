@@ -68,18 +68,18 @@ export default function TopNav({ props }: Props) {
             </div>
             <div className="right-content flex items-center gap-5 text-white max-md:hidden">
               <Link
-                href={"https://www.facebook.com/profile.php?id=61572946813700"}
+                href={"https://www.facebook.com/people/Packet-BD/61578171175015/"}
                 target="_blank"
               >
                 <FaFacebookF />
               </Link>
               <Link
-                href={"https://www.instagram.com/rinors_electronic_store/"}
+                href={"https://www.instagram.com/packetbd3"}
                 target="_blank"
               >
                 <FaInstagram />
               </Link>
-              <Link
+              {/* <Link
                 href={"https://www.youtube.com/@rinorsecommerce"}
                 target="_blank"
               >
@@ -93,7 +93,7 @@ export default function TopNav({ props }: Props) {
                 target="_blank"
               >
                 <SiTiktok className="text-md" />
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
