@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       </div>
     `;
     await resend.emails.send({
-      from: "no-reply@rinors.com",
+      from: "no-reply@packetbd.com",
       to: email,
       subject: "Your new account at Rinors Ecommerce",
       html,

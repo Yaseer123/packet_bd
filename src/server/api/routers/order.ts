@@ -380,7 +380,7 @@ export const orderRouter = createTRPCRouter({
       // Send admin email (outside transaction)
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
-        from: "no-reply@rinors.com",
+        from: "no-reply@packetbd.com",
         to: "contact@packetbd.com",
         subject: "New Order Placed",
         html,
@@ -413,7 +413,7 @@ export const orderRouter = createTRPCRouter({
           `;
           console.log("EMAIL HTML:", html);
           await resend.emails.send({
-            from: "no-reply@rinors.com",
+            from: "no-reply@packetbd.com",
             to: user.email,
             subject: "Your order is confirmed!",
             html,
@@ -591,7 +591,7 @@ export const orderRouter = createTRPCRouter({
               `;
             }
             await resend.emails.send({
-              from: "no-reply@rinors.com",
+              from: "no-reply@packetbd.com",
               to: user.email,
               subject,
               html,
@@ -835,7 +835,7 @@ export const orderRouter = createTRPCRouter({
       `;
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
-        from: "no-reply@rinors.com",
+        from: "no-reply@packetbd.com",
         to: "contact@packetbd.com",
         subject: "New Guest Order Placed",
         html,
@@ -866,7 +866,7 @@ export const orderRouter = createTRPCRouter({
         `;
         console.log("EMAIL HTML:", guestHtml);
         await resend.emails.send({
-          from: "no-reply@rinors.com",
+          from: "no-reply@packetbd.com",
           to: address.email,
           subject: "Your order is confirmed!",
           html: guestHtml,
@@ -1029,7 +1029,7 @@ export const orderRouter = createTRPCRouter({
             </div>
           `;
           await resend.emails.send({
-            from: "no-reply@rinors.com",
+            from: "no-reply@packetbd.com",
             to: user.email,
             subject: "Your order has been cancelled",
             html,
