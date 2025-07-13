@@ -654,35 +654,35 @@ export default function ProductDetails({
                       </div>
                     ))}
                   </div>
-                  {/* Size selector (only if sizes available for selected color) */}
-                  {availableSizes.length > 0 && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="font-semibold">Size:</span>
-                      {availableSizes.map((size, idx) =>
-                        size ? (
-                          <button
-                            key={size + idx}
-                            className={`rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"} ${size === productMain.defaultSize ? "ring-2 ring-blue-400" : ""}`}
-                            onClick={() => setSelectedSize(size)}
-                          >
-                            {size}
-                            {size === productMain.defaultSize ? (
-                              <span className="ml-1 text-xs text-blue-600">
-                                (default)
-                              </span>
-                            ) : null}
-                          </button>
-                        ) : null,
-                      )}
-                      {productMain.defaultSize && (
-                        <button
-                          className={`rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
-                          onClick={() => setSelectedSize(undefined)}
-                        >
-                          {productMain.defaultSize}
-                        </button>
-                      )}
-                    </div>
+                </div>
+              )}
+              {/* Size selector (always show if availableSizes.length > 0) */}
+              {availableSizes.length > 0 && (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="font-semibold">Size:</span>
+                  {availableSizes.map((size, idx) =>
+                    size ? (
+                      <button
+                        key={size + idx}
+                        className={`rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"} ${size === productMain.defaultSize ? "ring-2 ring-blue-400" : ""}`}
+                        onClick={() => setSelectedSize(size)}
+                      >
+                        {size}
+                        {size === productMain.defaultSize ? (
+                          <span className="ml-1 text-xs text-blue-600">
+                            (default)
+                          </span>
+                        ) : null}
+                      </button>
+                    ) : null,
+                  )}
+                  {productMain.defaultSize && (
+                    <button
+                      className={`rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
+                      onClick={() => setSelectedSize(undefined)}
+                    >
+                      {productMain.defaultSize}
+                    </button>
                   )}
                 </div>
               )}
