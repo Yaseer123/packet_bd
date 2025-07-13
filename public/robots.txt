@@ -8,7 +8,7 @@ Disallow: /admin
 Disallow: /admin/*
 
 # Host
-Host: https://rinors.com
+Host: https://packetbd.com
 
 # Sitemaps
-Sitemap: https://rinors.com/sitemap.xml
+Sitemap: https://packetbd.com/sitemap.xml

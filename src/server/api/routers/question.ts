@@ -59,7 +59,7 @@ export const questionRouter = createTRPCRouter({
       });
       if (question?.user?.email) {
         const productTitle = question.product?.title ?? "Product";
-        const productUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://rinors.com"}/products/${question.productId}`;
+        const productUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://packetbd.com"}/products/${question.productId}`;
         await sendEmail(
           question.user.email,
           `Your question on ${productTitle} has been answered`,

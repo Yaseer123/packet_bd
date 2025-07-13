@@ -11,7 +11,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // --- Branded Email Components ---
 const emailHeader = `
   <div style="background: #fff; text-align: center; padding: 24px 0 8px 0;">
-    <img src="https://rinors.com/images/brand/RINORS.png" alt="Rinors" style="height: 48px;" />
+    <img src="https://packetbd.com/images/brand/RINORS.png" alt="Rinors" style="height: 48px;" />
   </div>
 `;
 const contactInfo = `
@@ -41,11 +41,11 @@ const socialLinks = `
 `;
 const importantLinks = `
   <div style="text-align: center; margin-bottom: 16px; font-size: 14px;">
-    <a href="https://rinors.com/contact" style="margin: 0 10px; color: #007b55; text-decoration: none;">Contact Us</a> |
-    <a href="https://rinors.com/my-account" style="margin: 0 10px; color: #007b55; text-decoration: none;">My Account</a> |
-    <a href="https://rinors.com/order-tracking" style="margin: 0 10px; color: #007b55; text-decoration: none;">Order Tracking</a> |
-    <a href="https://rinors.com/faqs" style="margin: 0 10px; color: #007b55; text-decoration: none;">FAQs</a> |
-    <a href="https://rinors.com/privacy-policy" style="margin: 0 10px; color: #007b55; text-decoration: none;">Privacy Policy</a>
+    <a href="https://packetbd.com/contact" style="margin: 0 10px; color: #007b55; text-decoration: none;">Contact Us</a> |
+    <a href="https://packetbd.com/my-account" style="margin: 0 10px; color: #007b55; text-decoration: none;">My Account</a> |
+    <a href="https://packetbd.com/order-tracking" style="margin: 0 10px; color: #007b55; text-decoration: none;">Order Tracking</a> |
+    <a href="https://packetbd.com/faqs" style="margin: 0 10px; color: #007b55; text-decoration: none;">FAQs</a> |
+    <a href="https://packetbd.com/privacy-policy" style="margin: 0 10px; color: #007b55; text-decoration: none;">Privacy Policy</a>
   </div>
 `;
 const emailFooter = `
