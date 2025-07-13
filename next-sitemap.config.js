@@ -15,7 +15,7 @@ if (
 }
 
 export default {
-  siteUrl: process.env.NEXTAUTH_URL ?? "https://rinors.com",
+  siteUrl: "https://packetbd.com", // Hardcoded domain
   generateRobotsTxt: true,
   exclude: ["/admin", "/admin/*"],
   robotsTxtOptions: {
@@ -23,6 +23,7 @@ export default {
       { userAgent: "*", allow: "/" },
       { userAgent: "*", disallow: ["/admin", "/admin/*"] },
     ],
+    host: "https://packetbd.com", // Hardcoded host
   },
   /**
    * @param {import('next-sitemap').IConfig} config
