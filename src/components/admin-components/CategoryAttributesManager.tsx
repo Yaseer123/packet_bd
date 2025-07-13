@@ -330,6 +330,9 @@ export default function CategoryAttributesManager({
     return options.filter((opt) => opt.trim() !== "");
   };
 
+  // Determine if this is a primary (parent) category
+  const isPrimaryCategory = category.parentId === null;
+
   return (
     <div className="space-y-8 pb-10">
       <div className="sticky top-0 z-10 flex flex-col items-center justify-between gap-4 bg-background/95 py-4 backdrop-blur sm:flex-row">
@@ -354,7 +357,11 @@ export default function CategoryAttributesManager({
             <Layout className="h-4 w-4" />
             <span>Category Details</span>
           </TabsTrigger>
-          <TabsTrigger value="attributes" className="flex items-center gap-2">
+          <TabsTrigger
+            value="attributes"
+            className="flex items-center gap-2"
+            disabled={isPrimaryCategory}
+          >
             <Tag className="h-4 w-4" />
             <span>Category Attributes</span>
           </TabsTrigger>
@@ -456,174 +463,196 @@ export default function CategoryAttributesManager({
 
         {/* Category Attributes Tab */}
         <TabsContent value="attributes" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                <Database className="h-5 w-5 text-primary" />
-                Category Attributes
-              </CardTitle>
-              <CardDescription>
-                Define attributes that will be available for products in this
-                category
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...attributesForm}>
-                <form
-                  onSubmit={attributesForm.handleSubmit(onSubmitAttributes)}
-                  className="space-y-6"
-                >
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-xl font-medium">
-                          Product Attributes
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Attributes help customers filter and find products
-                          easily
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleAddAttribute}
-                        className="gap-2"
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                        Add Attribute
-                      </Button>
-                    </div>
-
-                    {fields.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-                        <Database className="h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-medium">
-                          No attributes defined
-                        </h3>
-                        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                          Attributes help customers filter and find products.
-                          Examples include size, color, material, etc.
-                        </p>
+          {isPrimaryCategory ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <Database className="h-5 w-5 text-primary" />
+                  Category Attributes
+                </CardTitle>
+                <CardDescription>
+                  Attributes can only be added to subcategories. Please select a
+                  subcategory to manage attributes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="py-8 text-center text-lg text-muted-foreground">
+                  Attributes can only be added to subcategories. Please select a
+                  subcategory to manage attributes.
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <Database className="h-5 w-5 text-primary" />
+                  Category Attributes
+                </CardTitle>
+                <CardDescription>
+                  Define attributes that will be available for products in this
+                  category
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...attributesForm}>
+                  <form
+                    onSubmit={attributesForm.handleSubmit(onSubmitAttributes)}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-xl font-medium">
+                            Product Attributes
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Attributes help customers filter and find products
+                            easily
+                          </p>
+                        </div>
                         <Button
                           type="button"
+                          variant="outline"
                           onClick={handleAddAttribute}
-                          className="mt-4 gap-2"
+                          className="gap-2"
                         >
                           <PlusCircle className="h-4 w-4" />
-                          Add Your First Attribute
+                          Add Attribute
                         </Button>
                       </div>
-                    ) : (
-                      <div className="grid gap-6 sm:grid-cols-2">
-                        {fields.map((field, index) => (
-                          <motion.div
-                            key={field.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2 }}
+
+                      {fields.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+                          <Database className="h-12 w-12 text-muted-foreground/50" />
+                          <h3 className="mt-4 text-lg font-medium">
+                            No attributes defined
+                          </h3>
+                          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                            Attributes help customers filter and find products.
+                            Examples include size, color, material, etc.
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={handleAddAttribute}
+                            className="mt-4 gap-2"
                           >
-                            <Card className="overflow-hidden">
-                              <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <Badge
-                                    variant="outline"
-                                    className="font-normal"
-                                  >
-                                    #{index + 1}
-                                  </Badge>
-                                  <h4 className="font-medium">
-                                    {attributesForm.watch(
-                                      `attributes.${index}.name`,
-                                    ) || "New Attribute"}
-                                  </h4>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    // If this is an existing attribute in the database, remove it from there
-                                    if (
-                                      category &&
-                                      attributesForm.watch(
+                            <PlusCircle className="h-4 w-4" />
+                            Add Your First Attribute
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid gap-6 sm:grid-cols-2">
+                          {fields.map((field, index) => (
+                            <motion.div
+                              key={field.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Card className="overflow-hidden">
+                                <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className="font-normal"
+                                    >
+                                      #{index + 1}
+                                    </Badge>
+                                    <h4 className="font-medium">
+                                      {attributesForm.watch(
                                         `attributes.${index}.name`,
-                                      )
-                                    ) {
-                                      handleRemoveSingleAttribute(index);
-                                    } else {
-                                      // Otherwise just remove it from the form
-                                      remove(index);
-                                    }
-                                  }}
-                                  disabled={isRemovingSingleAttribute}
-                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
+                                      ) || "New Attribute"}
+                                    </h4>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      // If this is an existing attribute in the database, remove it from there
+                                      if (
+                                        category &&
+                                        attributesForm.watch(
+                                          `attributes.${index}.name`,
+                                        )
+                                      ) {
+                                        handleRemoveSingleAttribute(index);
+                                      } else {
+                                        // Otherwise just remove it from the form
+                                        remove(index);
+                                      }
+                                    }}
+                                    disabled={isRemovingSingleAttribute}
+                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
 
-                              <div className="space-y-4 p-4">
-                                <FormField
-                                  control={attributesForm.control}
-                                  name={`attributes.${index}.name`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Name</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          {...field}
-                                          placeholder="Color, Size, Material..."
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                {/* Always show options field since we're only using select type */}
-                                <FormField
-                                  control={attributesForm.control}
-                                  name={`attributes.${index}.options`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Options</FormLabel>
-                                      <FormControl>
-                                        <div className="space-y-2">
+                                <div className="space-y-4 p-4">
+                                  <FormField
+                                    control={attributesForm.control}
+                                    name={`attributes.${index}.name`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Name</FormLabel>
+                                        <FormControl>
                                           <Input
-                                            placeholder="Add option and press Enter"
-                                            onKeyDown={(e) => {
-                                              if (e.key === "Enter") {
-                                                e.preventDefault();
-                                                const inputValue =
-                                                  e.currentTarget.value.trim();
-                                                if (inputValue) {
-                                                  const currentOptions =
-                                                    normalizeOptions(
-                                                      field.value,
-                                                    );
-                                                  if (
-                                                    !currentOptions.includes(
-                                                      inputValue,
-                                                    )
-                                                  ) {
-                                                    field.onChange([
-                                                      ...currentOptions,
-                                                      inputValue,
-                                                    ]);
-                                                    e.currentTarget.value = "";
-                                                  } else {
-                                                    toast.error(
-                                                      "This option already exists",
-                                                    );
+                                            {...field}
+                                            placeholder="Color, Size, Material..."
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+
+                                  {/* Always show options field since we're only using select type */}
+                                  <FormField
+                                    control={attributesForm.control}
+                                    name={`attributes.${index}.options`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Options</FormLabel>
+                                        <FormControl>
+                                          <div className="space-y-2">
+                                            <Input
+                                              placeholder="Add option and press Enter"
+                                              onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                  e.preventDefault();
+                                                  const inputValue =
+                                                    e.currentTarget.value.trim();
+                                                  if (inputValue) {
+                                                    const currentOptions =
+                                                      normalizeOptions(
+                                                        field.value,
+                                                      );
+                                                    if (
+                                                      !currentOptions.includes(
+                                                        inputValue,
+                                                      )
+                                                    ) {
+                                                      field.onChange([
+                                                        ...currentOptions,
+                                                        inputValue,
+                                                      ]);
+                                                      e.currentTarget.value =
+                                                        "";
+                                                    } else {
+                                                      toast.error(
+                                                        "This option already exists",
+                                                      );
+                                                    }
                                                   }
                                                 }
-                                              }
-                                            }}
-                                          />
-                                          <div className="flex flex-wrap gap-2">
-                                            {normalizeOptions(field.value).map(
-                                              (option, optionIndex) => (
+                                              }}
+                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                              {normalizeOptions(
+                                                field.value,
+                                              ).map((option, optionIndex) => (
                                                 <Badge
                                                   key={optionIndex}
                                                   variant="default"
@@ -653,117 +682,117 @@ export default function CategoryAttributesManager({
                                                     <X className="h-3 w-3" />
                                                   </Button>
                                                 </Badge>
-                                              ),
-                                            )}
-                                            {normalizeOptions(field.value)
-                                              .length === 0 && (
-                                              <p className="text-sm text-muted-foreground">
-                                                No options added (required)
-                                              </p>
-                                            )}
+                                              ))}
+                                              {normalizeOptions(field.value)
+                                                .length === 0 && (
+                                                <p className="text-sm text-muted-foreground">
+                                                  No options added (required)
+                                                </p>
+                                              )}
+                                            </div>
                                           </div>
-                                        </div>
-                                      </FormControl>
-                                      <FormDescription>
-                                        Enter an option and press Enter to add
-                                        it. At least one option is required.
-                                      </FormDescription>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={attributesForm.control}
-                                  name={`attributes.${index}.required`}
-                                  render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                      <div className="space-y-0.5">
-                                        <FormLabel className="text-base">
-                                          Required
-                                        </FormLabel>
+                                        </FormControl>
                                         <FormDescription>
-                                          Make this attribute mandatory for all
-                                          products
+                                          Enter an option and press Enter to add
+                                          it. At least one option is required.
                                         </FormDescription>
-                                      </div>
-                                      <FormControl>
-                                        <Switch
-                                          checked={field.value}
-                                          onCheckedChange={field.onChange}
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            </Card>
-                          </motion.div>
-                        ))}
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+
+                                  <FormField
+                                    control={attributesForm.control}
+                                    name={`attributes.${index}.required`}
+                                    render={({ field }) => (
+                                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                        <div className="space-y-0.5">
+                                          <FormLabel className="text-base">
+                                            Required
+                                          </FormLabel>
+                                          <FormDescription>
+                                            Make this attribute mandatory for
+                                            all products
+                                          </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                          <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {fields.length > 0 && (
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          type="submit"
+                          disabled={isSavingAttributes}
+                          size="lg"
+                          className="gap-2 sm:w-auto"
+                        >
+                          <Save className="h-4 w-4" />
+                          {isSavingAttributes
+                            ? "Saving..."
+                            : "Save All Attributes"}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          className="gap-2 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
+                          disabled={isRemovingAllAttributes}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {isRemovingAllAttributes
+                            ? "Removing..."
+                            : "Remove All Attributes"}
+                        </Button>
                       </div>
                     )}
-                  </div>
-
-                  {fields.length > 0 && (
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        type="submit"
-                        disabled={isSavingAttributes}
-                        size="lg"
-                        className="gap-2 sm:w-auto"
-                      >
-                        <Save className="h-4 w-4" />
-                        {isSavingAttributes
-                          ? "Saving..."
-                          : "Save All Attributes"}
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        onClick={() => setIsDeleteDialogOpen(true)}
-                        className="gap-2 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
-                        disabled={isRemovingAllAttributes}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        {isRemovingAllAttributes
-                          ? "Removing..."
-                          : "Remove All Attributes"}
-                      </Button>
-                    </div>
-                  )}
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          {/* Confirmation Dialog for removing all attributes */}
-          <AlertDialog
-            open={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Remove All Attributes</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will remove all attributes for this category. Products
-                  using these attributes may be affected. This action cannot be
-                  undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleRemoveAllAttributes}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Remove All
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
+
+        {/* Confirmation Dialog for removing all attributes */}
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove All Attributes</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all attributes for this category. Products
+                using these attributes may be affected. This action cannot be
+                undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleRemoveAllAttributes}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Remove All
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Tabs>
     </div>
   );
