@@ -319,9 +319,6 @@ const Checkout = () => {
         </div>
       )}
       <div className="mb-2 text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-        <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
-          1
-        </span>
         Shipping Information
       </div>
       <hr className="mb-4" />
@@ -399,7 +396,7 @@ const Checkout = () => {
           </div>
         </form>
         {/* Additional Notes Field */}
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <label htmlFor="additional-notes" className="mb-1 block font-medium">
             Additional Notes (optional)
           </label>
@@ -411,81 +408,81 @@ const Checkout = () => {
             onChange={(e) => setNote(e.target.value)}
             rows={3}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );
 
-  const renderDeliveryMethodSection = () => (
-    <div className="mb-8 mt-8">
-      <div className="mb-2 flex items-center">
-        <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
-          3
-        </span>
-        <span className="text-xl font-semibold">Delivery Method</span>
-      </div>
-      <hr className="mb-4" />
-      <div className="mb-2 font-medium">Select a delivery method</div>
-      <RadioGroup
-        value={deliveryMethod}
-        onValueChange={(val) =>
-          setDeliveryMethod(val as "home" | "pickup" | "express")
-        }
-        className="flex flex-col gap-2"
-      >
-        <label className="flex cursor-pointer items-center gap-2">
-          <RadioGroupItem value="home" id="delivery-home" />
-          <span>Home Delivery - 60৳</span>
-        </label>
-        <label className="flex cursor-pointer items-center gap-2">
-          <RadioGroupItem value="pickup" id="delivery-pickup" />
-          <span>Store Pickup - 0৳</span>
-        </label>
-        <label className="flex cursor-pointer items-center gap-2">
-          <RadioGroupItem value="express" id="delivery-express" />
-          <span>Request Express - Charge Applicable</span>
-        </label>
-      </RadioGroup>
-    </div>
-  );
+  // const renderDeliveryMethodSection = () => (
+  //   <div className="mb-8 mt-8">
+  //     <div className="mb-2 flex items-center">
+  //       <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
+  //         3
+  //       </span>
+  //       <span className="text-xl font-semibold">Delivery Method</span>
+  //     </div>
+  //     <hr className="mb-4" />
+  //     <div className="mb-2 font-medium">Select a delivery method</div>
+  //     <RadioGroup
+  //       value={deliveryMethod}
+  //       onValueChange={(val) =>
+  //         setDeliveryMethod(val as "home" | "pickup" | "express")
+  //       }
+  //       className="flex flex-col gap-2"
+  //     >
+  //       <label className="flex cursor-pointer items-center gap-2">
+  //         <RadioGroupItem value="home" id="delivery-home" />
+  //         <span>Home Delivery - 60৳</span>
+  //       </label>
+  //       <label className="flex cursor-pointer items-center gap-2">
+  //         <RadioGroupItem value="pickup" id="delivery-pickup" />
+  //         <span>Store Pickup - 0৳</span>
+  //       </label>
+  //       <label className="flex cursor-pointer items-center gap-2">
+  //         <RadioGroupItem value="express" id="delivery-express" />
+  //         <span>Request Express - Charge Applicable</span>
+  //       </label>
+  //     </RadioGroup>
+  //   </div>
+  // );
 
-  const renderPaymentSection = () => (
-    <div className="mt-6 md:mt-10">
-      <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-        <span className="mb-2 mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
-          2
-        </span>
-        Choose payment Option:
-      </div>
-      <hr className="mb-4" />
-      <div className="mt-5 bg-white">
-        <div
-          className={`bg-surface rounded-lg border border-[#ddd] p-5 focus:border-[#ddd]`}
-        >
-          <input
-            className="cursor-pointer"
-            type="radio"
-            id="delivery"
-            name="payment"
-            checked={true}
-            readOnly
-          />
-          <label
-            className="cursor-pointer pl-2 text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6"
-            htmlFor="delivery"
-          >
-            Cash on delivery
-          </label>
-          <div className="visible max-h-[1000px] opacity-100">
-            <div className="pt-4">
-              You will pay in cash when your order is delivered to your address.
-              Please ensure your shipping information is correct.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  // const renderPaymentSection = () => (
+  //   <div className="mt-6 md:mt-10">
+  //     <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
+  //       <span className="mb-2 mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
+  //         2
+  //       </span>
+  //       Choose payment Option:
+  //     </div>
+  //     <hr className="mb-4" />
+  //     <div className="mt-5 bg-white">
+  //       <div
+  //         className={`bg-surface rounded-lg border border-[#ddd] p-5 focus:border-[#ddd]`}
+  //       >
+  //         <input
+  //           className="cursor-pointer"
+  //           type="radio"
+  //           id="delivery"
+  //           name="payment"
+  //           checked={true}
+  //           readOnly
+  //         />
+  //         <label
+  //           className="cursor-pointer pl-2 text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6"
+  //           htmlFor="delivery"
+  //         >
+  //           Cash on delivery
+  //         </label>
+  //         <div className="visible max-h-[1000px] opacity-100">
+  //           <div className="pt-4">
+  //             You will pay in cash when your order is delivered to your address.
+  //             Please ensure your shipping information is correct.
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
   const placeOrder = api.order.placeOrder.useMutation({
     onSuccess: (data: OrderSuccessType) => {
@@ -621,8 +618,8 @@ const Checkout = () => {
 
   const paymentAndOrderSection = (
     <>
-      {renderPaymentSection()}
-      {renderDeliveryMethodSection()}
+      {/* {renderPaymentSection()} */}
+      {/* {renderDeliveryMethodSection()} */}
 
       <div className="mt-6 md:mt-10">
         <button
@@ -800,28 +797,28 @@ const Checkout = () => {
                     ))
                   )}
                 </div>
-                <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
+                {/* <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     Discounts
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     -{formatPrice(discountValue)}
                   </div>
-                </div>
-                <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
+                </div> */}
+                {/* <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     Shipping
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     {shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
                   </div>
-                </div>
+                </div> */}
                 <div className="flex justify-between pt-5">
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
                     Total
                   </div>
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-                    {formatPrice(totalCart - discountValue + shippingCost)}
+                    {formatPrice(totalCart - discountValue)}
                   </div>
                 </div>
               </div>
