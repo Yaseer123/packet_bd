@@ -36,7 +36,7 @@ export const newsletterRouter = createTRPCRouter({
       `;
 
       await resend.emails.send({
-        from: "no-reply@rinors.com",
+        from: "no-reply@packetbd.com",
         to: input.email,
         subject: "Welcome to Rinors Newsletter!",
         html,

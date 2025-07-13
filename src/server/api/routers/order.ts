@@ -212,8 +212,10 @@ export const orderRouter = createTRPCRouter({
           acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
         0,
       );
-      const shippingCost = input.shippingCost ?? 0;
-      const total = productTotal + shippingCost;
+      // const shippingCost = input.shippingCost ?? 0;
+      // const total = productTotal + shippingCost;
+      const shippingCost = 0; // Shipping is free for now
+      const total = productTotal; // No shipping cost added
 
       // Start transaction (DB only)
       const order = await ctx.db.$transaction(async (tx) => {
@@ -380,7 +382,7 @@ export const orderRouter = createTRPCRouter({
       // Send admin email (outside transaction)
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
-        from: "no-reply@rinors.com",
+        from: "no-reply@packetbd.com",
         to: "contact@packetbd.com",
         subject: "New Order Placed",
         html,
@@ -398,11 +400,11 @@ export const orderRouter = createTRPCRouter({
                 <p>Thank you for your order. Your order has been <b>confirmed</b> and is being processed.</p>
                 <p><strong>Order ID:</strong> ${order.id}</p>
                 <p><strong>Subtotal:</strong> ৳${productTotal}</p>
-                <p><strong>Shipping:</strong> ৳${shippingCost}</p>
+                <!-- <p><strong>Shipping:</strong> ৳${shippingCost}</p> -->
                 <p><strong>Total:</strong> ৳${order.total}</p>
                 ${productsTable}
                 ${addressBlock}
-                ${notesBlock}
+                <!-- ${notesBlock} -->
                 <p style="margin-top: 32px; color: #888; font-size: 13px;">If you have any questions, reply to this email.</p>
               </div>
               ${contactInfo}
@@ -413,7 +415,7 @@ export const orderRouter = createTRPCRouter({
           `;
           console.log("EMAIL HTML:", html);
           await resend.emails.send({
-            from: "no-reply@rinors.com",
+            from: "no-reply@packetbd.com",
             to: user.email,
             subject: "Your order is confirmed!",
             html,
@@ -591,7 +593,7 @@ export const orderRouter = createTRPCRouter({
               `;
             }
             await resend.emails.send({
-              from: "no-reply@rinors.com",
+              from: "no-reply@packetbd.com",
               to: user.email,
               subject,
               html,
@@ -679,8 +681,10 @@ export const orderRouter = createTRPCRouter({
           acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
         0,
       );
-      const shippingCost = input.shippingCost ?? 0;
-      const total = productTotal + shippingCost;
+      // const shippingCost = input.shippingCost ?? 0;
+      // const total = productTotal + shippingCost;
+      const shippingCost = 0; // Shipping is free for now
+      const total = productTotal; // No shipping cost added
 
       // Start transaction (DB only)
       const order = await ctx.db.$transaction(async (tx) => {
@@ -820,11 +824,11 @@ export const orderRouter = createTRPCRouter({
             <p style="font-size: 16px;">A new guest order has been placed on Rinors Ecommerce Admin.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${productTotal}</div>
-            <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div>
+            <!-- <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div> -->
             <div style="margin-bottom: 16px;"><strong>Total:</strong> ৳${order.total}</div>
             ${guestProductsTable}
             ${addressBlock}
-            ${notesBlock}
+            <!-- ${notesBlock} -->
             <p style="margin-top: 32px; color: #888; font-size: 13px;">Please process this order promptly.</p>
           </div>
           ${contactInfo}
@@ -835,7 +839,7 @@ export const orderRouter = createTRPCRouter({
       `;
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
-        from: "no-reply@rinors.com",
+        from: "no-reply@packetbd.com",
         to: "contact@packetbd.com",
         subject: "New Guest Order Placed",
         html,
@@ -851,11 +855,11 @@ export const orderRouter = createTRPCRouter({
               <p>Thank you for your order. Your order has been <b>confirmed</b> and is being processed.</p>
               <p><strong>Order ID:</strong> ${order.id}</p>
               <p><strong>Subtotal:</strong> ৳${productTotal}</p>
-              <p><strong>Shipping:</strong> ৳${shippingCost}</p>
+              <!-- <p><strong>Shipping:</strong> ৳${shippingCost}</p> -->
               <p><strong>Total:</strong> ৳${order.total}</p>
               ${guestProductsTable}
               ${addressBlock}
-              ${notesBlock}
+              <!-- ${notesBlock} -->
               <p style="margin-top: 32px; color: #888; font-size: 13px;">If you have any questions, reply to this email.</p>
             </div>
             ${contactInfo}
@@ -866,7 +870,7 @@ export const orderRouter = createTRPCRouter({
         `;
         console.log("EMAIL HTML:", guestHtml);
         await resend.emails.send({
-          from: "no-reply@rinors.com",
+          from: "no-reply@packetbd.com",
           to: address.email,
           subject: "Your order is confirmed!",
           html: guestHtml,
@@ -1029,7 +1033,7 @@ export const orderRouter = createTRPCRouter({
             </div>
           `;
           await resend.emails.send({
-            from: "no-reply@rinors.com",
+            from: "no-reply@packetbd.com",
             to: user.email,
             subject: "Your order has been cancelled",
             html,
