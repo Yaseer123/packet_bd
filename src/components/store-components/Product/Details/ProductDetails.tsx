@@ -780,9 +780,9 @@ export default function ProductDetails({
             <div className="product-infor w-full lg:w-1/2 lg:pl-[15px]">
               <div className="flex justify-between">
                 <div>
-                  <div className="mt-1 text-[30px] font-semibold capitalize leading-[42px] md:text-[18px] md:leading-[28px] lg:text-[26px] lg:leading-[32px]">
+                  <h1 className="mt-1 text-[30px] font-semibold capitalize leading-[42px] md:text-[18px] md:leading-[28px] lg:text-[26px] lg:leading-[32px]">
                     {productMain.title}
-                  </div>
+                  </h1>
                 </div>
               </div>
               <div className="mt-3 flex items-center">
@@ -960,7 +960,9 @@ export default function ProductDetails({
                     }`}
                     onClick={() => handleActiveTab(tab.key)}
                   >
-                    {tab.label}
+                    <h2 className="m-0 p-0 text-lg font-semibold">
+                      {tab.label}
+                    </h2>
                   </div>
                 ))}
               </div>
@@ -969,14 +971,16 @@ export default function ProductDetails({
               <div
                 className={`desc-item description ${activeTab === "description" ? "open" : ""}`}
               >
+                <h2 className="sr-only">Description</h2>
                 <ParseContent content={productMain.description} />
               </div>
               <div
                 className={`desc-item specifications ${activeTab === "specifications" ? "open" : ""}`}
               >
+                <h2 className="mb-4 text-lg font-bold">Specifications</h2>
                 <div className="w-full overflow-x-auto">
                   <h3 className="mb-4 whitespace-nowrap text-sm font-bold">
-                    Specifications
+                    Details
                   </h3>
                   {productMain.attributes &&
                     Object.entries(productMain.attributes).map(
@@ -1132,10 +1136,8 @@ export default function ProductDetails({
                 <div className="top-overview border-b border-[#ddd] pb-6 focus:border-[#ddd]">
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rating-summary bg-surface rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md">
+                      <h3 className="text-lg font-semibold">Overall Rating</h3>
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">
-                          Overall Rating
-                        </h3>
                         <div className="rounded-full bg-black px-2 py-0.5 text-xs text-white hover:bg-black/75">
                           {reviewStats.totalCount}{" "}
                           {reviewStats.totalCount === 1 ? "Review" : "Reviews"}
