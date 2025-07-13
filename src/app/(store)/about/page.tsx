@@ -23,19 +23,29 @@ const AboutUs = () => {
                 </h1>
                 <div className="mt-5 text-center text-lg font-normal leading-7 md:mt-7">
                   <p>
-                    <strong>Packet BD</strong> is your trusted partner for high-quality, customizable packaging solutions — proudly serving businesses across Bangladesh. Whether you're an emerging online store or an established retailer, we help elevate your brand with secure and professional packaging.
+                    <strong>Packet BD</strong> is your trusted partner for
+                    high-quality, customizable packaging solutions — proudly
+                    serving businesses across Bangladesh. Whether you&apos;re an
+                    emerging online store or an established retailer, we help
+                    elevate your brand with secure and professional packaging.
                   </p>
 
                   <h2 className="mt-8 text-2xl font-semibold">Our Mission</h2>
                   <p>
-                    Our mission is to make premium packaging accessible and affordable for businesses of all sizes. We aim to help brands stand out, protect their products during transit, and leave a lasting impression on their customers.
+                    Our mission is to make premium packaging accessible and
+                    affordable for businesses of all sizes. We aim to help
+                    brands stand out, protect their products during transit, and
+                    leave a lasting impression on their customers.
                   </p>
 
                   <h2 className="mt-8 text-2xl font-semibold">What We Offer</h2>
-                  <p>We provide a wide range of packaging materials tailored to your brand and shipping needs:</p>
+                  <p>
+                    We provide a wide range of packaging materials tailored to
+                    your brand and shipping needs:
+                  </p>
 
                   <div className="flex justify-center">
-                    <ul className="text-left list-disc list-inside mt-4 inline-block text-start">
+                    <ul className="mt-4 inline-block list-inside list-disc text-left text-start">
                       <li>Custom Courier Polybags (Printed & Plain)</li>
                       <li>Waterproof Self-Sealing Mailers</li>
                       <li>Bubble Wrappers for fragile items</li>
@@ -51,24 +61,40 @@ const AboutUs = () => {
                     </ul>
                   </div>
 
-                  <h2 className="mt-8 text-2xl font-semibold">Why Choose Us?</h2>
+                  <h2 className="mt-8 text-2xl font-semibold">
+                    Why Choose Us?
+                  </h2>
                   <div className="flex justify-center">
-                    <ul className="text-left list-disc list-inside mt-4 inline-block text-start">
-                      <li>Premium packaging materials that reflect your brand quality</li>
-                      <li>Affordable pricing with small MOQ (minimum order quantity)</li>
+                    <ul className="mt-4 inline-block list-inside list-disc text-left text-start">
+                      <li>
+                        Premium packaging materials that reflect your brand
+                        quality
+                      </li>
+                      <li>
+                        Affordable pricing with small MOQ (minimum order
+                        quantity)
+                      </li>
                       <li>Custom branding options for most products</li>
                       <li>Fast, reliable delivery across Bangladesh</li>
                       <li>Dedicated support team to guide you</li>
                     </ul>
                   </div>
 
-                  <h3 className="mt-8 text-xl font-semibold">Let’s Grow Together</h3>
+                  <h3 className="mt-8 text-xl font-semibold">
+                    Let&apos;s Grow Together
+                  </h3>
                   <p>
-                    From small startups to large e-commerce retailers, Packet BD is here to help your packaging speak louder than words. Whether you need 100 pieces or 10,000 — we’ve got you covered.
+                    From small startups to large e-commerce retailers, Packet BD
+                    is here to help your packaging speak louder than words.
+                    Whether you need 100 pieces or 10,000 — we&apos;ve got you
+                    covered.
                   </p>
 
                   <p className="mt-4">
-                    <strong>At Packet BD, packaging is more than protection — it’s presentation.</strong>
+                    <strong>
+                      At Packet BD, packaging is more than protection —
+                      it&apos;s presentation.
+                    </strong>
                     <br />
                     Let us help your brand make the best first impression.
                   </p>
