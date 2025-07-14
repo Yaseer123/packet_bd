@@ -144,7 +144,7 @@ export default function AddCategoryForm() {
 
       {/* Parent Category */}
       <div>
-        <label className="text-sm font-medium">Select parent category</label>
+        <label className="text-sm font-medium">Select category</label>
         <CategorySelector
           setValue={setValue}
           categories={categories}
@@ -164,7 +164,7 @@ export default function AddCategoryForm() {
 
       {/* Description (optional) */}
       <div>
-        <label className="text-sm font-medium">Description (optional)</label>
+        <label className="text-sm font-medium">Description Here (optional)</label>
         <textarea
           {...register("description")}
           placeholder="Enter category description (for SEO, shown at bottom of category page)"

@@ -195,14 +195,16 @@ const ContactUs = () => {
                 <div className="text-[30px] font-semibold capitalize leading-[42px] md:text-[18px] md:leading-[28px] lg:text-[26px] lg:leading-[32px]">
                   Our Store
                 </div>
-                <p className="mt-3">41/5 East Badda Dhaka, Bangladesh</p>
+                <p className="mt-3">Plot-1832, Bir Uttam Rafiqul Islam Ave, Dhaka, Bangladesh</p>
                 <p className="mt-3">
                   Phone:{" "}
-                  <span className="whitespace-nowrap">+8801312223452</span>
+                  <span className="whitespace-nowrap">+8801824443227</span>
                 </p>
                 <p className="mt-1">
                   Email:{" "}
-                  <span className="whitespace-nowrap">contact@rinors.com</span>
+                  <span className="whitespace-nowrap">
+                    contact@packetbd.com
+                  </span>
                 </p>
               </div>
               <div className="item mt-10">

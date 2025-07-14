@@ -11,12 +11,12 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // --- Branded Email Components ---
 const emailHeader = `
   <div style="background: #fff; text-align: center; padding: 24px 0 8px 0;">
-    <img src="https://rinors.com/images/brand/RINORS.png" alt="Rinors" style="height: 48px;" />
+    <img src="https://packetbd.com/images/brand/RINORS.png" alt="Rinors" style="height: 48px;" />
   </div>
 `;
 const contactInfo = `
   <div style="text-align: center; font-size: 14px; color: #333; margin-bottom: 12px;">
-    <strong>Contact:</strong> contact@rinors.com | <strong>Phone:</strong> 01312223452<br/>
+    <strong>Contact:</strong> contact@packetbd.com | <strong>Phone:</strong> 01824443227<br/>
     <span>41/5 East Badda Dhaka, Bangladesh</span>
   </div>
 `;
@@ -41,16 +41,16 @@ const socialLinks = `
 `;
 const importantLinks = `
   <div style="text-align: center; margin-bottom: 16px; font-size: 14px;">
-    <a href="https://rinors.com/contact" style="margin: 0 10px; color: #007b55; text-decoration: none;">Contact Us</a> |
-    <a href="https://rinors.com/my-account" style="margin: 0 10px; color: #007b55; text-decoration: none;">My Account</a> |
-    <a href="https://rinors.com/order-tracking" style="margin: 0 10px; color: #007b55; text-decoration: none;">Order Tracking</a> |
-    <a href="https://rinors.com/faqs" style="margin: 0 10px; color: #007b55; text-decoration: none;">FAQs</a> |
-    <a href="https://rinors.com/privacy-policy" style="margin: 0 10px; color: #007b55; text-decoration: none;">Privacy Policy</a>
+    <a href="https://packetbd.com/contact" style="margin: 0 10px; color: #007b55; text-decoration: none;">Contact Us</a> |
+    <a href="https://packetbd.com/my-account" style="margin: 0 10px; color: #007b55; text-decoration: none;">My Account</a> |
+    <a href="https://packetbd.com/order-tracking" style="margin: 0 10px; color: #007b55; text-decoration: none;">Order Tracking</a> |
+    <a href="https://packetbd.com/faqs" style="margin: 0 10px; color: #007b55; text-decoration: none;">FAQs</a> |
+    <a href="https://packetbd.com/privacy-policy" style="margin: 0 10px; color: #007b55; text-decoration: none;">Privacy Policy</a>
   </div>
 `;
 const emailFooter = `
   <div style="background: #f7f7f7; color: #888; text-align: center; padding: 12px 0; font-size: 13px;">
-    &copy; 2024 Rinors Corporation. All Rights Reserved.
+    &copy; 2024 Packet BD. All Rights Reserved.
   </div>
 `;
 // --- END Branded Email Components ---
@@ -212,8 +212,10 @@ export const orderRouter = createTRPCRouter({
           acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
         0,
       );
-      const shippingCost = input.shippingCost ?? 0;
-      const total = productTotal + shippingCost;
+      // const shippingCost = input.shippingCost ?? 0;
+      // const total = productTotal + shippingCost;
+      const shippingCost = 0; // Shipping is free for now
+      const total = productTotal; // No shipping cost added
 
       // Start transaction (DB only)
       const order = await ctx.db.$transaction(async (tx) => {
@@ -380,8 +382,8 @@ export const orderRouter = createTRPCRouter({
       // Send admin email (outside transaction)
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
-        from: "no-reply@rinors.com",
-        to: "contact@rinors.com",
+        from: "no-reply@packetbd.com",
+        to: "contact@packetbd.com",
         subject: "New Order Placed",
         html,
       });
@@ -398,11 +400,11 @@ export const orderRouter = createTRPCRouter({
                 <p>Thank you for your order. Your order has been <b>confirmed</b> and is being processed.</p>
                 <p><strong>Order ID:</strong> ${order.id}</p>
                 <p><strong>Subtotal:</strong> ৳${productTotal}</p>
-                <p><strong>Shipping:</strong> ৳${shippingCost}</p>
+                <!-- <p><strong>Shipping:</strong> ৳${shippingCost}</p> -->
                 <p><strong>Total:</strong> ৳${order.total}</p>
                 ${productsTable}
                 ${addressBlock}
-                ${notesBlock}
+                <!-- ${notesBlock} -->
                 <p style="margin-top: 32px; color: #888; font-size: 13px;">If you have any questions, reply to this email.</p>
               </div>
               ${contactInfo}
@@ -413,7 +415,7 @@ export const orderRouter = createTRPCRouter({
           `;
           console.log("EMAIL HTML:", html);
           await resend.emails.send({
-            from: "no-reply@rinors.com",
+            from: "no-reply@packetbd.com",
             to: user.email,
             subject: "Your order is confirmed!",
             html,
@@ -591,7 +593,7 @@ export const orderRouter = createTRPCRouter({
               `;
             }
             await resend.emails.send({
-              from: "no-reply@rinors.com",
+              from: "no-reply@packetbd.com",
               to: user.email,
               subject,
               html,
@@ -679,8 +681,10 @@ export const orderRouter = createTRPCRouter({
           acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
         0,
       );
-      const shippingCost = input.shippingCost ?? 0;
-      const total = productTotal + shippingCost;
+      // const shippingCost = input.shippingCost ?? 0;
+      // const total = productTotal + shippingCost;
+      const shippingCost = 0; // Shipping is free for now
+      const total = productTotal; // No shipping cost added
 
       // Start transaction (DB only)
       const order = await ctx.db.$transaction(async (tx) => {
@@ -820,11 +824,11 @@ export const orderRouter = createTRPCRouter({
             <p style="font-size: 16px;">A new guest order has been placed on Rinors Ecommerce Admin.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${productTotal}</div>
-            <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div>
+            <!-- <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div> -->
             <div style="margin-bottom: 16px;"><strong>Total:</strong> ৳${order.total}</div>
             ${guestProductsTable}
             ${addressBlock}
-            ${notesBlock}
+            <!-- ${notesBlock} -->
             <p style="margin-top: 32px; color: #888; font-size: 13px;">Please process this order promptly.</p>
           </div>
           ${contactInfo}
@@ -835,8 +839,8 @@ export const orderRouter = createTRPCRouter({
       `;
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
-        from: "no-reply@rinors.com",
-        to: "contact@rinors.com",
+        from: "no-reply@packetbd.com",
+        to: "contact@packetbd.com",
         subject: "New Guest Order Placed",
         html,
       });
@@ -851,11 +855,11 @@ export const orderRouter = createTRPCRouter({
               <p>Thank you for your order. Your order has been <b>confirmed</b> and is being processed.</p>
               <p><strong>Order ID:</strong> ${order.id}</p>
               <p><strong>Subtotal:</strong> ৳${productTotal}</p>
-              <p><strong>Shipping:</strong> ৳${shippingCost}</p>
+              <!-- <p><strong>Shipping:</strong> ৳${shippingCost}</p> -->
               <p><strong>Total:</strong> ৳${order.total}</p>
               ${guestProductsTable}
               ${addressBlock}
-              ${notesBlock}
+              <!-- ${notesBlock} -->
               <p style="margin-top: 32px; color: #888; font-size: 13px;">If you have any questions, reply to this email.</p>
             </div>
             ${contactInfo}
@@ -866,7 +870,7 @@ export const orderRouter = createTRPCRouter({
         `;
         console.log("EMAIL HTML:", guestHtml);
         await resend.emails.send({
-          from: "no-reply@rinors.com",
+          from: "no-reply@packetbd.com",
           to: address.email,
           subject: "Your order is confirmed!",
           html: guestHtml,
@@ -1029,7 +1033,7 @@ export const orderRouter = createTRPCRouter({
             </div>
           `;
           await resend.emails.send({
-            from: "no-reply@rinors.com",
+            from: "no-reply@packetbd.com",
             to: user.email,
             subject: "Your order has been cancelled",
             html,

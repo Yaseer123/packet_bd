@@ -13,12 +13,12 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable}`}>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta title="Rinors E-commerce" />
+        <meta title="Packet BD" />
         <meta
           name="description"
           content="Your one-stop shop for premium products. Discover our curated collection of quality items with secure shopping and fast delivery."
         />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.png" />
       </Head>
       {/* Google Tag Manager */}
       <Script
@@ -30,7 +30,7 @@ export default function RootLayout({
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
             j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-TXM9N777');
+            })(window,document,'script','dataLayer','GTM-PX4XFQ2N');
           `,
         }}
       />
@@ -39,7 +39,7 @@ export default function RootLayout({
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-TXM9N777"
+            src="https://www.googletagmanager.com/ns.html?id=GTM-PX4XFQ2N"
             height="0"
             width="0"
             style={{ display: "none", visibility: "hidden" }}

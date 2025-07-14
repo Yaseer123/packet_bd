@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     // Send email
     const resetUrl = `${APP_URL}/reset-password?token=${token}`;
     await resend.emails.send({
-      from: "no-reply@rinors.com",
+      from: "no-reply@packetbd.com",
       to: email,
       subject: "Reset your password",
       html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link will expire in 1 hour.</p>`,

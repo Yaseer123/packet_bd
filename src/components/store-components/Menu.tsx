@@ -176,12 +176,12 @@ export default function Menu({
                 className="flex items-center max-lg:absolute max-lg:left-1/2 max-lg:z-10 max-lg:-translate-x-1/2 lg:relative lg:left-0 lg:transform-none"
               >
                 <Image
-                  src="/images/brand/RINORS.png"
+                  src="/light.png"
                   alt="Rinors"
-                  width={120}
-                  height={40}
+                  width={260}
+                  height={80}
                   priority
-                  className="h-auto w-[120px] object-contain"
+                  className="h-auto w-[300px] object-contain  ml-[-30px] lg:ml-[-40px]"
                 />
               </Link>
               <div className="form-search relative flex h-[44px] w-2/3 items-center pl-8 max-lg:hidden">
@@ -492,7 +492,7 @@ export default function Menu({
             <div className="right mr-3 flex items-center gap-2 border-l border-gray-100 pl-4">
               <div className="text-sm text-gray-500">Hotline:</div>
               <div className="text-sm font-semibold transition-colors hover:text-brand-primary">
-                +8801312223452
+                +8801824443227
               </div>
             </div>
           </div>

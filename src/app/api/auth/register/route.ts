@@ -23,7 +23,7 @@ async function sendVerificationEmail(email: string, token: string) {
     </div>
   `;
   await resend.emails.send({
-    from: "no-reply@rinors.com",
+    from: "no-reply@packetbd.com",
     to: email,
     subject: "Verify your email address",
     html,

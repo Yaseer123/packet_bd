@@ -32,3 +32,18 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+:root {
+  --brand-primary: #F9BF80;
+  --brand-secondary: #E84E2B;
+
+
+  /* Optional: set text, background, or foreground versions if needed */
+  --brand-primary-foreground: #000000;
+  --brand-secondary-foreground: #ffffff;
+}
+
+.dark {
+  --brand-primary: #F9BF80;
+  --brand-secondary: #E84E2B;
+}

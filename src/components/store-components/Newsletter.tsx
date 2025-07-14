@@ -39,7 +39,7 @@ export default function Newsletter({ variant = "default" }: NewsletterProps) {
   return (
     <>
       {variant === "default" ? (
-        <div className="newsletter-block bg-green bg-green-300 py-7">
+        <div className="newsletter-block bg-green mt-20 mb-20 bg-[#F9B981] py-7">
           <div className="mx-auto flex w-full !max-w-[1322px] items-center justify-center gap-8 gap-y-4 px-4 max-lg:flex-col lg:justify-between">
             <div className="text-content">
               <div className="text-[36px] font-semibold capitalize leading-[40px] max-lg:text-center md:text-[20px] md:leading-[28px] lg:text-[30px] lg:leading-[38px]">

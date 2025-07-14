@@ -91,21 +91,21 @@ export default function ComingSoon() {
                 </form>
               </div>
               <div className="list-link mt-6 flex items-center justify-center gap-6">
-                <Link
-                  href={
-                    "https://www.facebook.com/profile.php?id=61572946813700"
-                  }
-                  target="_blank"
-                >
-                  <div className="icon-facebook text-xl"></div>
-                </Link>
-                <Link
-                  href={"https://www.instagram.com/rinors_electronic_store/"}
-                  target="_blank"
-                >
-                  <div className="icon-instagram text-xl"></div>
-                </Link>
-                <Link
+                 <Link
+                    href={"https://www.facebook.com/people/Packet-BD/61578171175015/"}
+                    target="_blank"
+                    className="bg-surface flex h-10 w-10 items-center justify-center rounded-full duration-300 hover:bg-black hover:bg-black/75 hover:text-white"
+                  >
+                    <div className="icon-facebook duration-100"></div>
+                  </Link>
+                  <Link
+                    href={"https://www.instagram.com/packetbd3"}
+                    target="_blank"
+                    className="bg-surface flex h-10 w-10 items-center justify-center rounded-full duration-300 hover:bg-black hover:bg-black/75 hover:text-white"
+                  >
+                    <div className="icon-instagram duration-100"></div>
+                  </Link>
+                {/* <Link
                   href={"https://www.youtube.com/@rinorsecommerce"}
                   target="_blank"
                 >
@@ -119,7 +119,7 @@ export default function ComingSoon() {
                   target="_blank"
                 >
                   <div className="icon-tiktok text-xl"></div>
-                </Link>
+                </Link> */}
               </div>
             </div>
           </div>

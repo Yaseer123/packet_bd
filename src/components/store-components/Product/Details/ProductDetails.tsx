@@ -479,8 +479,14 @@ export default function ProductDetails({
 
   // Find the most specific variant (for now, only by color)
   let activeVariant: ProductVariant | undefined = undefined;
-  if (selectedColorHex) {
+  if (selectedColorHex && selectedSize) {
+    activeVariant = variants.find(
+      (v) => v.colorHex === selectedColorHex && v.size === selectedSize,
+    );
+  } else if (selectedColorHex) {
     activeVariant = variants.find((v) => v.colorHex === selectedColorHex);
+  } else if (selectedSize) {
+    activeVariant = variants.find((v) => v.size === selectedSize);
   }
   console.log("Active Variant:", activeVariant);
 
@@ -606,86 +612,6 @@ export default function ProductDetails({
         <div className="featured-product underwear bg-white py-10 md:py-20">
           <div className="container flex flex-col gap-y-6 lg:flex-row lg:items-start lg:gap-x-8">
             <div className="list-img w-full lg:w-1/2 lg:pr-[45px]">
-              {/* Unified Color Selector */}
-              {unifiedColors.length > 0 && (
-                <div className="mb-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">Color:</span>
-                    {unifiedColors.map((colorObj, idx) => (
-                      <div
-                        key={String(colorObj.colorHex) + idx}
-                        className="mx-1 flex flex-col items-center"
-                      >
-                        <button
-                          className={`rounded-full border p-0 ${selectedColorHex === colorObj.colorHex ? "border-2 border-blue-500 ring-2 ring-blue-400" : "border"}`}
-                          style={{
-                            width: 28,
-                            height: 28,
-                            backgroundColor: colorObj.colorHex,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                          onClick={() => {
-                            setSelectedColorHex(colorObj.colorHex);
-                            setSelectedColorName(colorObj.colorName);
-                            setSelectedSize(undefined);
-                          }}
-                          aria-label={colorObj.colorName}
-                          title={colorObj.colorName}
-                        >
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 20,
-                              height: 20,
-                              backgroundColor: colorObj.colorHex,
-                              borderRadius: "50%",
-                              // border: "1px solid #ccc",
-                            }}
-                          />
-                        </button>
-                        <span
-                          className="mt-1 text-center text-xs"
-                          style={{ maxWidth: 48, wordBreak: "break-word" }}
-                        >
-                          {colorObj.colorName}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Size selector (only if sizes available for selected color) */}
-                  {availableSizes.length > 0 && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="font-semibold">Size:</span>
-                      {availableSizes.map((size, idx) =>
-                        size ? (
-                          <button
-                            key={size + idx}
-                            className={`rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"} ${size === productMain.defaultSize ? "ring-2 ring-blue-400" : ""}`}
-                            onClick={() => setSelectedSize(size)}
-                          >
-                            {size}
-                            {size === productMain.defaultSize ? (
-                              <span className="ml-1 text-xs text-blue-600">
-                                (default)
-                              </span>
-                            ) : null}
-                          </button>
-                        ) : null,
-                      )}
-                      {productMain.defaultSize && (
-                        <button
-                          className={`rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
-                          onClick={() => setSelectedSize(undefined)}
-                        >
-                          {productMain.defaultSize}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
               {/* Images Swiper */}
               <Swiper
                 slidesPerView={1}
@@ -780,9 +706,9 @@ export default function ProductDetails({
             <div className="product-infor w-full lg:w-1/2 lg:pl-[15px]">
               <div className="flex justify-between">
                 <div>
-                  <div className="mt-1 text-[30px] font-semibold capitalize leading-[42px] md:text-[18px] md:leading-[28px] lg:text-[26px] lg:leading-[32px]">
+                  <h1 className="mt-1 text-[30px] font-semibold capitalize leading-[42px] md:text-[18px] md:leading-[28px] lg:text-[26px] lg:leading-[32px]">
                     {productMain.title}
-                  </div>
+                  </h1>
                 </div>
               </div>
               <div className="mt-3 flex items-center">
@@ -824,6 +750,92 @@ export default function ProductDetails({
                 {productMain.shortDescription}
               </div>
               <div className="list-action mt-6">
+                {/* Unified Color Selector */}
+                {unifiedColors.length > 0 && (
+                  <div className="mb-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex-shrink-0 font-semibold">
+                        Color:
+                      </span>
+                      <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
+                        {unifiedColors.map((colorObj, idx) => (
+                          <div
+                            key={String(colorObj.colorHex) + idx}
+                            className="mx-1 flex flex-shrink-0 flex-col items-center"
+                          >
+                            <button
+                              className={`rounded-full border p-0 ${selectedColorHex === colorObj.colorHex ? "border-2 border-blue-500 ring-2 ring-blue-400" : "border"}`}
+                              style={{
+                                width: 28,
+                                height: 28,
+                                backgroundColor: colorObj.colorHex,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                              onClick={() => {
+                                setSelectedColorHex(colorObj.colorHex);
+                                setSelectedColorName(colorObj.colorName);
+                                setSelectedSize(undefined);
+                              }}
+                              aria-label={colorObj.colorName}
+                              title={colorObj.colorName}
+                            >
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  width: 20,
+                                  height: 20,
+                                  backgroundColor: colorObj.colorHex,
+                                  borderRadius: "50%",
+                                  // border: "1px solid #ccc",
+                                }}
+                              />
+                            </button>
+                            <span
+                              className="mt-1 text-center text-xs"
+                              style={{ maxWidth: 48, wordBreak: "break-word" }}
+                            >
+                              {colorObj.colorName}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Size selector (always show if availableSizes.length > 0) */}
+                {availableSizes.length > 0 && (
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="flex-shrink-0 font-semibold">Size:</span>
+                    <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
+                      {availableSizes.map((size, idx) =>
+                        size ? (
+                          <button
+                            key={size + idx}
+                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"} ${size === productMain.defaultSize ? "ring-2 ring-blue-400" : ""}`}
+                            onClick={() => setSelectedSize(size)}
+                          >
+                            {size}
+                            {size === productMain.defaultSize ? (
+                              <span className="ml-1 text-xs text-blue-600">
+                                (default)
+                              </span>
+                            ) : null}
+                          </button>
+                        ) : null,
+                      )}
+                      {productMain.defaultSize && (
+                        <button
+                          className={`flex-shrink-0 rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
+                          onClick={() => setSelectedSize(undefined)}
+                        >
+                          {productMain.defaultSize}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="text-title mt-5">Quantity:</div>
                 <div className="choose-quantity mt-3 flex items-center gap-5 gap-y-3 lg:justify-between">
                   <div className="quantity-block flex w-[120px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[180px] md:p-3">
@@ -960,7 +972,9 @@ export default function ProductDetails({
                     }`}
                     onClick={() => handleActiveTab(tab.key)}
                   >
-                    {tab.label}
+                    <h2 className="m-0 p-0 text-lg font-semibold">
+                      {tab.label}
+                    </h2>
                   </div>
                 ))}
               </div>
@@ -969,14 +983,16 @@ export default function ProductDetails({
               <div
                 className={`desc-item description ${activeTab === "description" ? "open" : ""}`}
               >
+                <h2 className="sr-only">Description</h2>
                 <ParseContent content={productMain.description} />
               </div>
               <div
                 className={`desc-item specifications ${activeTab === "specifications" ? "open" : ""}`}
               >
+                <h2 className="mb-4 text-lg font-bold">Specifications</h2>
                 <div className="w-full overflow-x-auto">
                   <h3 className="mb-4 whitespace-nowrap text-sm font-bold">
-                    Specifications
+                    Details
                   </h3>
                   {productMain.attributes &&
                     Object.entries(productMain.attributes).map(
@@ -1132,10 +1148,8 @@ export default function ProductDetails({
                 <div className="top-overview border-b border-[#ddd] pb-6 focus:border-[#ddd]">
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rating-summary bg-surface rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md">
+                      <h3 className="text-lg font-semibold">Overall Rating</h3>
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">
-                          Overall Rating
-                        </h3>
                         <div className="rounded-full bg-black px-2 py-0.5 text-xs text-white hover:bg-black/75">
                           {reviewStats.totalCount}{" "}
                           {reviewStats.totalCount === 1 ? "Review" : "Reviews"}

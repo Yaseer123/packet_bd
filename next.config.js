@@ -14,6 +14,11 @@ const config = {
         hostname: "rinorsestore.s3.ap-southeast-1.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "packetbd.s3.ap-southeast-1.amazonaws.com",
+        pathname: "/**",
+      },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
