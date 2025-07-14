@@ -479,8 +479,14 @@ export default function ProductDetails({
 
   // Find the most specific variant (for now, only by color)
   let activeVariant: ProductVariant | undefined = undefined;
-  if (selectedColorHex) {
+  if (selectedColorHex && selectedSize) {
+    activeVariant = variants.find(
+      (v) => v.colorHex === selectedColorHex && v.size === selectedSize,
+    );
+  } else if (selectedColorHex) {
     activeVariant = variants.find((v) => v.colorHex === selectedColorHex);
+  } else if (selectedSize) {
+    activeVariant = variants.find((v) => v.size === selectedSize);
   }
   console.log("Active Variant:", activeVariant);
 
