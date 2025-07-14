@@ -547,6 +547,12 @@ export default function ProductDetails({
     }
   }, [activeTab, shouldScrollToQuestion]);
 
+  // Add this inside the ProductDetails component
+  const [currentUrl, setCurrentUrl] = useState("");
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
+
   return (
     <>
       <div className="product-detail sale mb-5">
@@ -556,33 +562,47 @@ export default function ProductDetails({
             <div className="flex flex-row items-center justify-between gap-3 rounded-full border bg-white px-6 py-3 shadow md:flex-row md:gap-0 md:px-6 md:py-2">
               <div className="flex items-center justify-center gap-2">
                 <span className="font-semibold text-gray-700">Share:</span>
-                {/* Messenger */}
+                {/* Messenger (commented out) */}
                 {/* <a
-                  href={`https://www.facebook.com/dialog/send?link=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  href={`https://www.facebook.com/dialog/send?link=${encodeURIComponent(currentUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#101828] text-white hover:opacity-80"
                   title="Share on Messenger"
+                  aria-disabled={!currentUrl}
+                  tabIndex={!currentUrl ? -1 : 0}
                 >
                   <FaFacebookMessenger size={18} />
                 </a> */}
                 {/* Pinterest */}
                 <a
-                  href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  href={
+                    currentUrl
+                      ? `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(currentUrl)}`
+                      : undefined
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#101828] text-white hover:opacity-80"
                   title="Share on Pinterest"
+                  aria-disabled={!currentUrl}
+                  tabIndex={!currentUrl ? -1 : 0}
                 >
                   <FaPinterestP size={18} />
                 </a>
                 {/* WhatsApp */}
                 <a
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  href={
+                    currentUrl
+                      ? `https://api.whatsapp.com/send?text=${encodeURIComponent(currentUrl)}`
+                      : undefined
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#101828] text-white hover:opacity-80"
                   title="Share on WhatsApp"
+                  aria-disabled={!currentUrl}
+                  tabIndex={!currentUrl ? -1 : 0}
                 >
                   <FaWhatsapp size={18} />
                 </a>
