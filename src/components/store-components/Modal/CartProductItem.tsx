@@ -23,7 +23,11 @@ export default function CartProductItem({ item }: CartProductItemProps) {
     <div className="w-full items-center gap-3">
       <div className="bg-img aspect-square w-full flex-shrink-0 overflow-hidden rounded-lg">
         <Image
-          src={item.coverImage ?? "/images/placeholder-image.png"}
+          src={
+            item.coverImage && item.coverImage.trim() !== ""
+              ? item.coverImage
+              : "/images/placeholder-image.png"
+          }
           width={300}
           height={300}
           alt={item.name}
