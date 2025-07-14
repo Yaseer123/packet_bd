@@ -47,12 +47,12 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                 className="logo cursor-pointer text-center"
               >
                 <Image
-                  src="/images/brand/RINORS.png"
+                  src="/light.png"
                   alt="Rinors"
                   width={120}
                   height={40}
                   priority
-                  className="mx-auto h-auto w-[120px] object-contain"
+                  className="mx-auto h-auto ml-[-10px] w-[200px] object-contain"
                 />
               </div>
             </div>
