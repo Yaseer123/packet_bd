@@ -181,7 +181,7 @@ export default function Menu({
                   width={260}
                   height={80}
                   priority
-                  className="h-auto w-[300px] object-contain lg:ml-[-40px]"
+                  className="h-auto w-[300px] object-contain  ml-[-30px] lg:ml-[-40px]"
                 />
               </Link>
               <div className="form-search relative flex h-[44px] w-2/3 items-center pl-8 max-lg:hidden">
