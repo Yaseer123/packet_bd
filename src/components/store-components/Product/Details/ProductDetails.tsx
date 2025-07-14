@@ -212,13 +212,11 @@ export default function ProductDetails({
   );
 
   const handleAddToCart = () => {
-    // Determine if a variant is selected
-    const isVariantSelected = !!(selectedColorHex && selectedSize);
-    // Build cart item
+    // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     const cartItem = {
-      id: isVariantSelected
-        ? `${productMain.id}-${selectedColorHex}-${selectedSize}`
+      id: selectedColorName
+        ? `${productMain.id}-${selectedColorName}-${selectedSize ?? ""}`
         : productMain.id,
       name: productMain.title,
       price:
@@ -247,6 +245,16 @@ export default function ProductDetails({
       size: selectedSize,
       productId: productMain.id,
     };
+    console.log(
+      "[AddToCart] selectedColorHex:",
+      selectedColorHex,
+      "selectedColorName:",
+      selectedColorName,
+      "selectedSize:",
+      selectedSize,
+      "cartItem:",
+      cartItem,
+    );
     // Add to cart (allow multiple variants)
     if (!cartArray.find((item) => item.id === cartItem.id)) {
       addToCart(cartItem);
@@ -463,7 +471,7 @@ export default function ProductDetails({
         }))
         .filter((v) => v.colorHex && v.colorName)
     : [];
-  console.log(availableColors);
+  // console.log(availableColors);
   const availableSizes = variants
     ? [
         ...new Set(
