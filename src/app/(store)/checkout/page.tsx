@@ -60,6 +60,9 @@ type CartItem = {
   color?: string;
   colorName?: string;
   size?: string;
+  minQuantity: number;
+  maxQuantity?: number;
+  quantityStep: number;
   // add other fields as needed
 };
 
@@ -486,7 +489,7 @@ const Checkout = () => {
         <div
           className={`bg-surface rounded-lg border border-[#ddd] p-5 focus:border-[#ddd]`}
         >
-          <RadioGroup value="delivery" onValueChange={() => {}}>
+          <RadioGroup value="delivery">
             <label className="flex cursor-pointer items-center">
               <RadioGroupItem value="delivery" id="delivery" />
               <span className="cursor-pointer pl-2 text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6">
@@ -791,10 +794,17 @@ const Checkout = () => {
                               onClick={() =>
                                 handleQuantityChange(
                                   product.id,
-                                  product.quantity - 1,
+                                  Math.max(
+                                    (product.quantity ?? 1) -
+                                      (product.quantityStep ?? 1),
+                                    product.minQuantity ?? 1,
+                                  ),
                                 )
                               }
                               className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                              disabled={
+                                product.quantity === (product.minQuantity ?? 1)
+                              }
                             >
                               <Minus size={16} />
                             </button>
@@ -802,12 +812,22 @@ const Checkout = () => {
                               {product.quantity}
                             </span>
                             <button
-                              onClick={() =>
-                                handleQuantityChange(
-                                  product.id,
-                                  product.quantity + 1,
-                                )
-                              }
+                              onClick={() => {
+                                const next =
+                                  (product.quantity ?? 1) +
+                                  (product.quantityStep ?? 1);
+                                if (
+                                  product.maxQuantity !== undefined &&
+                                  next > product.maxQuantity
+                                ) {
+                                  handleQuantityChange(
+                                    product.id,
+                                    product.maxQuantity,
+                                  );
+                                } else {
+                                  handleQuantityChange(product.id, next);
+                                }
+                              }}
                               className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
                             >
                               <Plus size={16} />

@@ -139,7 +139,7 @@ export default function Product({ data }: ProductProps) {
         "discountedPrice" in data
           ? (data.discountedPrice ?? undefined)
           : undefined,
-      quantity: 1,
+      quantity: data.minQuantity ?? 1,
       coverImage:
         "images" in data && Array.isArray(data.images) && data.images[0]
           ? data.images[0]
@@ -147,6 +147,9 @@ export default function Product({ data }: ProductProps) {
       sku: typeof data.sku === "string" ? data.sku : "",
       color: undefined,
       size: undefined,
+      minQuantity: data.minQuantity ?? 1,
+      maxQuantity: data.maxQuantity,
+      quantityStep: data.quantityStep ?? 1,
     };
     addToCart(cartItem);
     openModalCart();

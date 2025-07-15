@@ -244,6 +244,9 @@ export default function ProductDetails({
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      minQuantity: productMain.minQuantity ?? 1,
+      maxQuantity: productMain.maxQuantity,
+      quantityStep: productMain.quantityStep ?? 1,
     };
     console.log(
       "[AddToCart] selectedColorHex:",
