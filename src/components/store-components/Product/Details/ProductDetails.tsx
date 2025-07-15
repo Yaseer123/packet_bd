@@ -869,13 +869,28 @@ export default function ProductDetails({
                 )}
                 <div className="text-title mt-5">Quantity:</div>
                 <div className="choose-quantity mt-3 flex items-center gap-5 gap-y-3 lg:justify-between">
-                  <div className="quantity-block flex w-[120px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[180px] md:p-3">
+                  <div className="quantity-block flex w-[180px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[220px] md:p-3">
                     <Minus
                       size={20}
                       onClick={handleDecreaseQuantity}
                       className={`${productQuantity === minQuantity ? "disabled" : ""} cursor-pointer`}
                     />
-                    <div className="body1 font-semibold">{productQuantity}</div>
+                    <input
+                      type="number"
+                      className="body1 w-16 border-none bg-transparent text-center font-semibold outline-none"
+                      min={minQuantity}
+                      max={maxQuantity}
+                      step={quantityStep}
+                      value={productQuantity}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (isNaN(val)) val = minQuantity;
+                        if (val < minQuantity) val = minQuantity;
+                        if (maxQuantity !== undefined && val > maxQuantity)
+                          val = maxQuantity;
+                        setProductQuantity(val);
+                      }}
+                    />
                     <Plus
                       size={20}
                       onClick={handleIncreaseQuantity}

@@ -100,9 +100,26 @@ const ModalCart = () => {
                                 >
                                   <Minus size={12} />
                                 </button>
-                                <span className="text-sm font-medium">
-                                  {item.quantity}
-                                </span>
+                                <input
+                                  type="number"
+                                  className="w-14 border-none bg-transparent text-center text-sm font-medium outline-none"
+                                  min={item.minQuantity ?? 1}
+                                  max={item.maxQuantity}
+                                  step={item.quantityStep ?? 1}
+                                  value={item.quantity}
+                                  onChange={(e) => {
+                                    let val = Number(e.target.value);
+                                    if (isNaN(val)) val = item.minQuantity ?? 1;
+                                    if (val < (item.minQuantity ?? 1))
+                                      val = item.minQuantity ?? 1;
+                                    if (
+                                      item.maxQuantity !== undefined &&
+                                      val > item.maxQuantity
+                                    )
+                                      val = item.maxQuantity;
+                                    updateCart(item.id, val);
+                                  }}
+                                />
                                 <button
                                   className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500"
                                   onClick={() => {

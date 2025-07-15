@@ -136,9 +136,28 @@ const Cart = () => {
                                 }}
                                 className={`cursor-pointer text-base disabled:pointer-events-none disabled:text-secondary max-md:text-sm ${product.quantity === (product.minQuantity ?? 1) ? "disabled" : ""}`}
                               />
-                              <div className="quantity text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6">
-                                {product.quantity}
-                              </div>
+                              <input
+                                type="number"
+                                className="quantity border-none bg-transparent text-center text-base font-semibold outline-none"
+                                style={{ width: "80px" }}
+                                min={product.minQuantity ?? 1}
+                                max={product.maxQuantity}
+                                step={product.quantityStep ?? 1}
+                                value={product.quantity}
+                                onChange={(e) => {
+                                  let val = Number(e.target.value);
+                                  if (isNaN(val))
+                                    val = product.minQuantity ?? 1;
+                                  if (val < (product.minQuantity ?? 1))
+                                    val = product.minQuantity ?? 1;
+                                  if (
+                                    product.maxQuantity !== undefined &&
+                                    val > product.maxQuantity
+                                  )
+                                    val = product.maxQuantity;
+                                  handleQuantityChange(product.id, val);
+                                }}
+                              />
                               <Plus
                                 onClick={() => {
                                   const next =
