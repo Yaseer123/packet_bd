@@ -39,6 +39,9 @@ export const productSchema = z.object({
   estimatedDeliveryTime: z.number().int().positive().optional(),
   categoryAttributes: categoryAttributeValueSchema.default({}), // Add categoryAttributes field
   variants: z.array(variantSchema).optional(), // Add variants field
+  minQuantity: z.number().min(1).default(1),
+  maxQuantity: z.number().optional(),
+  quantityStep: z.number().min(1).default(1),
 });
 
 export const updateProductSchema = z.object({
@@ -61,6 +64,9 @@ export const updateProductSchema = z.object({
   estimatedDeliveryTime: z.number().int().positive().optional(),
   categoryAttributes: categoryAttributeValueSchema.optional(), // Add categoryAttributes field
   variants: z.array(variantSchema).optional(), // Add variants field
+  minQuantity: z.number().min(1).optional(),
+  maxQuantity: z.number().optional(),
+  quantityStep: z.number().min(1).optional(),
 });
 
 export type Product = z.infer<typeof productSchema>;

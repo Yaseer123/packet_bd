@@ -104,6 +104,9 @@ model Product {
     variants              Json?       // <-- Add this line for color/size/image variations
     sku                   String?   @unique // Add this line for SKU
     allSkus               String[]  // Add this line to store all SKUs (main + variants)
+    minQuantity           Int         @default(1) // Minimum quantity allowed per order
+    maxQuantity           Int?        // Maximum quantity allowed per order (optional)
+    quantityStep          Int         @default(1) // Quantity increment step
 
     reviews   Review[]
     orders    OrderItem[]

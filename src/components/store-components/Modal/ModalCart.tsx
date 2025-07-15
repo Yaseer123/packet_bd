@@ -85,20 +85,56 @@ const ModalCart = () => {
                                 <button
                                   className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500 disabled:opacity-50"
                                   onClick={() =>
-                                    updateCart(item.id, item.quantity - 1)
+                                    updateCart(
+                                      item.id,
+                                      Math.max(
+                                        (item.quantity ?? 1) -
+                                          (item.quantityStep ?? 1),
+                                        item.minQuantity ?? 1,
+                                      ),
+                                    )
                                   }
-                                  disabled={item.quantity === 1}
+                                  disabled={
+                                    item.quantity === (item.minQuantity ?? 1)
+                                  }
                                 >
                                   <Minus size={12} />
                                 </button>
-                                <span className="text-sm font-medium">
-                                  {item.quantity}
-                                </span>
+                                <input
+                                  type="number"
+                                  className="w-14 border-none bg-transparent text-center text-sm font-medium outline-none"
+                                  min={item.minQuantity ?? 1}
+                                  max={item.maxQuantity}
+                                  step={item.quantityStep ?? 1}
+                                  value={item.quantity}
+                                  onChange={(e) => {
+                                    let val = Number(e.target.value);
+                                    if (isNaN(val)) val = item.minQuantity ?? 1;
+                                    if (val < (item.minQuantity ?? 1))
+                                      val = item.minQuantity ?? 1;
+                                    if (
+                                      item.maxQuantity !== undefined &&
+                                      val > item.maxQuantity
+                                    )
+                                      val = item.maxQuantity;
+                                    updateCart(item.id, val);
+                                  }}
+                                />
                                 <button
                                   className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500"
-                                  onClick={() =>
-                                    updateCart(item.id, item.quantity + 1)
-                                  }
+                                  onClick={() => {
+                                    const next =
+                                      (item.quantity ?? 1) +
+                                      (item.quantityStep ?? 1);
+                                    if (
+                                      item.maxQuantity !== undefined &&
+                                      next > item.maxQuantity
+                                    ) {
+                                      updateCart(item.id, item.maxQuantity);
+                                    } else {
+                                      updateCart(item.id, next);
+                                    }
+                                  }}
                                 >
                                   <Plus size={12} />
                                 </button>

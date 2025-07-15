@@ -32,7 +32,10 @@ const ModalQuickView = () => {
     selectedProduct: Product | null;
     closeQuickView: () => void;
   };
-  const [quantity, setQuantity] = useState<number>(1);
+  const minQuantity = selectedProduct?.minQuantity ?? 1;
+  const maxQuantity = selectedProduct?.maxQuantity;
+  const quantityStep = selectedProduct?.quantityStep ?? 1;
+  const [quantity, setQuantity] = useState<number>(minQuantity);
   const { addToCart, updateCart, cartArray } = useCartStore();
   const { openModalCart } = useModalCartStore();
   const { addToWishlist, removeFromWishlist, wishlistArray } =
@@ -50,7 +53,7 @@ const ModalQuickView = () => {
 
   // Reset quantity when selected product changes
   useEffect(() => {
-    setQuantity(1);
+    setQuantity(minQuantity);
   }, [selectedProduct]);
 
   const percentSale =
@@ -61,13 +64,18 @@ const ModalQuickView = () => {
     );
 
   const handleIncreaseQuantity = () => {
-    setQuantity((prev) => prev + 1);
+    setQuantity((prev) => {
+      const next = prev + quantityStep;
+      if (maxQuantity !== undefined && next > maxQuantity) return maxQuantity;
+      return next;
+    });
   };
 
   const handleDecreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
+    setQuantity((prev) => {
+      const next = prev - quantityStep;
+      return next < minQuantity ? minQuantity : next;
+    });
   };
 
   const getVariantField = (field: keyof Variant): string | undefined => {
@@ -122,6 +130,9 @@ const ModalQuickView = () => {
           color,
           size,
           productId: selectedProduct.id,
+          minQuantity: selectedProduct.minQuantity ?? 1,
+          maxQuantity: selectedProduct.maxQuantity,
+          quantityStep: selectedProduct.quantityStep ?? 1,
         });
       }
       // Always update the quantity whether it's a new item or existing one
@@ -161,6 +172,9 @@ const ModalQuickView = () => {
           color,
           size,
           productId: selectedProduct.id,
+          minQuantity: selectedProduct.minQuantity ?? 1,
+          maxQuantity: selectedProduct.maxQuantity,
+          quantityStep: selectedProduct.quantityStep ?? 1,
         });
       }
       updateCart(selectedProduct.id, quantity);

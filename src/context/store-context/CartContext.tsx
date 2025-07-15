@@ -13,6 +13,9 @@ interface CartItem {
   color?: string;
   size?: string;
   productId: string;
+  minQuantity: number;
+  maxQuantity?: number;
+  quantityStep: number;
 }
 
 interface CartState {

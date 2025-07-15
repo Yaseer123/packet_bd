@@ -90,7 +90,10 @@ export default function ProductDetails({
   const [activeTab, setActiveTab] = useState<string | undefined>(
     "specifications",
   );
-  const [productQuantity, setProductQuantity] = useState<number>(1);
+  const minQuantity = productMain.minQuantity ?? 1;
+  const maxQuantity = productMain.maxQuantity;
+  const quantityStep = productMain.quantityStep ?? 1;
+  const [productQuantity, setProductQuantity] = useState<number>(minQuantity);
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
     comment: "",
@@ -191,14 +194,18 @@ export default function ProductDetails({
   };
 
   const handleIncreaseQuantity = () => {
-    setProductQuantity(productQuantity + 1);
+    setProductQuantity((prev) => {
+      const next = prev + quantityStep;
+      if (maxQuantity !== undefined && next > maxQuantity) return maxQuantity;
+      return next;
+    });
   };
 
   const handleDecreaseQuantity = () => {
-    if (productQuantity > 1) {
-      setProductQuantity(productQuantity - 1);
-      // updateCart(productMain.id, productMain.quantityPurchase - 1);
-    }
+    setProductQuantity((prev) => {
+      const next = prev - quantityStep;
+      return next < minQuantity ? minQuantity : next;
+    });
   };
 
   // Fetch category hierarchy for primary category name
@@ -215,9 +222,7 @@ export default function ProductDetails({
     // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     const cartItem = {
-      id: selectedColorName
-        ? `${productMain.id}-${selectedColorName}-${selectedSize ?? ""}`
-        : productMain.id,
+      id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
       price:
         typeof activeVariant?.price === "number"
@@ -234,16 +239,14 @@ export default function ProductDetails({
         activeVariant?.images?.[0] ??
         productMain.images?.[0] ??
         "/images/product/1000x1000.png",
-      sku: generateSKU({
-        categoryName: primaryCategoryName,
-        productId: productMain.id,
-        color: selectedColorName,
-        size: selectedSize,
-      }),
+      sku: displaySKU,
       color: selectedColorHex, // for swatch
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      minQuantity: productMain.minQuantity ?? 1,
+      maxQuantity: productMain.maxQuantity,
+      quantityStep: productMain.quantityStep ?? 1,
     };
     console.log(
       "[AddToCart] selectedColorHex:",
@@ -866,13 +869,28 @@ export default function ProductDetails({
                 )}
                 <div className="text-title mt-5">Quantity:</div>
                 <div className="choose-quantity mt-3 flex items-center gap-5 gap-y-3 lg:justify-between">
-                  <div className="quantity-block flex w-[120px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[180px] md:p-3">
+                  <div className="quantity-block flex w-[180px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[220px] md:p-3">
                     <Minus
                       size={20}
                       onClick={handleDecreaseQuantity}
-                      className={`${productQuantity === 1 ? "disabled" : ""} cursor-pointer`}
+                      className={`${productQuantity === minQuantity ? "disabled" : ""} cursor-pointer`}
                     />
-                    <div className="body1 font-semibold">{productQuantity}</div>
+                    <input
+                      type="number"
+                      className="body1 w-16 border-none bg-transparent text-center font-semibold outline-none"
+                      min={minQuantity}
+                      max={maxQuantity}
+                      step={quantityStep}
+                      value={productQuantity}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (isNaN(val)) val = minQuantity;
+                        if (val < minQuantity) val = minQuantity;
+                        if (maxQuantity !== undefined && val > maxQuantity)
+                          val = maxQuantity;
+                        setProductQuantity(val);
+                      }}
+                    />
                     <Plus
                       size={20}
                       onClick={handleIncreaseQuantity}

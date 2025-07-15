@@ -562,6 +562,9 @@ export const productRouter = createTRPCRouter({
         categoryAttributes: categoryAttributes || {}, // Store category-specific attributes
         stockStatus, // <-- always set
         variants: input.variants ?? undefined, // Store variants if present
+        minQuantity: input.minQuantity ?? 1,
+        maxQuantity: input.maxQuantity,
+        quantityStep: input.quantityStep ?? 1,
       },
     });
 
@@ -752,6 +755,9 @@ export const productRouter = createTRPCRouter({
           variants: updatedVariantsFromInput ?? undefined, // Update variants with SKUs
           sku: newSKU ?? undefined, // Always set the correct SKU, ensure type safety
           allSkus,
+          minQuantity: input.minQuantity ?? 1,
+          maxQuantity: input.maxQuantity,
+          quantityStep: input.quantityStep ?? 1,
         },
       });
       return product;

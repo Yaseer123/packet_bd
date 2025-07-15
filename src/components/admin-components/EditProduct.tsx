@@ -511,6 +511,11 @@ export default function EditProductForm({ productId }: { productId: string }) {
     product?.defaultColorHex ?? "#ffffff",
   );
   const [defaultSize, setDefaultSize] = useState(product?.defaultSize ?? "");
+  const [minQuantity, setMinQuantity] = useState(product?.minQuantity ?? 1);
+  const [maxQuantity, setMaxQuantity] = useState<number | undefined>(
+    product?.maxQuantity ?? undefined,
+  );
+  const [quantityStep, setQuantityStep] = useState(product?.quantityStep ?? 1);
 
   // Variants state
   const normalizeVariants = (variants: unknown): Variant[] => {
@@ -668,6 +673,9 @@ export default function EditProductForm({ productId }: { productId: string }) {
               }),
             }))
           : undefined,
+      minQuantity,
+      maxQuantity,
+      quantityStep,
     });
   };
 
@@ -776,6 +784,40 @@ export default function EditProductForm({ productId }: { productId: string }) {
           {errors.stock && (
             <p className="mt-1 text-sm text-red-500">{errors.stock}</p>
           )}
+        </div>
+        <div>
+          <Label>Min Quantity</Label>
+          <Input
+            type="number"
+            placeholder="Min Quantity"
+            value={minQuantity}
+            min={1}
+            onChange={(e) => setMinQuantity(Number(e.target.value))}
+          />
+        </div>
+        <div>
+          <Label>Max Quantity</Label>
+          <Input
+            type="number"
+            placeholder="Max Quantity (optional)"
+            value={maxQuantity ?? ""}
+            min={1}
+            onChange={(e) =>
+              setMaxQuantity(
+                e.target.value ? Number(e.target.value) : undefined,
+              )
+            }
+          />
+        </div>
+        <div>
+          <Label>Quantity Step</Label>
+          <Input
+            type="number"
+            placeholder="Quantity Step"
+            value={quantityStep}
+            min={1}
+            onChange={(e) => setQuantityStep(Number(e.target.value))}
+          />
         </div>
         <div>
           <Label>Brand</Label>
