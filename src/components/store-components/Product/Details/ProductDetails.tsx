@@ -90,7 +90,10 @@ export default function ProductDetails({
   const [activeTab, setActiveTab] = useState<string | undefined>(
     "specifications",
   );
-  const [productQuantity, setProductQuantity] = useState<number>(1);
+  const minQuantity = productMain.minQuantity ?? 1;
+  const maxQuantity = productMain.maxQuantity;
+  const quantityStep = productMain.quantityStep ?? 1;
+  const [productQuantity, setProductQuantity] = useState<number>(minQuantity);
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
     comment: "",
@@ -191,14 +194,18 @@ export default function ProductDetails({
   };
 
   const handleIncreaseQuantity = () => {
-    setProductQuantity(productQuantity + 1);
+    setProductQuantity((prev) => {
+      const next = prev + quantityStep;
+      if (maxQuantity !== undefined && next > maxQuantity) return maxQuantity;
+      return next;
+    });
   };
 
   const handleDecreaseQuantity = () => {
-    if (productQuantity > 1) {
-      setProductQuantity(productQuantity - 1);
-      // updateCart(productMain.id, productMain.quantityPurchase - 1);
-    }
+    setProductQuantity((prev) => {
+      const next = prev - quantityStep;
+      return next < minQuantity ? minQuantity : next;
+    });
   };
 
   // Fetch category hierarchy for primary category name
@@ -863,7 +870,7 @@ export default function ProductDetails({
                     <Minus
                       size={20}
                       onClick={handleDecreaseQuantity}
-                      className={`${productQuantity === 1 ? "disabled" : ""} cursor-pointer`}
+                      className={`${productQuantity === minQuantity ? "disabled" : ""} cursor-pointer`}
                     />
                     <div className="body1 font-semibold">{productQuantity}</div>
                     <Plus

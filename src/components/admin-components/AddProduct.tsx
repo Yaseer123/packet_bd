@@ -37,11 +37,11 @@ import { type StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  type Key,
   useEffect,
   useRef,
   useState,
   type Dispatch,
+  type Key,
   type SetStateAction,
 } from "react";
 import { ColorPicker, useColor, type IColor } from "react-color-palette";
@@ -694,6 +694,9 @@ export default function AddProductForm(_unused?: unknown) {
               size: typeof v.size === "string" ? v.size : "",
             }))
           : undefined,
+      minQuantity,
+      maxQuantity,
+      quantityStep,
     });
     // Do not clear the form here! Only clear on success.
   };
@@ -704,6 +707,10 @@ export default function AddProductForm(_unused?: unknown) {
       categoryId: validateField("categoryId", categoryId),
     }));
   }, [categoryId]);
+
+  const [minQuantity, setMinQuantity] = useState(1);
+  const [maxQuantity, setMaxQuantity] = useState<number | undefined>(undefined);
+  const [quantityStep, setQuantityStep] = useState(1);
 
   return (
     <RichEditor
@@ -1083,6 +1090,41 @@ export default function AddProductForm(_unused?: unknown) {
             value={estimatedDeliveryTime ?? ""}
             onChange={handleEstimatedDeliveryTimeChange}
             style={{ width: "100%" }}
+          />
+        </div>
+        {/* Min Quantity */}
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">Min Quantity</Label>
+          <Input
+            type="number"
+            placeholder="Min Quantity"
+            value={minQuantity}
+            min={1}
+            onChange={(e) => setMinQuantity(Number(e.target.value))}
+          />
+        </div>
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">Max Quantity</Label>
+          <Input
+            type="number"
+            placeholder="Max Quantity (optional)"
+            value={maxQuantity ?? ""}
+            min={1}
+            onChange={(e) =>
+              setMaxQuantity(
+                e.target.value ? Number(e.target.value) : undefined,
+              )
+            }
+          />
+        </div>
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">Quantity Step</Label>
+          <Input
+            type="number"
+            placeholder="Quantity Step"
+            value={quantityStep}
+            min={1}
+            onChange={(e) => setQuantityStep(Number(e.target.value))}
           />
         </div>
         {/* Images */}
