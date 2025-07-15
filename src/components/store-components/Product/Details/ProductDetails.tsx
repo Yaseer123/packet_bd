@@ -215,9 +215,7 @@ export default function ProductDetails({
     // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     const cartItem = {
-      id: selectedColorName
-        ? `${productMain.id}-${selectedColorName}-${selectedSize ?? ""}`
-        : productMain.id,
+      id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
       price:
         typeof activeVariant?.price === "number"
@@ -234,12 +232,7 @@ export default function ProductDetails({
         activeVariant?.images?.[0] ??
         productMain.images?.[0] ??
         "/images/product/1000x1000.png",
-      sku: generateSKU({
-        categoryName: primaryCategoryName,
-        productId: productMain.id,
-        color: selectedColorName,
-        size: selectedSize,
-      }),
+      sku: displaySKU,
       color: selectedColorHex, // for swatch
       colorName: selectedColorName, // for display
       size: selectedSize,
