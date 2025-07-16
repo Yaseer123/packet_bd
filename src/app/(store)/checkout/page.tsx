@@ -239,6 +239,38 @@ const Checkout = () => {
     }
   }, [deliveryMethod, shippingArea]);
 
+  // Per-item state for input value and error
+  const [inputStates, setInputStates] = useState<
+    Record<string, { value: string; error: string }>
+  >({});
+
+  // Sync input state with checkoutItems (initialize on mount or checkoutItems change)
+  useEffect(() => {
+    const newStates: Record<string, { value: string; error: string }> = {};
+    checkoutItems.forEach((item) => {
+      newStates[item.id] = {
+        value: String(item.quantity),
+        error: "",
+      };
+    });
+    setInputStates(newStates);
+  }, [checkoutItems]);
+
+  // Validation function
+  const validateQuantity = (val: string, min: number, max?: number): string => {
+    if (val === "" || isNaN(Number(val))) {
+      return "Please enter a quantity.";
+    }
+    const num = Number(val);
+    if (num < min) {
+      return `Minimum quantity is ${min}.`;
+    }
+    if (typeof max === "number" && num > max) {
+      return `Maximum quantity is ${max}.`;
+    }
+    return "";
+  };
+
   const breadcrumbItems = [
     {
       label: <HomeIcon size={16} />,
@@ -745,137 +777,162 @@ const Checkout = () => {
                       No product in cart
                     </p>
                   ) : (
-                    checkoutItems.map((product) => (
-                      <div
-                        key={product.id}
-                        className="mt-5 flex w-full items-start gap-4 border-b border-[#ddd] bg-white p-3 pb-5 focus:border-[#ddd]"
-                      >
-                        <div className="bg-img aspect-square w-[100px] flex-shrink-0 overflow-hidden rounded-lg">
-                          <Image
-                            src={
-                              product.coverImage ??
-                              "/images/product/1000x1000.png"
-                            }
-                            width={500}
-                            height={500}
-                            alt="img"
-                            className="h-full w-full"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <div className="flex w-full items-start justify-between gap-4">
-                            <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
-                              {product.name}
+                    checkoutItems.map((product) => {
+                      const min = product.minQuantity ?? 1;
+                      const max = product.maxQuantity;
+                      const step = product.quantityStep ?? 1;
+                      const inputState = inputStates[product.id] ?? {
+                        value: String(product.quantity),
+                        error: "",
+                      };
+                      return (
+                        <div
+                          key={product.id}
+                          className="mt-5 flex w-full items-start gap-4 border-b border-[#ddd] bg-white p-3 pb-5 focus:border-[#ddd]"
+                        >
+                          <div className="bg-img aspect-square w-[100px] flex-shrink-0 overflow-hidden rounded-lg">
+                            <Image
+                              src={
+                                product.coverImage ??
+                                "/images/product/1000x1000.png"
+                              }
+                              width={500}
+                              height={500}
+                              alt="img"
+                              className="h-full w-full"
+                            />
+                          </div>
+                          <div className="w-full">
+                            <div className="flex w-full items-start justify-between gap-4">
+                              <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
+                                {product.name}
+                              </div>
+                              <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
+                                {formatPrice(
+                                  product.discountedPrice ?? product.price,
+                                )}
+                              </div>
                             </div>
-                            <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
+
+                            {(product.sku ?? product.color ?? product.size) && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                {product.sku && <span>SKU: {product.sku}</span>}
+                                {(product.colorName ?? product.color) && (
+                                  <span className="ml-2">
+                                    Color: {product.colorName ?? product.color}
+                                  </span>
+                                )}
+                                {product.size && (
+                                  <span className="ml-2">
+                                    Size: {product.size}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="mt-2 text-base font-medium capitalize leading-6 md:hidden md:text-base md:leading-5">
                               {formatPrice(
                                 product.discountedPrice ?? product.price,
                               )}
                             </div>
-                          </div>
 
-                          {(product.sku ?? product.color ?? product.size) && (
-                            <div className="mt-1 text-xs text-gray-500">
-                              {product.sku && <span>SKU: {product.sku}</span>}
-                              {(product.colorName ?? product.color) && (
-                                <span className="ml-2">
-                                  Color: {product.colorName ?? product.color}
-                                </span>
-                              )}
-                              {product.size && (
-                                <span className="ml-2">
-                                  Size: {product.size}
-                                </span>
-                              )}
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                                onClick={() => {
+                                  const current =
+                                    Number(inputState.value) || min;
+                                  const next = Math.max(current - step, min);
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: String(next),
+                                      error: "",
+                                    },
+                                  }));
+                                  handleQuantityChange(product.id, next);
+                                }}
+                                disabled={Number(inputState.value) === min}
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <input
+                                type="text"
+                                className="w-14 border-none bg-transparent text-center text-base font-medium outline-none"
+                                min={min}
+                                max={max}
+                                step={step}
+                                value={inputState.value}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const error = validateQuantity(val, min, max);
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: val,
+                                      error,
+                                    },
+                                  }));
+                                  if (!error) {
+                                    handleQuantityChange(
+                                      product.id,
+                                      Number(val),
+                                    );
+                                  }
+                                }}
+                                onBlur={() => {
+                                  const val = inputState.value;
+                                  const error = validateQuantity(val, min, max);
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: val,
+                                      error,
+                                    },
+                                  }));
+                                  if (!error) {
+                                    handleQuantityChange(
+                                      product.id,
+                                      Number(val),
+                                    );
+                                  }
+                                }}
+                              />
+                              <button
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                                onClick={() => {
+                                  const current =
+                                    Number(inputState.value) || min;
+                                  const next =
+                                    max !== undefined
+                                      ? Math.min(current + step, max)
+                                      : current + step;
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: String(next),
+                                      error: "",
+                                    },
+                                  }));
+                                  handleQuantityChange(product.id, next);
+                                }}
+                                disabled={
+                                  max !== undefined &&
+                                  Number(inputState.value) === max
+                                }
+                              >
+                                <Plus size={16} />
+                              </button>
                             </div>
-                          )}
-
-                          <div className="mt-2 text-base font-medium capitalize leading-6 md:hidden md:text-base md:leading-5">
-                            {formatPrice(
-                              product.discountedPrice ?? product.price,
+                            {inputState.error && (
+                              <div className="mt-1 text-xs text-red-500">
+                                {inputState.error}
+                              </div>
                             )}
                           </div>
-
-                          <div className="mt-2 flex items-center gap-2">
-                            <button
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-                              onClick={() =>
-                                handleQuantityChange(
-                                  product.id,
-                                  Math.max(
-                                    (product.quantity ?? 1) -
-                                      (product.quantityStep ?? 1),
-                                    product.minQuantity ?? 1,
-                                  ),
-                                )
-                              }
-                              disabled={
-                                product.quantity === (product.minQuantity ?? 1)
-                              }
-                            >
-                              <Minus size={16} />
-                            </button>
-                            <input
-                              type="text"
-                              className="w-14 border-none bg-transparent text-center text-base font-medium outline-none"
-                              min={product.minQuantity ?? 1}
-                              max={product.maxQuantity}
-                              step={product.quantityStep ?? 1}
-                              value={product.quantity}
-                              onChange={(e) => {
-                                let val = Number(e.target.value);
-                                if (isNaN(val)) val = product.minQuantity ?? 1;
-                                if (val < (product.minQuantity ?? 1))
-                                  val = product.minQuantity ?? 1;
-                                if (
-                                  product.maxQuantity !== undefined &&
-                                  val > product.maxQuantity
-                                )
-                                  val = product.maxQuantity;
-                                handleQuantityChange(product.id, val);
-                              }}
-                              onBlur={(e) => {
-                                let val = Number(e.target.value);
-                                if (isNaN(val)) val = product.minQuantity ?? 1;
-                                if (val < (product.minQuantity ?? 1))
-                                  val = product.minQuantity ?? 1;
-                                if (
-                                  product.maxQuantity !== undefined &&
-                                  val > product.maxQuantity
-                                )
-                                  val = product.maxQuantity;
-                                handleQuantityChange(product.id, val);
-                              }}
-                            />
-                            <button
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-                              onClick={() => {
-                                const next =
-                                  (product.quantity ?? 1) +
-                                  (product.quantityStep ?? 1);
-                                if (
-                                  product.maxQuantity !== undefined &&
-                                  next > product.maxQuantity
-                                ) {
-                                  handleQuantityChange(
-                                    product.id,
-                                    product.maxQuantity,
-                                  );
-                                } else {
-                                  handleQuantityChange(product.id, next);
-                                }
-                              }}
-                              disabled={
-                                product.maxQuantity !== undefined &&
-                                product.quantity === product.maxQuantity
-                              }
-                            >
-                              <Plus size={16} />
-                            </button>
-                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
                 <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
