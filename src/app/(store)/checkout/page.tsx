@@ -501,7 +501,10 @@ const Checkout = () => {
       >
         <label className="flex cursor-pointer items-center gap-2">
           <RadioGroupItem value="home" id="delivery-home" />
-          <span>Home Delivery - {shippingCost}৳</span>
+          <span>
+            Home Delivery - {shippingCost}৳ (
+            {shippingArea === "inside" ? "Inside Dhaka" : "Outside Dhaka"})
+          </span>
         </label>
         <label className="flex cursor-pointer items-center gap-2">
           <RadioGroupItem value="pickup" id="delivery-pickup" />
