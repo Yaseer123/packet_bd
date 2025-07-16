@@ -507,10 +507,10 @@ const Checkout = () => {
           <RadioGroupItem value="pickup" id="delivery-pickup" />
           <span>Store Pickup - 0৳</span>
         </label>
-        <label className="flex cursor-pointer items-center gap-2">
+        {/* <label className="flex cursor-pointer items-center gap-2">
           <RadioGroupItem value="express" id="delivery-express" />
           <span>Request Express - Charge Applicable</span>
-        </label>
+        </label> */}
       </RadioGroup>
     </div>
   );
