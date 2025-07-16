@@ -921,7 +921,7 @@ export default function ProductDetails({
                       className={`${productQuantity === minQuantity ? "disabled" : ""} cursor-pointer`}
                     />
                     <input
-                      type="number"
+                      type="text"
                       className="quantity-input body1 border-none bg-transparent text-center font-semibold outline-none"
                       min={minQuantity}
                       max={maxQuantity ?? undefined}
