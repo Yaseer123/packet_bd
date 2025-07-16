@@ -122,14 +122,22 @@ const Checkout = () => {
   }, [checkoutItems]);
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    // Find the product to get min/max/step
+    const product = checkoutItems.find((item) => item.id === itemId);
+    if (!product) return;
+
+    const min = product.minQuantity ?? 1;
+    const max = product.maxQuantity;
+    let quantity = Math.max(newQuantity, min);
+    if (max !== undefined) quantity = Math.min(quantity, max);
+
     if (buyNowProduct && buyNowProduct.id === itemId) {
-      // Update buyNowProduct quantity directly
-      if (newQuantity > 0) {
-        setBuyNowProduct({ ...buyNowProduct, quantity: newQuantity });
+      if (quantity > 0) {
+        setBuyNowProduct({ ...buyNowProduct, quantity });
         if (typeof window !== "undefined") {
           window.sessionStorage.setItem(
             "buyNowProduct",
-            JSON.stringify({ ...buyNowProduct, quantity: newQuantity }),
+            JSON.stringify({ ...buyNowProduct, quantity }),
           );
         }
       } else {
@@ -139,9 +147,8 @@ const Checkout = () => {
         }
       }
     } else {
-      // Fallback to cart logic
-      if (newQuantity > 0) {
-        updateCart(itemId, newQuantity);
+      if (quantity > 0) {
+        updateCart(itemId, quantity);
       } else {
         removeFromCart(itemId);
       }
@@ -789,8 +796,9 @@ const Checkout = () => {
                             )}
                           </div>
 
-                          <div className="mt-2 flex items-center">
+                          <div className="mt-2 flex items-center gap-2">
                             <button
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
                               onClick={() =>
                                 handleQuantityChange(
                                   product.id,
@@ -801,17 +809,46 @@ const Checkout = () => {
                                   ),
                                 )
                               }
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
                               disabled={
                                 product.quantity === (product.minQuantity ?? 1)
                               }
                             >
                               <Minus size={16} />
                             </button>
-                            <span className="quantity px-3 text-base font-medium">
-                              {product.quantity}
-                            </span>
+                            <input
+                              type="text"
+                              className="w-14 border-none bg-transparent text-center text-base font-medium outline-none"
+                              min={product.minQuantity ?? 1}
+                              max={product.maxQuantity}
+                              step={product.quantityStep ?? 1}
+                              value={product.quantity}
+                              onChange={(e) => {
+                                let val = Number(e.target.value);
+                                if (isNaN(val)) val = product.minQuantity ?? 1;
+                                if (val < (product.minQuantity ?? 1))
+                                  val = product.minQuantity ?? 1;
+                                if (
+                                  product.maxQuantity !== undefined &&
+                                  val > product.maxQuantity
+                                )
+                                  val = product.maxQuantity;
+                                handleQuantityChange(product.id, val);
+                              }}
+                              onBlur={(e) => {
+                                let val = Number(e.target.value);
+                                if (isNaN(val)) val = product.minQuantity ?? 1;
+                                if (val < (product.minQuantity ?? 1))
+                                  val = product.minQuantity ?? 1;
+                                if (
+                                  product.maxQuantity !== undefined &&
+                                  val > product.maxQuantity
+                                )
+                                  val = product.maxQuantity;
+                                handleQuantityChange(product.id, val);
+                              }}
+                            />
                             <button
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
                               onClick={() => {
                                 const next =
                                   (product.quantity ?? 1) +
@@ -828,7 +865,10 @@ const Checkout = () => {
                                   handleQuantityChange(product.id, next);
                                 }
                               }}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                              disabled={
+                                product.maxQuantity !== undefined &&
+                                product.quantity === product.maxQuantity
+                              }
                             >
                               <Plus size={16} />
                             </button>

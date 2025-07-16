@@ -433,6 +433,9 @@ export default function ProductDetails({
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      minQuantity: productMain.minQuantity ?? 1,
+      maxQuantity: productMain.maxQuantity ?? undefined,
+      quantityStep: productMain.quantityStep ?? 1,
     };
     // Store in sessionStorage for checkout page
     if (typeof window !== "undefined") {
