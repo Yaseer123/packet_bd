@@ -71,7 +71,7 @@ export interface ProductType {
   categoryAttributes?: JsonValue;
   position?: number;
   minQuantity: number;
-  maxQuantity?: number;
+  maxQuantity: number | null;
   quantityStep: number;
 }
 
@@ -82,6 +82,6 @@ export type ProductWithCategory = Product & {
   defaultSize?: string | null;
   variants?: Variant[] | null;
   minQuantity: number;
-  maxQuantity?: number;
+  maxQuantity: number | null;
   quantityStep: number;
 };

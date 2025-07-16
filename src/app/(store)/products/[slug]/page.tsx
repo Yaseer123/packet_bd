@@ -72,9 +72,13 @@ const ProductPage = async ({
   } else {
     variants = null;
   }
+  const productDataTyped = productData as ProductWithCategory;
   const fixedProductData: ProductWithCategory = {
-    ...productData,
+    ...productDataTyped,
     variants: variants as unknown as ProductWithCategory["variants"],
+    maxQuantity: productDataTyped.maxQuantity ?? null,
+    minQuantity: productDataTyped.minQuantity,
+    quantityStep: productDataTyped.quantityStep,
   };
 
   // Prepare JSON-LD data

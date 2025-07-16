@@ -148,7 +148,7 @@ export default function Product({ data }: ProductProps) {
       color: undefined,
       size: undefined,
       minQuantity: data.minQuantity ?? 1,
-      maxQuantity: data.maxQuantity,
+      maxQuantity: data.maxQuantity ?? undefined,
       quantityStep: data.quantityStep ?? 1,
     };
     addToCart(cartItem);
@@ -270,6 +270,8 @@ export default function Product({ data }: ProductProps) {
           ? ((data as { variants?: JsonValue }).variants ?? null)
           : null,
       sku: typeof data.sku === "string" ? data.sku : "",
+      maxQuantity:
+        typeof data.maxQuantity === "number" ? data.maxQuantity : null,
     };
     openQuickView(productForQuickView);
   };
