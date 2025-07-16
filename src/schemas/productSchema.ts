@@ -40,7 +40,7 @@ export const productSchema = z.object({
   categoryAttributes: categoryAttributeValueSchema.default({}), // Add categoryAttributes field
   variants: z.array(variantSchema).optional(), // Add variants field
   minQuantity: z.number().min(1).default(1),
-  maxQuantity: z.number().optional(),
+  maxQuantity: z.number().nullable().optional(),
   quantityStep: z.number().min(1).default(1),
 });
 
@@ -65,7 +65,7 @@ export const updateProductSchema = z.object({
   categoryAttributes: categoryAttributeValueSchema.optional(), // Add categoryAttributes field
   variants: z.array(variantSchema).optional(), // Add variants field
   minQuantity: z.number().min(1).optional(),
-  maxQuantity: z.number().optional(),
+  maxQuantity: z.number().nullable().optional(),
   quantityStep: z.number().min(1).optional(),
 });
 

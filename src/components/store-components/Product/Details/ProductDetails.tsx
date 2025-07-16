@@ -196,7 +196,7 @@ export default function ProductDetails({
   const handleIncreaseQuantity = () => {
     setProductQuantity((prev) => {
       const next = prev + quantityStep;
-      if (maxQuantity !== undefined && next > maxQuantity) return maxQuantity;
+      if (maxQuantity !== null && next > maxQuantity) return maxQuantity;
       return next;
     });
   };
@@ -245,7 +245,7 @@ export default function ProductDetails({
       size: selectedSize,
       productId: productMain.id,
       minQuantity: productMain.minQuantity ?? 1,
-      maxQuantity: productMain.maxQuantity,
+      maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
     };
     console.log(
@@ -879,14 +879,14 @@ export default function ProductDetails({
                       type="number"
                       className="body1 w-16 border-none bg-transparent text-center font-semibold outline-none"
                       min={minQuantity}
-                      max={maxQuantity}
+                      max={maxQuantity ?? undefined}
                       step={quantityStep}
                       value={productQuantity}
                       onChange={(e) => {
                         let val = Number(e.target.value);
                         if (isNaN(val)) val = minQuantity;
                         if (val < minQuantity) val = minQuantity;
-                        if (maxQuantity !== undefined && val > maxQuantity)
+                        if (maxQuantity !== null && val > maxQuantity)
                           val = maxQuantity;
                         setProductQuantity(val);
                       }}
