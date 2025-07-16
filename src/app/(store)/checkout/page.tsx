@@ -228,16 +228,18 @@ const Checkout = () => {
   const [shippingArea, setShippingArea] = useState<"inside" | "outside">(
     "inside",
   );
-  const [shippingCost, setShippingCost] = useState<number>(80);
+  // Calculate home delivery cost based on area
+  const homeDeliveryCost = shippingArea === "inside" ? 80 : 120;
+  const [shippingCost, setShippingCost] = useState<number>(homeDeliveryCost);
 
   // Update shipping cost based on delivery method and shipping area
   useEffect(() => {
     if (deliveryMethod === "home") {
-      setShippingCost(shippingArea === "inside" ? 80 : 120);
-    } else if (deliveryMethod === "pickup" || deliveryMethod === "express") {
+      setShippingCost(homeDeliveryCost);
+    } else {
       setShippingCost(0);
     }
-  }, [deliveryMethod, shippingArea]);
+  }, [deliveryMethod, shippingArea, homeDeliveryCost]);
 
   // Per-item state for input value and error
   const [inputStates, setInputStates] = useState<
@@ -502,7 +504,7 @@ const Checkout = () => {
         <label className="flex cursor-pointer items-center gap-2">
           <RadioGroupItem value="home" id="delivery-home" />
           <span>
-            Home Delivery - {shippingCost}৳ (
+            Home Delivery - {homeDeliveryCost}৳ (
             {shippingArea === "inside" ? "Inside Dhaka" : "Outside Dhaka"})
           </span>
         </label>
