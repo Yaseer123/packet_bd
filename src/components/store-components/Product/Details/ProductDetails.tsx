@@ -978,10 +978,10 @@ export default function ProductDetails({
                 <div className="mt-5 flex items-center gap-8 border-b border-[#ddd] pb-6 focus:border-[#ddd] lg:gap-20"></div>
                 <div className="more-infor mt-6">
                   <div className="flex flex-wrap items-center gap-4">
-                    <Link href={"/faqs"} className="flex items-center gap-1">
+                    {/* <Link href={"/faqs"} className="flex items-center gap-1">
                       <ArrowClockwise className="body1" />
                       <div className="text-title">Delivery & Return</div>
-                    </Link>
+                    </Link> */}
                     <button
                       type="button"
                       className="flex items-center gap-1"
@@ -1018,7 +1018,7 @@ export default function ProductDetails({
                 </div>
               </div>
 
-              <div className="get-it mt-6 flex flex-col gap-4 sm:flex-row">
+              {/* <div className="get-it mt-6 flex flex-col gap-4 sm:flex-row">
                 <div className="item mt-4 flex flex-col items-start gap-2 bg-white px-3 py-1 sm:flex-row sm:items-center sm:gap-3">
                   <div>
                     <div className="icon-delivery-truck text-3xl sm:text-4xl"></div>
@@ -1050,7 +1050,7 @@ export default function ProductDetails({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
