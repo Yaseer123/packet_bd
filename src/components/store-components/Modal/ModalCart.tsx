@@ -101,7 +101,7 @@ const ModalCart = () => {
                                   <Minus size={12} />
                                 </button>
                                 <input
-                                  type="number"
+                                  type="text"
                                   className="w-14 border-none bg-transparent text-center text-sm font-medium outline-none"
                                   min={item.minQuantity ?? 1}
                                   max={item.maxQuantity}
