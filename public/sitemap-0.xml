@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://packetbd.com/auth/verify-required</loc><lastmod>2025-07-13T17:40:34.638Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://packetbd.com/verify-email</loc><lastmod>2025-07-13T17:40:34.638Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/verify-email</loc><lastmod>2025-07-16T20:03:08.421Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/auth/verify-required</loc><lastmod>2025-07-16T20:03:08.422Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://packetbd.com/about</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 <url><loc>https://packetbd.com/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 <url><loc>https://packetbd.com/blog/[slug]</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
@@ -21,4 +21,31 @@
 <url><loc>https://packetbd.com/wishlist</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 <url><loc>https://packetbd.com/products/test-product</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://packetbd.com/products/poly-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/coffee-cup-disposable</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/black-readymade-courier-poly-bag-customized-packaging</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/alluminium-sachet</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/readymade-die-cut-box</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/aluminium-zip-lock-sachet</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/center-seal-aluminium-sachet</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/kraft-paper-full-tap-zip-lock-pouch-with-window</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/transparent-readymade-courier-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/milky-white-sachet</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/kraft-paper-without-window-full-tap-zip-lock-pouch</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/die-cut-poly-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/transparent-scotch-tape</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/white-readymade-courier-bag-customized-packaging</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/stretch-wrapping-poly</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/aluminium-pouch</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/golden-stand-up-zip-lock-pouch-with-window</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/one-side-transparent-pouch</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/white-readymade-courier-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/silver-readymade-courier-bag-customized-packegign</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/center-seal-transparent-sachet</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/milk-poly</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/readymade-parcelbox</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/silver-readymade-courier-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/black-readymade-courier-poly-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/bubble-wrap</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/readymade-shoebox</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://packetbd.com/products/readymade-non-woven-bag</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>

@@ -93,7 +93,10 @@ export default function ProductDetails({
   const minQuantity = productMain.minQuantity ?? 1;
   const maxQuantity = productMain.maxQuantity;
   const quantityStep = productMain.quantityStep ?? 1;
-  const [productQuantity, setProductQuantity] = useState<number>(minQuantity);
+  const [productQuantity, setProductQuantity] = useState<number | "">(
+    minQuantity,
+  );
+  const [quantityError, setQuantityError] = useState<string>("");
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
     comment: "",
@@ -194,18 +197,54 @@ export default function ProductDetails({
   };
 
   const handleIncreaseQuantity = () => {
-    setProductQuantity((prev) => {
-      const next = prev + quantityStep;
-      if (maxQuantity !== null && next > maxQuantity) return maxQuantity;
-      return next;
-    });
+    if (typeof productQuantity !== "number") return;
+    const next = productQuantity + quantityStep;
+    if (maxQuantity !== null && maxQuantity !== undefined && next > maxQuantity)
+      return setProductQuantity(maxQuantity);
+    setProductQuantity(next);
   };
 
   const handleDecreaseQuantity = () => {
-    setProductQuantity((prev) => {
-      const next = prev - quantityStep;
-      return next < minQuantity ? minQuantity : next;
-    });
+    if (typeof productQuantity !== "number") return;
+    const next = productQuantity - quantityStep;
+    return next < minQuantity
+      ? setProductQuantity(minQuantity)
+      : setProductQuantity(next);
+  };
+
+  const validateQuantity = (qty: number | "") => {
+    if (qty === "" || isNaN(Number(qty))) {
+      return "Please enter a quantity.";
+    }
+    if (typeof qty === "number") {
+      if (qty < minQuantity) {
+        return `Minimum quantity is ${minQuantity}.`;
+      }
+      if (
+        maxQuantity !== undefined &&
+        maxQuantity !== null &&
+        qty > maxQuantity
+      ) {
+        return `Maximum quantity is ${maxQuantity}.`;
+      }
+    }
+    return "";
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === "") {
+      setProductQuantity("");
+      setQuantityError("Please enter a quantity.");
+      return;
+    }
+    const num = Number(val);
+    setProductQuantity(num);
+    setQuantityError(validateQuantity(num));
+  };
+
+  const handleQuantityBlur = () => {
+    setQuantityError(validateQuantity(productQuantity));
   };
 
   // Fetch category hierarchy for primary category name
@@ -219,6 +258,9 @@ export default function ProductDetails({
   );
 
   const handleAddToCart = () => {
+    const error = validateQuantity(productQuantity);
+    setQuantityError(error);
+    if (error || typeof productQuantity !== "number") return;
     // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     const cartItem = {
@@ -355,6 +397,9 @@ export default function ProductDetails({
   const router = useRouter();
 
   const handleBuyNow = () => {
+    const error = validateQuantity(productQuantity);
+    setQuantityError(error);
+    if (error || typeof productQuantity !== "number") return;
     // Determine if a variant is selected
     const isVariantSelected = !!(selectedColorHex && selectedSize);
     // Build buy-now product object
@@ -388,6 +433,9 @@ export default function ProductDetails({
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      minQuantity: productMain.minQuantity ?? 1,
+      maxQuantity: productMain.maxQuantity ?? undefined,
+      quantityStep: productMain.quantityStep ?? 1,
     };
     // Store in sessionStorage for checkout page
     if (typeof window !== "undefined") {
@@ -876,21 +924,29 @@ export default function ProductDetails({
                       className={`${productQuantity === minQuantity ? "disabled" : ""} cursor-pointer`}
                     />
                     <input
-                      type="number"
-                      className="body1 w-16 border-none bg-transparent text-center font-semibold outline-none"
+                      type="text"
+                      className="quantity-input body1 border-none bg-transparent text-center font-semibold outline-none"
                       min={minQuantity}
                       max={maxQuantity ?? undefined}
                       step={quantityStep}
                       value={productQuantity}
-                      onChange={(e) => {
-                        let val = Number(e.target.value);
-                        if (isNaN(val)) val = minQuantity;
-                        if (val < minQuantity) val = minQuantity;
-                        if (maxQuantity !== null && val > maxQuantity)
-                          val = maxQuantity;
-                        setProductQuantity(val);
+                      onChange={handleQuantityChange}
+                      onBlur={handleQuantityBlur}
+                      style={{
+                        width: "80px",
+                        padding: "2px 4px",
+                        fontSize: "1.1rem",
+                        margin: 0,
+                        fontFamily: "monospace",
                       }}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                     />
+                    {/* {quantityError && (
+                      <div className="mt-1 w-full text-center text-xs text-red-500">
+                        {quantityError}
+                      </div>
+                    )} */}
                     <Plus
                       size={20}
                       onClick={handleIncreaseQuantity}
@@ -899,15 +955,22 @@ export default function ProductDetails({
                   </div>
                   <div
                     onClick={handleAddToCart}
-                    className="duration-400 md:text-md inline-block w-full cursor-pointer rounded-[.25rem] border border-black bg-white px-0 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4"
+                    className={`duration-400 md:text-md inline-block w-full rounded-[.25rem] border border-black bg-white px-0 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4 ${quantityError ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                    style={quantityError ? { pointerEvents: "none" } : {}}
                   >
                     Add To Cart
                   </div>
                 </div>
                 <div className="button-block mt-5">
+                  {quantityError && (
+                    <div className="text-md mb-2 w-full text-center text-red-500">
+                      {quantityError}
+                    </div>
+                  )}
                   <div
-                    className="duration-400 md:text-md hover:bg-black/75/75 hover:bg-green inline-block w-full cursor-pointer rounded-[.25rem] bg-black px-10 py-4 text-center text-sm font-semibold uppercase leading-5 text-white transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4"
+                    className={`duration-400 md:text-md hover:bg-black/75/75 hover:bg-green inline-block w-full rounded-[.25rem] bg-black px-10 py-4 text-center text-sm font-semibold uppercase leading-5 text-white transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4 ${quantityError ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     onClick={handleBuyNow}
+                    style={quantityError ? { pointerEvents: "none" } : {}}
                   >
                     Buy It Now
                   </div>
@@ -915,10 +978,10 @@ export default function ProductDetails({
                 <div className="mt-5 flex items-center gap-8 border-b border-[#ddd] pb-6 focus:border-[#ddd] lg:gap-20"></div>
                 <div className="more-infor mt-6">
                   <div className="flex flex-wrap items-center gap-4">
-                    <Link href={"/faqs"} className="flex items-center gap-1">
+                    {/* <Link href={"/faqs"} className="flex items-center gap-1">
                       <ArrowClockwise className="body1" />
                       <div className="text-title">Delivery & Return</div>
-                    </Link>
+                    </Link> */}
                     <button
                       type="button"
                       className="flex items-center gap-1"
@@ -955,7 +1018,7 @@ export default function ProductDetails({
                 </div>
               </div>
 
-              <div className="get-it mt-6 flex flex-col gap-4 sm:flex-row">
+              {/* <div className="get-it mt-6 flex flex-col gap-4 sm:flex-row">
                 <div className="item mt-4 flex flex-col items-start gap-2 bg-white px-3 py-1 sm:flex-row sm:items-center sm:gap-3">
                   <div>
                     <div className="icon-delivery-truck text-3xl sm:text-4xl"></div>
@@ -987,7 +1050,7 @@ export default function ProductDetails({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -1476,6 +1539,17 @@ export default function ProductDetails({
           />
         </div>
       </div>
+      <style jsx global>{`
+        /* Hide number input spinners for all browsers */
+        input.quantity-input::-webkit-outer-spin-button,
+        input.quantity-input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input.quantity-input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
     </>
   );
 }

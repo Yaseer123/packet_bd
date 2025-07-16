@@ -5,7 +5,7 @@ import { useModalCartStore } from "@/context/store-context/ModalCartContext";
 import { Minus, Plus, Trash, X } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
 import CartProductItem from "./CartProductItem";
 
@@ -13,14 +13,46 @@ const ModalCart = () => {
   const { isModalOpen, closeModalCart } = useModalCartStore();
   const { cartArray: cartState, removeFromCart, updateCart } = useCartStore();
 
-  let [totalCart] = useState<number>(0);
+  // Per-item state for input value and error
+  const [inputStates, setInputStates] = useState<
+    Record<string, { value: string; error: string }>
+  >({});
 
-  cartState.map(
+  // Sync input state with cart state (initialize on open or cart change)
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const newStates: Record<string, { value: string; error: string }> = {};
+    cartState.forEach((item) => {
+      newStates[item.id] = {
+        value: String(item.quantity),
+        error: "",
+      };
+    });
+    setInputStates(newStates);
+  }, [cartState, isModalOpen]);
+
+  let totalCart = 0;
+  cartState.forEach(
     (item) =>
       (totalCart += (item.discountedPrice ?? item.price) * item.quantity),
   );
 
   const pathname = usePathname();
+
+  // Validation function
+  const validateQuantity = (val: string, min: number, max?: number): string => {
+    if (val === "" || isNaN(Number(val))) {
+      return "Please enter a quantity.";
+    }
+    const num = Number(val);
+    if (num < min) {
+      return `Minimum quantity is ${min}.`;
+    }
+    if (typeof max === "number" && num > max) {
+      return `Maximum quantity is ${max}.`;
+    }
+    return "";
+  };
 
   return (
     <>
@@ -55,108 +87,158 @@ const ModalCart = () => {
                   </div>
                 ) : (
                   <>
-                    {cartState.map((item) => (
-                      <div
-                        key={item.id}
-                        className="group relative mb-4 flex items-start gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:border-gray-200 hover:shadow-md"
-                      >
-                        <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-gray-50">
-                          <CartProductItem item={item} />
-                        </div>
-                        <div className="flex flex-1 flex-col">
-                          <div className="flex justify-between">
-                            <h4 className="mb-1 text-sm font-medium text-gray-900">
-                              {item.name}
-                            </h4>
-                            <button
-                              className="text-gray-400 transition-colors hover:text-red-500"
-                              onClick={() => removeFromCart(item.id)}
-                              aria-label="Remove item"
-                            >
-                              <Trash size={18} />
-                            </button>
+                    {cartState.map((item) => {
+                      const min = item.minQuantity ?? 1;
+                      const max = item.maxQuantity;
+                      const step = item.quantityStep ?? 1;
+                      const inputState = inputStates[item.id] ?? {
+                        value: String(item.quantity),
+                        error: "",
+                      };
+                      return (
+                        <div
+                          key={item.id}
+                          className="group relative mb-4 flex items-start gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:border-gray-200 hover:shadow-md"
+                        >
+                          <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-gray-50">
+                            <CartProductItem item={item} />
                           </div>
-                          <div className="mb-2 text-xs text-gray-500">
-                            SKU: {item.sku}
-                          </div>
-                          <div className="mt-auto flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-1 flex-col">
+                            <div className="flex justify-between">
+                              <h4 className="mb-1 text-sm font-medium text-gray-900">
+                                {item.name}
+                              </h4>
+                              <button
+                                className="text-gray-400 transition-colors hover:text-red-500"
+                                onClick={() => removeFromCart(item.id)}
+                                aria-label="Remove item"
+                              >
+                                <Trash size={18} />
+                              </button>
+                            </div>
+                            <div className="mb-2 text-xs text-gray-500">
+                              SKU: {item.sku}
+                            </div>
+                            <div className="mt-auto flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <button
-                                  className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500 disabled:opacity-50"
-                                  onClick={() =>
-                                    updateCart(
-                                      item.id,
-                                      Math.max(
-                                        (item.quantity ?? 1) -
-                                          (item.quantityStep ?? 1),
-                                        item.minQuantity ?? 1,
-                                      ),
-                                    )
-                                  }
-                                  disabled={
-                                    item.quantity === (item.minQuantity ?? 1)
-                                  }
-                                >
-                                  <Minus size={12} />
-                                </button>
-                                <input
-                                  type="number"
-                                  className="w-14 border-none bg-transparent text-center text-sm font-medium outline-none"
-                                  min={item.minQuantity ?? 1}
-                                  max={item.maxQuantity}
-                                  step={item.quantityStep ?? 1}
-                                  value={item.quantity}
-                                  onChange={(e) => {
-                                    let val = Number(e.target.value);
-                                    if (isNaN(val)) val = item.minQuantity ?? 1;
-                                    if (val < (item.minQuantity ?? 1))
-                                      val = item.minQuantity ?? 1;
-                                    if (
-                                      item.maxQuantity !== undefined &&
-                                      val > item.maxQuantity
-                                    )
-                                      val = item.maxQuantity;
-                                    updateCart(item.id, val);
-                                  }}
-                                />
-                                <button
-                                  className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500"
-                                  onClick={() => {
-                                    const next =
-                                      (item.quantity ?? 1) +
-                                      (item.quantityStep ?? 1);
-                                    if (
-                                      item.maxQuantity !== undefined &&
-                                      next > item.maxQuantity
-                                    ) {
-                                      updateCart(item.id, item.maxQuantity);
-                                    } else {
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500 disabled:opacity-50"
+                                    onClick={() => {
+                                      const current =
+                                        Number(inputState.value) || min;
+                                      const next = Math.max(
+                                        current - step,
+                                        min,
+                                      );
+                                      setInputStates((prev) => ({
+                                        ...prev,
+                                        [item.id]: {
+                                          value: String(next),
+                                          error: "",
+                                        },
+                                      }));
                                       updateCart(item.id, next);
+                                    }}
+                                    disabled={Number(inputState.value) === min}
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <input
+                                    type="text"
+                                    className="w-14 border-none bg-transparent text-center text-sm font-medium outline-none"
+                                    min={min}
+                                    max={max}
+                                    step={step}
+                                    value={inputState.value}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const error = validateQuantity(
+                                        val,
+                                        min,
+                                        max,
+                                      );
+                                      setInputStates((prev) => ({
+                                        ...prev,
+                                        [item.id]: {
+                                          value: val,
+                                          error,
+                                        },
+                                      }));
+                                      // Only update cart if valid
+                                      if (!error) {
+                                        updateCart(item.id, Number(val));
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      const val = inputState.value;
+                                      const error = validateQuantity(
+                                        val,
+                                        min,
+                                        max,
+                                      );
+                                      setInputStates((prev) => ({
+                                        ...prev,
+                                        [item.id]: {
+                                          value: val,
+                                          error,
+                                        },
+                                      }));
+                                      if (!error) {
+                                        updateCart(item.id, Number(val));
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-gray-500"
+                                    onClick={() => {
+                                      const current =
+                                        Number(inputState.value) || min;
+                                      const next =
+                                        max !== undefined
+                                          ? Math.min(current + step, max)
+                                          : current + step;
+                                      setInputStates((prev) => ({
+                                        ...prev,
+                                        [item.id]: {
+                                          value: String(next),
+                                          error: "",
+                                        },
+                                      }));
+                                      updateCart(item.id, next);
+                                    }}
+                                    disabled={
+                                      max !== undefined &&
+                                      Number(inputState.value) === max
                                     }
-                                  }}
-                                >
-                                  <Plus size={12} />
-                                </button>
+                                  >
+                                    <Plus size={12} />
+                                  </button>
+                                </div>
+                                <span className="text-xs text-gray-500">×</span>
+                                <span className="discounted-price text-sm font-medium">
+                                  ৳
+                                  {(item.discountedPrice ?? item.price).toFixed(
+                                    2,
+                                  )}
+                                </span>
                               </div>
-                              <span className="text-xs text-gray-500">×</span>
-                              <span className="discounted-price text-sm font-medium">
-                                ৳
-                                {(item.discountedPrice ?? item.price).toFixed(
-                                  2,
+                              <span className="font-medium text-black">
+                                {formatPrice(
+                                  (item.discountedPrice ?? item.price) *
+                                    item.quantity,
                                 )}
                               </span>
                             </div>
-                            <span className="font-medium text-black">
-                              {formatPrice(
-                                (item.discountedPrice ?? item.price) *
-                                  item.quantity,
-                              )}
-                            </span>
+                            {inputState.error && (
+                              <div className="mt-1 text-xs text-red-500">
+                                {inputState.error}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </>
                 )}
               </div>
