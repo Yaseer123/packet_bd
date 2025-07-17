@@ -466,7 +466,7 @@ const Checkout = () => {
             </div>
           </div>
         </form>
-        Additional Notes Field
+
         <div className="mt-4">
           <label htmlFor="additional-notes" className="mb-1 block font-medium">
             Additional Notes (optional)
