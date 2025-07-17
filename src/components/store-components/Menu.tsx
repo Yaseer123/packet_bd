@@ -272,25 +272,15 @@ export default function Menu({
                                               <span className="discounted-price">
                                                 {formatPrice(
                                                   product.discountedPrice,
-                                                  undefined,
-                                                  true,
                                                 )}
                                               </span>
                                               <span className="ml-2 text-gray-400 line-through">
-                                                {formatPrice(
-                                                  product.price,
-                                                  undefined,
-                                                  true,
-                                                )}
+                                                {formatPrice(product.price)}
                                               </span>
                                             </>
                                           ) : (
                                             <span className="text-black">
-                                              {formatPrice(
-                                                product.price,
-                                                undefined,
-                                                true,
-                                              )}
+                                              {formatPrice(product.price)}
                                             </span>
                                           )}
                                         </div>
@@ -627,27 +617,15 @@ export default function Menu({
                                   product.discountedPrice < product.price ? (
                                     <>
                                       <span className="discounted-price">
-                                        {formatPrice(
-                                          product.discountedPrice,
-                                          undefined,
-                                          true,
-                                        )}
+                                        {formatPrice(product.discountedPrice)}
                                       </span>
                                       <span className="ml-2 text-gray-400 line-through">
-                                        {formatPrice(
-                                          product.price,
-                                          undefined,
-                                          true,
-                                        )}
+                                        {formatPrice(product.price)}
                                       </span>
                                     </>
                                   ) : (
                                     <span className="text-black">
-                                      {formatPrice(
-                                        product.price,
-                                        undefined,
-                                        true,
-                                      )}
+                                      {formatPrice(product.price)}
                                     </span>
                                   )}
                                 </div>

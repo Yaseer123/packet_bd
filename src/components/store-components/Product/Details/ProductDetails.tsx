@@ -808,16 +808,16 @@ export default function ProductDetails({
                   displayDiscountedPrice < displayPrice ? (
                   <>
                     <div className="product-price heading5 discounted-price">
-                      {formatPrice(displayDiscountedPrice, undefined, true)}
+                      {formatPrice(displayDiscountedPrice)}
                     </div>
                     <div className="bg-line h-4 w-px"></div>
                     <div className="product-origin-price text-secondary2 font-normal">
-                      <del>{formatPrice(displayPrice, undefined, true)}</del>
+                      <del>{formatPrice(displayPrice)}</del>
                     </div>
                   </>
                 ) : (
                   <div className="product-price heading5">
-                    {formatPrice(displayPrice, undefined, true)}
+                    {formatPrice(displayPrice)}
                   </div>
                 )}
               </div>

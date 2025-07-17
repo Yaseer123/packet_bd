@@ -945,7 +945,7 @@ const Checkout = () => {
                     Discounts
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
-                    -{formatPrice(discountValue, undefined, true)}
+                    -{formatPrice(discountValue)}
                   </div>
                 </div>
                 <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
@@ -953,9 +953,7 @@ const Checkout = () => {
                     Shipping
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
-                    {shippingCost === 0
-                      ? "Free"
-                      : formatPrice(shippingCost, undefined, true)}
+                    {shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
                   </div>
                 </div>
                 <div className="flex justify-between pt-5">
@@ -963,11 +961,7 @@ const Checkout = () => {
                     Total
                   </div>
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-                    {formatPrice(
-                      totalCart - discountValue + shippingCost,
-                      undefined,
-                      true,
-                    )}
+                    {formatPrice(totalCart - discountValue + shippingCost)}
                   </div>
                 </div>
               </div>

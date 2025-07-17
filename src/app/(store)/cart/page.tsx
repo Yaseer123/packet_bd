@@ -112,8 +112,6 @@ const Cart = () => {
                             <div className="discounted-price text-center text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                               {formatPrice(
                                 product.discountedPrice ?? product.price,
-                                undefined,
-                                true,
                               )}
                             </div>
                           </div>
@@ -190,8 +188,6 @@ const Cart = () => {
                               {formatPrice(
                                 product.quantity *
                                   (product.discountedPrice ?? product.price),
-                                undefined,
-                                true,
                               )}
                             </div>
                           </div>
@@ -272,7 +268,7 @@ const Cart = () => {
                     Subtotal
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
-                    {formatPrice(totalCart, undefined, true)}
+                    {formatPrice(totalCart)}
                   </div>
                 </div>
 
@@ -281,11 +277,7 @@ const Cart = () => {
                     Total
                   </div>
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-                    {formatPrice(
-                      totalCart - discountCart + shipCart,
-                      undefined,
-                      true,
-                    )}
+                    {formatPrice(totalCart - discountCart + shipCart)}
                   </div>
                 </div>
                 <div className="block-button mt-5 flex flex-col items-center gap-y-4">

@@ -227,8 +227,6 @@ const ModalCart = () => {
                                 {formatPrice(
                                   (item.discountedPrice ?? item.price) *
                                     item.quantity,
-                                  undefined,
-                                  true,
                                 )}
                               </span>
                             </div>
@@ -249,12 +247,12 @@ const ModalCart = () => {
               <div className="flex flex-col gap-2 px-6 pt-0">
                 <div className="flex items-center justify-between text-gray-600">
                   <span>Items ({cartState.length})</span>
-                  <span>{formatPrice(totalCart, undefined, true)}</span>
+                  <span>{formatPrice(totalCart)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="heading5">Total</div>
                   <div className="heading5 text-xl">
-                    {formatPrice(totalCart, undefined, true)}
+                    {formatPrice(totalCart)}
                   </div>
                 </div>
               </div>

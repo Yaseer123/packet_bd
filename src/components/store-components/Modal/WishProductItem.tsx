@@ -45,16 +45,12 @@ export default function WishProductItem({
           </div>
           <div className="mt-2 flex items-center gap-2">
             <div className="item-price text-title">
-              {formatPrice(
-                product.discountedPrice ?? product.price,
-                undefined,
-                true,
-              )}
+              {formatPrice(product.discountedPrice ?? product.price)}
             </div>
             {product.discountedPrice &&
               product.discountedPrice < product.price && (
                 <div className="item-origin-price text-secondary2">
-                  <del>{formatPrice(product.price, undefined, true)}</del>
+                  <del>{formatPrice(product.price)}</del>
                 </div>
               )}
           </div>
