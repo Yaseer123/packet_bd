@@ -135,15 +135,27 @@ export default function MobileSearch() {
                                   product.discountedPrice < product.price ? (
                                     <>
                                       <span className="discounted-price">
-                                        {formatPrice(product.discountedPrice)}
+                                        {formatPrice(
+                                          product.discountedPrice,
+                                          undefined,
+                                          true,
+                                        )}
                                       </span>
                                       <span className="ml-2 text-gray-400 line-through">
-                                        {formatPrice(product.price)}
+                                        {formatPrice(
+                                          product.price,
+                                          undefined,
+                                          true,
+                                        )}
                                       </span>
                                     </>
                                   ) : (
                                     <span className="discounted-price">
-                                      {formatPrice(product.price)}
+                                      {formatPrice(
+                                        product.price,
+                                        undefined,
+                                        true,
+                                      )}
                                     </span>
                                   )}
                                 </div>

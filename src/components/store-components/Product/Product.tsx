@@ -319,7 +319,7 @@ export default function Product({ data }: ProductProps) {
                 display: "inline-block",
               }}
             >
-              Save: {formatPrice(amountSaved, "৳", false)} (-
+              Save: {formatPrice(amountSaved, "৳", true)} (-
               {discountPercentage}%)
             </span>
           </div>
@@ -419,15 +419,15 @@ export default function Product({ data }: ProductProps) {
           ) : data.discountedPrice != null ? (
             <div className="flex items-center gap-2">
               <span className="text-title discounted-price font-bold">
-                {formatPrice(data.discountedPrice)}
+                {formatPrice(data.discountedPrice, undefined, true)}
               </span>
               <span className="text-sm text-gray-500 line-through">
-                {formatPrice(data.price)}
+                {formatPrice(data.price, undefined, true)}
               </span>
             </div>
           ) : (
             <span className="text-title font-bold">
-              {formatPrice(data.price)}
+              {formatPrice(data.price, undefined, true)}
             </span>
           )}
         </div>

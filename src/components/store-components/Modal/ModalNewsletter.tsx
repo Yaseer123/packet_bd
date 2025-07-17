@@ -129,7 +129,13 @@ const ModalNewsletter = () => {
                                   </div>
                                   {product.discountedPrice && (
                                     <div className="product-origin-price text-title text-secondary2">
-                                      <del>{formatPrice(product.price)}</del>
+                                      <del>
+                                        {formatPrice(
+                                          product.price,
+                                          undefined,
+                                          true,
+                                        )}
+                                      </del>
                                     </div>
                                   )}
                                 </div>

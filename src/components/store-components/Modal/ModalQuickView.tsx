@@ -277,6 +277,8 @@ const ModalQuickView = () => {
                         {formatPrice(
                           selectedProduct.discountedPrice ??
                             selectedProduct.price,
+                          undefined,
+                          true,
                         )}
                       </div>
                       {selectedProduct.discountedPrice &&
@@ -285,7 +287,13 @@ const ModalQuickView = () => {
                           <>
                             <div className="bg-line h-4 w-px"></div>
                             <div className="product-origin-price text-secondary2 font-normal">
-                              <del>{formatPrice(selectedProduct.price)}</del>
+                              <del>
+                                {formatPrice(
+                                  selectedProduct.price,
+                                  undefined,
+                                  true,
+                                )}
+                              </del>
                             </div>
                             <div className="product-sale caption2 bg-green inline-block rounded-full px-3 py-0.5 font-semibold">
                               -{percentSale}%

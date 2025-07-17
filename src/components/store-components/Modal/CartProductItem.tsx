@@ -48,7 +48,7 @@ export default function CartProductItem({ item }: CartProductItemProps) {
           </div>
         </div>
         <div className="item-price text-title">
-          {formatPrice(item.discountedPrice ?? item.price)}
+          {formatPrice(item.discountedPrice ?? item.price, undefined, true)}
         </div>
       </div>
     </div>

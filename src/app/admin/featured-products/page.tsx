@@ -93,7 +93,7 @@ const SortableRow = ({
           </div>
         </div>
       </TableCell>
-      <TableCell>{formatPrice(product.price)}</TableCell>
+      <TableCell>{formatPrice(product.price, undefined, true)}</TableCell>
       <TableCell>
         <Badge
           variant={

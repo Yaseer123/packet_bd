@@ -767,8 +767,8 @@ export default function ProductsPage() {
                         >
                           <X size={16} className="cursor-pointer" />
                           <span>
-                            {formatPrice(priceRange.min)} -{" "}
-                            {formatPrice(priceRange.max)}
+                            {formatPrice(priceRange.min, undefined, true)} -{" "}
+                            {formatPrice(priceRange.max, undefined, true)}
                           </span>
                         </div>
                       )}

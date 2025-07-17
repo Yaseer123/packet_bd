@@ -311,7 +311,7 @@ export const columns: ColumnDef<ProductColumns>[] = [
       const price = parseFloat(row.getValue("price"));
       return (
         <div className="min-w-[100px] text-right font-medium">
-          {formatPrice(price)}
+          {formatPrice(price, undefined, true)}
         </div>
       );
     },

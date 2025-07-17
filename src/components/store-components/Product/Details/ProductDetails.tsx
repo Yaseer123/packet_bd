@@ -8,7 +8,6 @@ import { generateSKU } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import type { ProductWithCategory } from "@/types/ProductType";
 import {
-  ArrowClockwise,
   CaretDown,
   DotsThree,
   HandsClapping,
@@ -809,16 +808,16 @@ export default function ProductDetails({
                   displayDiscountedPrice < displayPrice ? (
                   <>
                     <div className="product-price heading5 discounted-price">
-                      {formatPrice(displayDiscountedPrice)}
+                      {formatPrice(displayDiscountedPrice, undefined, true)}
                     </div>
                     <div className="bg-line h-4 w-px"></div>
                     <div className="product-origin-price text-secondary2 font-normal">
-                      <del>{formatPrice(displayPrice)}</del>
+                      <del>{formatPrice(displayPrice, undefined, true)}</del>
                     </div>
                   </>
                 ) : (
                   <div className="product-price heading5">
-                    {formatPrice(displayPrice)}
+                    {formatPrice(displayPrice, undefined, true)}
                   </div>
                 )}
               </div>
@@ -1024,7 +1023,7 @@ export default function ProductDetails({
                     <div className="icon-delivery-truck text-3xl sm:text-4xl"></div>
                     <div className="text-title">Free shipping</div>
                     <div className="mt-1 text-sm font-normal leading-5 text-secondary md:text-[13px]">
-                      Free shipping on orders over {formatPrice(7500)}.
+                      Free shipping on orders over {formatPrice(7500, undefined, true)}.
                     </div>
                   </div>
                 </div>
