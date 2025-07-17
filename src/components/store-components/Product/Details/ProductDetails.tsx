@@ -8,7 +8,6 @@ import { generateSKU } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import type { ProductWithCategory } from "@/types/ProductType";
 import {
-  ArrowClockwise,
   CaretDown,
   DotsThree,
   HandsClapping,
@@ -1024,7 +1023,7 @@ export default function ProductDetails({
                     <div className="icon-delivery-truck text-3xl sm:text-4xl"></div>
                     <div className="text-title">Free shipping</div>
                     <div className="mt-1 text-sm font-normal leading-5 text-secondary md:text-[13px]">
-                      Free shipping on orders over {formatPrice(7500)}.
+                      Free shipping on orders over {formatPrice(7500, undefined, true)}.
                     </div>
                   </div>
                 </div>

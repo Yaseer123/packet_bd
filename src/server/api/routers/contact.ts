@@ -25,7 +25,7 @@ export const contactRouter = createTRPCRouter({
             <h2 style="margin: 0;">New Contact Form Submission</h2>
           </div>
           <div style="padding: 24px 32px;">
-            <p style="font-size: 16px;">A new contact form was submitted on Rinors Ecommerce Admin.</p>
+            <p style="font-size: 16px;">A new contact form was submitted on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Name:</strong> ${input.name}</div>
             <div style="margin-bottom: 16px;"><strong>Email:</strong> ${input.email}</div>
             <div style="margin-bottom: 16px;"><strong>Message:</strong><br/>${input.message.replace(/\n/g, "<br/>")}</div>

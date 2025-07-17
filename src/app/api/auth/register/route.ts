@@ -13,7 +13,7 @@ async function sendVerificationEmail(email: string, token: string) {
         <h2 style="margin: 0;">Verify your email address</h2>
       </div>
       <div style="padding: 24px 32px;">
-        <p style="font-size: 16px;">Thank you for registering at Rinors Ecommerce.</p>
+        <p style="font-size: 16px;">Thank you for registering at Packet BD.</p>
         <p style="font-size: 16px;">Please verify your email address by clicking the button below:</p>
         <div style="margin-top: 32px;">
           <a href="${APP_URL}/verify-email?token=${token}" style="background: #007b55; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Verify Email</a>

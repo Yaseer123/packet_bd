@@ -156,7 +156,10 @@ export default function Menu({
 
   return (
     <>
-      <TopNav props="style-one bg-black " />
+      {/* Show TopNav only on mobile and desktop, hide on md and lg (tablets) */}
+      <div className="block md:hidden xl:block">
+        <TopNav props="style-one bg-black " />
+      </div>
 
       {/* Main header - sticky on mobile */}
       <div className="header-menu w-full bg-white lg:pt-5">
