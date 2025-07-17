@@ -32,7 +32,6 @@ const socialLinks = `
   </div>
 `;
 
-
 // <a href="https://x.com/Rinors_Corpor" style="margin: 0 6px; text-decoration: none;" target="_blank">
 // <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg" alt="X (Twitter)" width="24" height="24" style="vertical-align:middle;"/>
 // </a>
@@ -365,7 +364,7 @@ export const orderRouter = createTRPCRouter({
           ${emailHeader}
           <div style="padding: 24px 32px;">
             <h2 style="margin: 0; color: #007b55;">New Order Placed</h2>
-            <p style="font-size: 16px;">A new order has been placed on Rinors Ecommerce Admin.</p>
+            <p style="font-size: 16px;">A new order has been placed on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${productTotal}</div>
             <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div>
@@ -821,7 +820,7 @@ export const orderRouter = createTRPCRouter({
           ${emailHeader}
           <div style="padding: 24px 32px;">
             <h2 style="margin: 0; color: #007b55;">New Guest Order Placed</h2>
-            <p style="font-size: 16px;">A new guest order has been placed on Rinors Ecommerce Admin.</p>
+            <p style="font-size: 16px;">A new guest order has been placed on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${guestProductTotal}</div>
             <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${guestShippingCost}</div>

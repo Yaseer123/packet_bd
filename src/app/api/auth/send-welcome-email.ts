@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
         <div style="background: #007b55; color: #fff; padding: 24px 32px;">
-          <h2 style="margin: 0;">Welcome to Rinors Ecommerce!</h2>
+          <h2 style="margin: 0;">Welcome to Packet BD!</h2>
         </div>
         <div style="padding: 24px 32px;">
           <p style="font-size: 16px;">Hi ${name ?? "there"},</p>
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: "no-reply@packetbd.com",
       to: email,
-      subject: "Your new account at Rinors Ecommerce",
+      subject: "Your new account at Packet BD",
       html,
     });
     return NextResponse.json({ success: true });
