@@ -138,7 +138,7 @@ const RecentlyAdded = () => {
               No products available in this category.
             </div>
           ) : (
-            <div className="list-product hide-product-sold mt-6 grid grid-cols-1 gap-[20px] sm:grid-cols-2 sm:gap-[30px] md:mt-10 lg:grid-cols-4">
+            <div className="list-product hide-product-sold mt-6 grid grid-cols-2 gap-[20px] sm:grid-cols-2 sm:gap-[30px] md:mt-10 md:grid-cols-3 lg:grid-cols-4">
               {products
                 ?.slice(0, 12)
                 .filter(isProductWithCategory)

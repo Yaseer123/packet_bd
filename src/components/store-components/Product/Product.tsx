@@ -16,7 +16,7 @@ import type { Product } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
 
 interface ProductProps {
@@ -35,6 +35,23 @@ type WishlistItem = {
   createdAt: Date;
   product: Product;
 };
+
+// Custom hook to detect mobile screen
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
+  );
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < breakpoint);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 export default function Product({ data }: ProductProps) {
   const { openModalCart } = useModalCartStore();
@@ -286,6 +303,8 @@ export default function Product({ data }: ProductProps) {
   const amountSaved =
     data.discountedPrice != null ? data.price - data.discountedPrice : 0;
 
+  const isMobile = useIsMobile(); // 640px is Tailwind's 'sm' breakpoint
+
   return (
     <div className="product-item style-marketplace h-full min-h-[300px] rounded-[.25rem] border border-[#ddd] bg-white p-4 pt-5 transition-all duration-300 hover:shadow-md focus:border-[#ddd]">
       <div className="bg-img relative w-full pt-6">
@@ -301,27 +320,41 @@ export default function Product({ data }: ProductProps) {
               top: -12,
               left: -18,
               zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
             }}
           >
-            <span
-              className="mark"
-              style={{
-                background: "var(--brand-primary)",
-                color: "#fff",
-                borderTopRightRadius: "10px",
-                borderBottomRightRadius: "10px",
-                padding: "0px 8px",
-                fontWeight: 700,
-                marginBottom: 2,
-                display: "inline-block",
-              }}
-            >
-              Save: {formatPrice(amountSaved, "৳")} (-
-              {discountPercentage}%)
-            </span>
+            {isMobile ? (
+              <span
+                className="mark"
+                style={{
+                  background: "var(--brand-primary)",
+                  color: "#fff",
+                  borderTopRightRadius: "10px",
+                  borderBottomRightRadius: "10px",
+                  padding: "0px 8px",
+                  fontWeight: 700,
+                  marginBottom: 2,
+                  display: "inline-block",
+                }}
+              >
+                -{discountPercentage}%
+              </span>
+            ) : (
+              <span
+                className="mark"
+                style={{
+                  background: "var(--brand-primary)",
+                  color: "#fff",
+                  borderTopRightRadius: "10px",
+                  borderBottomRightRadius: "10px",
+                  padding: "0px 8px",
+                  fontWeight: 700,
+                  marginBottom: 2,
+                  display: "inline-block",
+                }}
+              >
+                Save: {formatPrice(amountSaved, "৳")} (-{discountPercentage}%)
+              </span>
+            )}
           </div>
         )}
 

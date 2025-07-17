@@ -19,7 +19,7 @@ const ProductList: React.FC<ProductListProps> = ({
   return (
     <>
       <div
-        className={`list-product hide-product-sold grid lg:grid-cols-${layoutCol} md:gird-cols-3 mt-7 grid-cols-1 gap-[10px] sm:grid-cols-2 sm:gap-[20px]`}
+        className={`list-product hide-product-sold grid grid-cols-2 lg:grid-cols-${layoutCol} mt-7 grid-cols-1 gap-[10px] sm:grid-cols-2 sm:gap-[20px]`}
       >
         {data.map((item) =>
           item.id === "no-data" ? (
