@@ -33,7 +33,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import { type StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -41,7 +40,6 @@ import {
   useRef,
   useState,
   type Dispatch,
-  type Key,
   type SetStateAction,
 } from "react";
 import { ColorPicker, useColor, type IColor } from "react-color-palette";
@@ -182,20 +180,45 @@ export default function AddProductForm(_unused?: unknown) {
   const [defaultColorName, setDefaultColorName] = useState<string>("");
   const [defaultColorHex, setDefaultColorHex] = useColor("#ffffff");
 
-  // Variants state
+  // [1] --- VARIANT STATE REFACTOR ---
+  // Replace old variants state with grouped structure
+  // Remove:
+  // const [variants, setVariants] = useState<UIVariant[]>([ ... ]);
+  // const [enableVariants, setEnableVariants] = useState(false);
+  // Add:
   const [enableVariants, setEnableVariants] = useState(false);
-  const [variants, setVariants] = useState<UIVariant[]>([
-    {
-      colorName: "",
-      colorHex: "#ffffff",
-      size: "",
-      price: 0,
-      discountedPrice: 0,
-      stock: 0,
-      images: [],
-      imageId: uuid(),
-    },
+  // Color groups: each color has its own sizes
+  const [colorGroups, setColorGroups] = useState<
+    Array<{
+      colorName: string;
+      colorHex: string;
+      imageId: string;
+      images: string[];
+      sizes: Array<{
+        size: string;
+        price: number;
+        discountedPrice: number;
+        stock: number;
+      }>;
+    }>
+  >([
+    // Start with one color group by default if variants enabled
   ]);
+  // Default group (no color)
+  const [defaultGroup, setDefaultGroup] = useState<{
+    imageId: string;
+    images: string[];
+    sizes: Array<{
+      size: string;
+      price: number;
+      discountedPrice: number;
+      stock: number;
+    }>;
+  }>({
+    imageId: uuid(),
+    images: [],
+    sizes: [],
+  });
 
   // Variant image gallery logic
   const [variantGalleryOpen, setVariantGalleryOpen] = useState(false);
@@ -496,137 +519,144 @@ export default function AddProductForm(_unused?: unknown) {
   };
 
   // Variant handlers
-  const handleVariantChange = (
-    index: number,
-    field: keyof UIVariant,
-    value: string | number | undefined,
-  ) => {
-    setVariants((prev) => {
-      const updated = [...prev];
-      const prevVariant: UIVariant = updated[index] ?? {
-        colorName: "",
-        colorHex: "#ffffff",
-        size: "",
-        price: 0,
-        discountedPrice: 0,
-        stock: 0,
-        images: [],
-        imageId: uuid(),
-      };
-      if (
-        field === "price" ||
-        field === "discountedPrice" ||
-        field === "stock"
-      ) {
-        updated[index] = {
-          colorName: prevVariant.colorName,
-          colorHex: prevVariant.colorHex,
-          size: prevVariant.size,
-          price:
-            field === "price"
-              ? value === undefined || value === ""
-                ? 0
-                : Number(value)
-              : prevVariant.price,
-          discountedPrice:
-            field === "discountedPrice"
-              ? value === undefined || value === ""
-                ? 0
-                : Number(value)
-              : prevVariant.discountedPrice,
-          stock:
-            field === "stock"
-              ? value === undefined || value === ""
-                ? 0
-                : Number(value)
-              : prevVariant.stock,
-          images: prevVariant.images,
-          imageId: prevVariant.imageId,
-        };
-      } else {
-        updated[index] = {
-          colorName:
-            field === "colorName"
-              ? typeof value === "string"
-                ? value
-                : ""
-              : prevVariant.colorName,
-          colorHex:
-            field === "colorHex"
-              ? typeof value === "string"
-                ? value
-                : ""
-              : prevVariant.colorHex,
-          size:
-            field === "size"
-              ? typeof value === "string"
-                ? value
-                : ""
-              : prevVariant.size,
-          price: prevVariant.price,
-          discountedPrice: prevVariant.discountedPrice,
-          stock: prevVariant.stock,
-          images:
-            field === "images" && Array.isArray(value)
-              ? value
-              : prevVariant.images,
-          imageId: prevVariant.imageId,
-        };
-      }
-      return updated;
-    });
-  };
-  const handleVariantImageGallery = (index: number) => {
-    setVariantGalleryIdx(index);
-    setVariantGalleryOpen(true);
-  };
-  const handleAddVariant = () => {
-    setVariants((prev) => [
-      ...prev,
-      {
-        colorName: "",
-        colorHex: "#ffffff",
-        size: "",
-        price: 0,
-        discountedPrice: 0,
-        stock: 0,
-        images: [],
-        imageId: uuid(),
-      },
-    ]);
-  };
-  const handleRemoveVariant = (index: number) => {
-    setVariants((prev) => prev.filter((_, i) => i !== index));
-  };
+  // These handlers are no longer needed as variants are managed in state
+  // const handleVariantChange = (
+  //   index: number,
+  //   field: keyof UIVariant,
+  //   value: string | number | undefined,
+  // ) => {
+  //   setVariants((prev) => {
+  //     const updated = [...prev];
+  //     const prevVariant: UIVariant = updated[index] ?? {
+  //       colorName: "",
+  //       colorHex: "#ffffff",
+  //       size: "",
+  //       price: 0,
+  //       discountedPrice: 0,
+  //       stock: 0,
+  //       images: [],
+  //       imageId: uuid(),
+  //     };
+  //     if (
+  //       field === "price" ||
+  //       field === "discountedPrice" ||
+  //       field === "stock"
+  //     ) {
+  //       updated[index] = {
+  //         colorName: prevVariant.colorName,
+  //         colorHex: prevVariant.colorHex,
+  //         size: prevVariant.size,
+  //         price:
+  //           field === "price"
+  //             ? value === undefined || value === ""
+  //               ? 0
+  //               : Number(value)
+  //             : prevVariant.price,
+  //         discountedPrice:
+  //           field === "discountedPrice"
+  //             ? value === undefined || value === ""
+  //               ? 0
+  //               : Number(value)
+  //             : prevVariant.discountedPrice,
+  //         stock:
+  //           field === "stock"
+  //             ? value === undefined || value === ""
+  //               ? 0
+  //               : Number(value)
+  //             : prevVariant.stock,
+  //         images: prevVariant.images,
+  //         imageId: prevVariant.imageId,
+  //       };
+  //     } else {
+  //       updated[index] = {
+  //         colorName:
+  //           field === "colorName"
+  //             ? typeof value === "string"
+  //               ? value
+  //               : ""
+  //             : prevVariant.colorName,
+  //         colorHex:
+  //           field === "colorHex"
+  //             ? typeof value === "string"
+  //               ? value
+  //               : ""
+  //             : prevVariant.colorHex,
+  //         size:
+  //           field === "size"
+  //             ? typeof value === "string"
+  //               ? value
+  //               : ""
+  //             : prevVariant.size,
+  //         price: prevVariant.price,
+  //         discountedPrice: prevVariant.discountedPrice,
+  //         stock: prevVariant.stock,
+  //         images:
+  //           field === "images" && Array.isArray(value)
+  //             ? value
+  //             : prevVariant.images,
+  //         imageId: prevVariant.imageId,
+  //       };
+  //     }
+  //     return updated;
+  //   });
+  // };
+  // const handleVariantImageGallery = (index: number) => {
+  //   setVariantGalleryIdx(index);
+  //   setVariantGalleryOpen(true);
+  // };
+  // const handleAddVariant = () => {
+  //   setVariants((prev) => [
+  //     ...prev,
+  //     {
+  //       colorName: "",
+  //       colorHex: "#ffffff",
+  //       size: "",
+  //       price: 0,
+  //       discountedPrice: 0,
+  //       stock: 0,
+  //       images: [],
+  //       imageId: uuid(),
+  //     },
+  //   ]);
+  // };
+  // const handleRemoveVariant = (index: number) => {
+  //   setVariants((prev) => prev.filter((_, i) => i !== index));
+  // };
+  // const handleVariantImagesUpdate = (index: number, newImages: string[]) => {
+  //   setVariants((prev) => {
+  //     const updated = [...prev];
+  //     if (!updated[index]) {
+  //       updated[index] = {
+  //         colorName: "",
+  //         colorHex: "#ffffff",
+  //         size: "",
+  //         price: 0,
+  //         discountedPrice: 0,
+  //         stock: 0,
+  //         images: Array.isArray(newImages) ? newImages : [],
+  //         imageId: uuid(),
+  //       };
+  //     } else {
+  //       const v = updated[index];
+  //       updated[index] = {
+  //         colorName: v.colorName ?? "",
+  //         colorHex: v.colorHex ?? "#ffffff",
+  //         size: v.size ?? "",
+  //         price: v.price ?? 0,
+  //         discountedPrice: v.discountedPrice ?? 0,
+  //         stock: v.stock ?? 0,
+  //         images: Array.isArray(newImages) ? newImages : [],
+  //         imageId: v.imageId ?? uuid(),
+  //       };
+  //     }
+  //     return updated;
+  //   });
+  // };
+
   const handleVariantImagesUpdate = (index: number, newImages: string[]) => {
-    setVariants((prev) => {
-      const updated = [...prev];
-      if (!updated[index]) {
-        updated[index] = {
-          colorName: "",
-          colorHex: "#ffffff",
-          size: "",
-          price: 0,
-          discountedPrice: 0,
-          stock: 0,
-          images: Array.isArray(newImages) ? newImages : [],
-          imageId: uuid(),
-        };
-      } else {
-        const v = updated[index];
-        updated[index] = {
-          colorName: v.colorName ?? "",
-          colorHex: v.colorHex ?? "#ffffff",
-          size: v.size ?? "",
-          price: v.price ?? 0,
-          discountedPrice: v.discountedPrice ?? 0,
-          stock: v.stock ?? 0,
-          images: Array.isArray(newImages) ? newImages : [],
-          imageId: v.imageId ?? uuid(),
-        };
-      }
-      return updated;
-    });
+    setColorGroups((prev) =>
+      prev.map((g, gi) => (gi === index ? { ...g, images: newImages } : g)),
+    );
   };
 
   const handleSubmit = async (content: string) => {
@@ -654,6 +684,34 @@ export default function AddProductForm(_unused?: unknown) {
       "Submitting images in order:",
       images.map((img) => img.src),
     );
+
+    // [3] --- FLATTEN VARIANTS ON SUBMIT ---
+    // In handleSubmit, before addProduct.mutate, flatten the grouped structure:
+    const flatVariants = [
+      ...colorGroups.flatMap((group) =>
+        group.sizes.map((size) => ({
+          colorName: group.colorName,
+          colorHex: group.colorHex,
+          size: size.size,
+          price: size.price,
+          discountedPrice: size.discountedPrice,
+          stock: size.stock,
+          images: group.images,
+          imageId: group.imageId,
+        })),
+      ),
+      ...defaultGroup.sizes.map((size) => ({
+        colorName: "",
+        colorHex: "",
+        size: size.size,
+        price: size.price,
+        discountedPrice: size.discountedPrice,
+        stock: size.stock,
+        images: defaultGroup.images,
+        imageId: defaultGroup.imageId,
+      })),
+    ];
+
     addProduct.mutate({
       imageId,
       images: images.map((image) => image.src),
@@ -671,29 +729,7 @@ export default function AddProductForm(_unused?: unknown) {
       attributes: specsObject, // Only include specifications here
       categoryAttributes: attributeValues, // Pass category attributes separately
       estimatedDeliveryTime: estimatedDeliveryTime,
-      variants:
-        enableVariants && variants.length > 0
-          ? variants.map<UIVariant>((v) => ({
-              colorName: typeof v.colorName === "string" ? v.colorName : "",
-              colorHex: typeof v.colorHex === "string" ? v.colorHex : "",
-              images: Array.isArray(v.images)
-                ? v.images.filter(
-                    (img): img is string => typeof img === "string",
-                  )
-                : [],
-              imageId: typeof v.imageId === "string" ? v.imageId : uuid(),
-              price:
-                typeof v.price === "number" && !isNaN(v.price) ? v.price : 0,
-              discountedPrice:
-                typeof v.discountedPrice === "number" &&
-                !isNaN(v.discountedPrice)
-                  ? v.discountedPrice
-                  : 0,
-              stock:
-                typeof v.stock === "number" && !isNaN(v.stock) ? v.stock : 0,
-              size: typeof v.size === "string" ? v.size : "",
-            }))
-          : undefined,
+      variants: enableVariants ? flatVariants : undefined,
       minQuantity,
       maxQuantity,
       quantityStep,
@@ -764,155 +800,253 @@ export default function AddProductForm(_unused?: unknown) {
         {enableVariants && (
           <div className="flex flex-col gap-4 rounded-md border bg-gray-50 p-3">
             <Label className="text-base">Product Variants</Label>
-            <div className="w-full overflow-x-auto">
-              {variants.map((variant, idx) => {
-                const safeImages = Array.isArray(variant.images)
-                  ? variant.images
-                  : [];
-                const _safeImageId =
-                  typeof variant.imageId === "string"
-                    ? variant.imageId
-                    : uuid();
-                return (
-                  <div
-                    key={idx}
-                    className="mb-2 flex flex-col gap-2 border-b pb-2"
-                    style={{ rowGap: 16, columnGap: 8 }}
+            {/* Color Groups */}
+            {colorGroups.map((group, groupIdx) => (
+              <div key={group.imageId} className="mb-4 border-b pb-4">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Color Name"
+                    value={group.colorName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setColorGroups((prev) =>
+                        prev.map((g, i) =>
+                          i === groupIdx ? { ...g, colorName: val } : g,
+                        ),
+                      );
+                    }}
+                    className="w-40"
+                  />
+                  <ColorPicker
+                    color={{
+                      hex: group.colorHex,
+                      rgb: { r: 255, g: 255, b: 255, a: 1 },
+                      hsv: { h: 0, s: 0, v: 100, a: 1 },
+                    }}
+                    onChange={(color) =>
+                      setColorGroups((prev) =>
+                        prev.map((g, i) =>
+                          i === groupIdx ? { ...g, colorHex: color.hex } : g,
+                        ),
+                      )
+                    }
+                    hideInput={["rgb", "hsv"]}
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() =>
+                      setColorGroups((prev) =>
+                        prev.filter((_, i) => i !== groupIdx),
+                      )
+                    }
                   >
-                    <Input
-                      type="text"
-                      placeholder="Color Name (optional)"
-                      value={variant.colorName}
-                      onChange={(e) =>
-                        handleVariantChange(idx, "colorName", e.target.value)
-                      }
-                      className="w-full min-w-[120px] max-w-xs flex-1"
-                    />
-                    <div className="w-full min-w-[180px] max-w-full">
-                      <ColorPicker
-                        color={{
-                          hex: variant.colorHex,
-                          rgb: { r: 255, g: 255, b: 255, a: 1 },
-                          hsv: { h: 0, s: 0, v: 100, a: 1 },
-                        }}
-                        onChange={(color) =>
-                          handleVariantChange(idx, "colorHex", color.hex)
+                    Remove Color
+                  </Button>
+                </div>
+                {/* Images for color group */}
+                <Button
+                  type="button"
+                  onClick={() => setShowImageGallery(group.imageId)}
+                  className="mt-2 w-full"
+                >
+                  Show Image Gallery
+                </Button>
+                {showImageGallery === group.imageId && (
+                  <DndImageGallery
+                    imageId={group.imageId}
+                    onClose={setShowImageGallery}
+                  />
+                )}
+                {/* Sizes for this color */}
+                <div className="mt-2">
+                  <Label>Sizes for {group.colorName || "Color"}</Label>
+                  {group.sizes.map((sizeObj, sizeIdx) => (
+                    <div key={sizeIdx} className="mb-2 flex items-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Size"
+                        value={sizeObj.size}
+                        onChange={(e) =>
+                          setColorGroups((prev) =>
+                            prev.map((g, gi) =>
+                              gi === groupIdx
+                                ? {
+                                    ...g,
+                                    sizes: g.sizes.map((s, si) =>
+                                      si === sizeIdx
+                                        ? { ...s, size: e.target.value }
+                                        : s,
+                                    ),
+                                  }
+                                : g,
+                            ),
+                          )
                         }
-                        hideInput={["rgb", "hsv"]}
+                        className="w-24"
                       />
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={sizeObj.price === 0 ? "" : sizeObj.price}
+                        onChange={(e) =>
+                          setColorGroups((prev) =>
+                            prev.map((g, gi) =>
+                              gi === groupIdx
+                                ? {
+                                    ...g,
+                                    sizes: g.sizes.map((s, si) =>
+                                      si === sizeIdx
+                                        ? {
+                                            ...s,
+                                            price: Number(e.target.value),
+                                          }
+                                        : s,
+                                    ),
+                                  }
+                                : g,
+                            ),
+                          )
+                        }
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Discounted Price"
+                        value={
+                          sizeObj.discountedPrice === 0
+                            ? ""
+                            : sizeObj.discountedPrice
+                        }
+                        onChange={(e) =>
+                          setColorGroups((prev) =>
+                            prev.map((g, gi) =>
+                              gi === groupIdx
+                                ? {
+                                    ...g,
+                                    sizes: g.sizes.map((s, si) =>
+                                      si === sizeIdx
+                                        ? {
+                                            ...s,
+                                            discountedPrice: Number(
+                                              e.target.value,
+                                            ),
+                                          }
+                                        : s,
+                                    ),
+                                  }
+                                : g,
+                            ),
+                          )
+                        }
+                        className="w-32"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Stock"
+                        value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+                        onChange={(e) =>
+                          setColorGroups((prev) =>
+                            prev.map((g, gi) =>
+                              gi === groupIdx
+                                ? {
+                                    ...g,
+                                    sizes: g.sizes.map((s, si) =>
+                                      si === sizeIdx
+                                        ? {
+                                            ...s,
+                                            stock: Number(e.target.value),
+                                          }
+                                        : s,
+                                    ),
+                                  }
+                                : g,
+                            ),
+                          )
+                        }
+                        className="w-20"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() =>
+                          setColorGroups((prev) =>
+                            prev.map((g, gi) =>
+                              gi === groupIdx
+                                ? {
+                                    ...g,
+                                    sizes: g.sizes.filter(
+                                      (_, si) => si !== sizeIdx,
+                                    ),
+                                  }
+                                : g,
+                            ),
+                          )
+                        }
+                      >
+                        Remove Size
+                      </Button>
                     </div>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: 24,
-                        height: 24,
-                        backgroundColor: variant.colorHex,
-                        borderRadius: "50%",
-                        border: "1px solid #ccc",
-                      }}
-                      aria-label={variant.colorName}
-                      title={variant.colorName}
-                    />
-                    <span>
-                      {variant.colorName} ({variant.colorHex})
-                    </span>
-                    <Input
-                      type="text"
-                      placeholder="Size (optional)"
-                      value={variant.size}
-                      onChange={(e) =>
-                        handleVariantChange(idx, "size", e.target.value)
-                      }
-                      className="w-full min-w-[100px] max-w-xs flex-1"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Price (optional)"
-                      value={variant.price === 0 ? "" : variant.price}
-                      onChange={(e) =>
-                        handleVariantChange(idx, "price", e.target.value)
-                      }
-                      className="w-full min-w-[100px] max-w-xs flex-1"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Discounted Price (optional)"
-                      value={
-                        variant.discountedPrice === 0
-                          ? ""
-                          : variant.discountedPrice
-                      }
-                      onChange={(e) =>
-                        handleVariantChange(
-                          idx,
-                          "discountedPrice",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full min-w-[100px] max-w-xs flex-1"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Stock (optional)"
-                      value={variant.stock === 0 ? "" : variant.stock}
-                      onChange={(e) =>
-                        handleVariantChange(idx, "stock", e.target.value)
-                      }
-                      className="w-full min-w-[100px] max-w-xs flex-1"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => handleVariantImageGallery(idx)}
-                      className="w-full"
-                    >
-                      Add Images
-                    </Button>
-                    {/* Show variant images */}
-                    {safeImages.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {safeImages.map(
-                          (
-                            img: string | StaticImport,
-                            i: Key | null | undefined,
-                          ) => (
-                            <Image
-                              key={i}
-                              src={img}
-                              alt="variant-img"
-                              width={48}
-                              height={48}
-                              className="h-16 w-16 rounded object-cover"
-                            />
-                          ),
-                        )}
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() => handleRemoveVariant(idx)}
-                      className="w-full"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            <Button type="button" onClick={handleAddVariant} className="w-full">
-              Add Variant
+                  ))}
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      setColorGroups((prev) =>
+                        prev.map((g, gi) =>
+                          gi === groupIdx
+                            ? {
+                                ...g,
+                                sizes: [
+                                  ...g.sizes,
+                                  {
+                                    size: "",
+                                    price: 0,
+                                    discountedPrice: 0,
+                                    stock: 0,
+                                  },
+                                ],
+                              }
+                            : g,
+                        ),
+                      )
+                    }
+                    className="w-full"
+                  >
+                    Add Size
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              onClick={() =>
+                setColorGroups((prev) => [
+                  ...prev,
+                  {
+                    colorName: "",
+                    colorHex: "#ffffff",
+                    imageId: uuid(),
+                    images: [],
+                    sizes: [],
+                  },
+                ])
+              }
+              className="w-full"
+            >
+              Add Color
             </Button>
           </div>
         )}
         {/* Variant Image Gallery Modal */}
         {variantGalleryOpen &&
           variantGalleryIdx !== null &&
-          variants[variantGalleryIdx] !== undefined && (
+          colorGroups[variantGalleryIdx] !== undefined && (
             <VariantImageGalleryModal
               variantIndex={variantGalleryIdx}
               images={
-                Array.isArray(variants[variantGalleryIdx]?.images)
-                  ? variants[variantGalleryIdx]?.images
+                Array.isArray(colorGroups[variantGalleryIdx]?.images)
+                  ? colorGroups[variantGalleryIdx]?.images
                   : []
               }
               onClose={() => setVariantGalleryOpen(false)}
