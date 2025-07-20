@@ -506,6 +506,18 @@ export default function ProductDetails({
     productMain.defaultSize ?? undefined,
   );
 
+  // Reset selected size when color changes to avoid invalid selections
+  useEffect(() => {
+    if (selectedColorHex) {
+      const availableSizesForColor =
+        getAvailableSizesForColor(selectedColorHex);
+      // If current selected size is not available for the new color, reset it
+      if (selectedSize && !availableSizesForColor.includes(selectedSize)) {
+        setSelectedSize(undefined);
+      }
+    }
+  }, [selectedColorHex, selectedSize]);
+
   // Show default color swatch and name
   const defaultColorHex =
     productMain.defaultColorHex ?? productMain.defaultColor ?? undefined;
@@ -523,27 +535,44 @@ export default function ProductDetails({
     : [];
   // console.log(availableColors);
 
-  // Get available sizes: include default size + variant sizes
-  const variantSizes = variants
-    ? [
-        ...new Set(
-          variants
-            .filter((v) =>
-              selectedColorHex ? v.colorHex === selectedColorHex : true,
-            )
-            .map((v) => v.size)
-            .filter(Boolean),
-        ),
-      ]
-    : [];
+  // Get available sizes based on selected color
+  const getAvailableSizesForColor = (colorHex?: string) => {
+    const sizes: string[] = [];
 
-  // Include default size in available sizes if it exists
-  const availableSizes = [
-    ...new Set([
-      ...(productMain.defaultSize ? [productMain.defaultSize] : []),
-      ...variantSizes,
-    ]),
-  ];
+    // If no color is selected, show all sizes (default + variants)
+    if (!colorHex) {
+      // Add default size if it exists
+      if (productMain.defaultSize) {
+        sizes.push(productMain.defaultSize);
+      }
+      // Add all variant sizes
+      if (variants) {
+        variants.forEach((v) => {
+          if (v.size) {
+            sizes.push(v.size);
+          }
+        });
+      }
+    } else {
+      // If a specific color is selected, only show sizes for that color
+      if (variants) {
+        variants.forEach((v) => {
+          if (v.colorHex === colorHex && v.size) {
+            sizes.push(v.size);
+          }
+        });
+      }
+
+      // If the selected color matches the default color, also include default size
+      if (colorHex === defaultColorHex && productMain.defaultSize) {
+        sizes.push(productMain.defaultSize);
+      }
+    }
+
+    return [...new Set(sizes)]; // Remove duplicates
+  };
+
+  const availableSizes = getAvailableSizesForColor(selectedColorHex);
 
   // Find the most specific variant (for now, only by color)
   let activeVariant: ProductVariant | undefined = undefined;
