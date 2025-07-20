@@ -522,7 +522,9 @@ export default function ProductDetails({
         .filter((v) => v.colorHex && v.colorName)
     : [];
   // console.log(availableColors);
-  const availableSizes = variants
+
+  // Get available sizes: include default size + variant sizes
+  const variantSizes = variants
     ? [
         ...new Set(
           variants
@@ -534,6 +536,14 @@ export default function ProductDetails({
         ),
       ]
     : [];
+
+  // Include default size in available sizes if it exists
+  const availableSizes = [
+    ...new Set([
+      ...(productMain.defaultSize ? [productMain.defaultSize] : []),
+      ...variantSizes,
+    ]),
+  ];
 
   // Find the most specific variant (for now, only by color)
   let activeVariant: ProductVariant | undefined = undefined;
@@ -902,14 +912,6 @@ export default function ProductDetails({
                             ) : null}
                           </button>
                         ) : null,
-                      )}
-                      {productMain.defaultSize && (
-                        <button
-                          className={`flex-shrink-0 rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
-                          onClick={() => setSelectedSize(undefined)}
-                        >
-                          {productMain.defaultSize}
-                        </button>
                       )}
                     </div>
                   </div>
