@@ -659,23 +659,24 @@ export default function ProductDetails({
 
   const availableSizes = getAvailableSizesForColor(selectedColorHex);
 
-  // Find the most specific variant (for now, only by color)
+  // Find the most specific variant (for now, only by color and size, using robust normalization)
   let activeVariant: ProductVariant | undefined = undefined;
-
   if (selectedColorHex && selectedSize) {
+    const selectedNorm = normalizeColorValue(selectedColorHex);
     activeVariant = variants.find((v) => {
-      const variantColorHex = v.colorHex ?? v.colorName ?? "";
+      const vColorHex = normalizeColorValue(v.colorHex ?? "");
+      const vColorName = normalizeColorValue(v.colorName ?? "");
       return (
-        normalizeColor(variantColorHex) === normalizeColor(selectedColorHex) &&
+        (vColorHex === selectedNorm || vColorName === selectedNorm) &&
         v.size === selectedSize
       );
     });
   } else if (selectedColorHex) {
+    const selectedNorm = normalizeColorValue(selectedColorHex);
     activeVariant = variants.find((v) => {
-      const variantColorHex = v.colorHex ?? v.colorName ?? "";
-      return (
-        normalizeColor(variantColorHex) === normalizeColor(selectedColorHex)
-      );
+      const vColorHex = normalizeColorValue(v.colorHex ?? "");
+      const vColorName = normalizeColorValue(v.colorName ?? "");
+      return vColorHex === selectedNorm || vColorName === selectedNorm;
     });
   } else if (selectedSize) {
     activeVariant = variants.find((v) => v.size === selectedSize);
