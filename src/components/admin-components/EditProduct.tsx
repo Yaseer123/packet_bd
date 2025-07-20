@@ -12,11 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProductImageStore } from "@/context/admin-context/ProductImageProvider";
-import { generateSKU } from "@/lib/utils";
 import type { CategoryAttribute } from "@/schemas/categorySchema";
 import { updateProductSchema } from "@/schemas/productSchema";
 import { api } from "@/trpc/react";
-import type { Variant, Variant as VariantType } from "@/types/ProductType";
+import type { Variant as VariantType } from "@/types/ProductType";
 import {
   closestCenter,
   DndContext,
@@ -51,6 +50,36 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { hexToIColor } from "./AddProduct";
 import PreSelectedCategory from "./PreSelectedCategory";
+
+type Variant = {
+  colorName?: string;
+  colorHex?: string;
+  imageId?: string;
+  images?: string[];
+  size: string;
+  price?: number;
+  discountedPrice?: number;
+  stock?: number;
+  sizes?: Array<{
+    size: string;
+    price?: number;
+    discountedPrice?: number;
+    stock?: number;
+  }>;
+};
+
+type VariantGroup = {
+  colorName: string;
+  colorHex: string;
+  imageId: string;
+  images: string[];
+  sizes: Array<{
+    size: string;
+    price: number;
+    discountedPrice: number;
+    stock: number;
+  }>;
+};
 
 // Sortable item component for specifications
 function SortableSpecificationItem({
@@ -98,6 +127,191 @@ function SortableSpecificationItem({
       <Button variant="destructive" onClick={() => onRemove(index)}>
         Remove
       </Button>
+    </div>
+  );
+}
+
+// ColorGroup component to handle individual color groups
+function ColorGroup({
+  group,
+  groupIdx,
+  onUpdate,
+  onRemove,
+  onShowImageGallery,
+  showImageGallery,
+}: {
+  group: VariantGroup;
+  groupIdx: number;
+  onUpdate: (index: number, updates: Partial<VariantGroup>) => void;
+  onRemove: (index: number) => void;
+  onShowImageGallery: (imageId: string) => void;
+  showImageGallery: string;
+}) {
+  const [color, setColor] = useColor(group.colorHex || "#ffffff");
+
+  // Sync local color state with parent state
+  useEffect(() => {
+    if (group.colorHex !== color.hex) {
+      setColor({
+        hex: group.colorHex,
+        rgb: { r: 255, g: 255, b: 255, a: 1 },
+        hsv: { h: 0, s: 0, v: 1, a: 1 },
+      });
+    }
+  }, [group.colorHex, color.hex, setColor]);
+
+  return (
+    <div className="mb-4 border-b pb-4">
+      <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          placeholder="Color Name"
+          value={group.colorName}
+          onChange={(e) => {
+            onUpdate(groupIdx, { colorName: e.target.value });
+          }}
+          className="w-40"
+        />
+        <ColorPicker
+          color={color}
+          onChange={(newColor) => {
+            setColor(newColor);
+            onUpdate(groupIdx, { colorHex: newColor.hex });
+          }}
+          hideInput={["rgb", "hsv"]}
+        />
+        <span
+          style={{
+            display: "inline-block",
+            width: 32,
+            height: 32,
+            backgroundColor: color.hex,
+            borderRadius: "50%",
+            border: "1px solid #ccc",
+          }}
+          aria-label={group.colorName}
+          title={group.colorName}
+        />
+        <span>
+          {group.colorName} ({color.hex})
+        </span>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={() => onRemove(groupIdx)}
+        >
+          Remove Color
+        </Button>
+      </div>
+      {/* Images for color group */}
+      <Button
+        type="button"
+        onClick={() => onShowImageGallery(group.imageId)}
+        className="mt-2 w-full"
+      >
+        Show Image Gallery
+      </Button>
+      {showImageGallery === group.imageId && (
+        <DndImageGallery imageId={group.imageId} onClose={onShowImageGallery} />
+      )}
+      {/* Sizes for this color */}
+      <div className="mt-2">
+        <Label>Sizes for {group.colorName || "Color"}</Label>
+        {group.sizes.map((sizeObj, sizeIdx) => (
+          <div key={sizeIdx} className="mb-2 flex items-center gap-2">
+            <Input
+              type="text"
+              placeholder="Size"
+              value={sizeObj.size}
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx ? { ...s, size: e.target.value } : s,
+                  ),
+                })
+              }
+              className="w-24"
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={sizeObj.price === 0 ? "" : sizeObj.price}
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx
+                      ? { ...s, price: Number(e.target.value) }
+                      : s,
+                  ),
+                })
+              }
+              className="w-24"
+            />
+            <Input
+              type="number"
+              placeholder="Discounted Price"
+              value={
+                sizeObj.discountedPrice === 0 ? "" : sizeObj.discountedPrice
+              }
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx
+                      ? { ...s, discountedPrice: Number(e.target.value) }
+                      : s,
+                  ),
+                })
+              }
+              className="w-32"
+            />
+            <Input
+              type="number"
+              placeholder="Stock"
+              value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx
+                      ? { ...s, stock: Number(e.target.value) }
+                      : s,
+                  ),
+                })
+              }
+              className="w-20"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.filter((_, si) => si !== sizeIdx),
+                })
+              }
+            >
+              Remove Size
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          onClick={() =>
+            onUpdate(groupIdx, {
+              sizes: [
+                ...group.sizes,
+                {
+                  size: "",
+                  price: 0,
+                  discountedPrice: 0,
+                  stock: 0,
+                },
+              ],
+            })
+          }
+          className="w-full"
+        >
+          Add Size
+        </Button>
+      </div>
     </div>
   );
 }
@@ -517,85 +731,141 @@ export default function EditProductForm({ productId }: { productId: string }) {
   );
   const [quantityStep, setQuantityStep] = useState(product?.quantityStep ?? 1);
 
-  // Variants state
-  const normalizeVariants = (variants: unknown): Variant[] => {
-    if (Array.isArray(variants)) {
-      // Ensure all items are objects (not null, not string/number)
-      return variants.filter(
-        (v): v is Variant =>
-          v !== null && typeof v === "object" && !Array.isArray(v),
-      );
-    }
-    if (typeof variants === "string") {
-      try {
-        const parsed: unknown = JSON.parse(variants);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(
-            (v): v is Variant =>
-              v !== null && typeof v === "object" && !Array.isArray(v),
-          );
-        }
-      } catch {
-        return [];
-      }
-      return [];
-    }
-    return [];
-  };
+  // [1] --- VARIANT STATE REFACTOR ---
+  // Remove old variants state and enableVariants state
+  // Add grouped state:
   const [enableVariants, setEnableVariants] = useState(
     Array.isArray(product?.variants) && product.variants.length > 0,
   );
-  const [variants, setVariants] = useState<Variant[]>(
-    normalizeVariants(product?.variants).map((v) => ({
-      ...v,
-      colorName: v.colorName ?? "",
-      colorHex: v.colorHex ?? "#ffffff",
-      images: v.images ?? [],
-      imageId: v.imageId ?? uuid(),
-    })),
-  );
-  const [variantGalleryOpen, setVariantGalleryOpen] = useState(false);
-  const [variantGalleryIdx, setVariantGalleryIdx] = useState<number | null>(
-    null,
-  );
+  const [colorGroups, setColorGroups] = useState<VariantGroup[]>(() => {
+    if (!Array.isArray(product?.variants)) return [];
+    const groups: Record<string, VariantGroup> = {};
+    (product.variants as Variant[]).forEach((v) => {
+      const key = (v.colorName ?? "") + "|" + (v.colorHex ?? "");
+      if (!groups[key]) {
+        groups[key] = {
+          colorName: v.colorName ?? "",
+          colorHex: v.colorHex ?? "#ffffff",
+          imageId: v.imageId ?? uuid(),
+          images: v.images ?? [],
+          sizes: [],
+        };
+      }
+      if (v.size) {
+        groups[key].sizes.push({
+          size: v.size,
+          price: v.price ?? 0,
+          discountedPrice: v.discountedPrice ?? 0,
+          stock: v.stock ?? 0,
+        });
+      }
+    });
+    // Remove default group (no color) from colorGroups
+    return Object.values(groups).filter(
+      (g) => g.colorName !== "" || g.colorHex !== "",
+    );
+  });
+  const [defaultGroup, setDefaultGroup] = useState<{
+    imageId: string;
+    images: string[];
+    sizes: Array<{
+      size: string;
+      price: number;
+      discountedPrice: number;
+      stock: number;
+    }>;
+  }>(() => {
+    // Find variants with no colorName/colorHex
+    const variants: Variant[] = Array.isArray(product?.variants)
+      ? (product.variants as Variant[])
+      : [];
+    const defaultVariants = variants.filter((v) => !v.colorName && !v.colorHex);
+    return {
+      imageId: defaultVariants[0]?.imageId ?? uuid(),
+      images: defaultVariants[0]?.images ?? [],
+      sizes: defaultVariants.map((v) => ({
+        size: v.size,
+        price: v.price ?? 0,
+        discountedPrice: v.discountedPrice ?? 0,
+        stock: v.stock ?? 0,
+      })),
+    };
+  });
 
+  // [2] --- VARIANT UI REFACTOR ---
+  // Replace the old variants UI with a grouped UI
   const handleVariantChange = (
     index: number,
     field: string,
     value: string | number | undefined,
   ) => {
-    setVariants((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
+    setColorGroups((prev) =>
+      prev.map((g, gi) =>
+        gi === index ? { ...g, colorName: value as string } : g,
+      ),
+    );
   };
   const handleVariantImageGallery = (index: number) => {
-    setVariantGalleryIdx(index);
-    setVariantGalleryOpen(true);
+    const group = colorGroups[index];
+    if (group) setShowImageGallery(group.imageId);
   };
   const handleAddVariant = () => {
-    setVariants((prev) => [
+    setColorGroups((prev) => [
       ...prev,
       {
-        price: undefined,
-        discountedPrice: undefined,
-        stock: undefined,
-        images: [],
+        colorName: "",
+        colorHex: "#ffffff",
         imageId: uuid(),
+        images: [],
+        sizes: [],
       },
     ]);
   };
   const handleRemoveVariant = (index: number) => {
-    setVariants((prev) => prev.filter((_, i) => i !== index));
+    setColorGroups((prev) => prev.filter((_, i) => i !== index));
   };
   const handleVariantImagesUpdate = (index: number, newImages: string[]) => {
-    setVariants((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], images: newImages };
-      return updated;
-    });
+    setColorGroups((prev) =>
+      prev.map((g, gi) => (gi === index ? { ...g, images: newImages } : g)),
+    );
   };
+
+  // Handler for updating color groups
+  const handleColorGroupUpdate = (
+    index: number,
+    updates: Partial<VariantGroup>,
+  ) => {
+    setColorGroups((prev) =>
+      prev.map((g, gi) => (gi === index ? { ...g, ...updates } : g)),
+    );
+  };
+
+  // [3] --- FLATTEN VARIANTS ON SUBMIT ---
+  // In handleSubmit, before updateProduct.mutate, flatten the grouped structure:
+  const flatVariants = [
+    ...colorGroups.flatMap((group) =>
+      group.sizes.map((size) => ({
+        colorName: group.colorName,
+        colorHex: group.colorHex,
+        size: size.size,
+        price: size.price,
+        discountedPrice: size.discountedPrice,
+        stock: size.stock,
+        images: group.images,
+        imageId: group.imageId,
+      })),
+    ),
+    ...defaultGroup.sizes.map((size) => ({
+      colorName: "",
+      colorHex: "",
+      size: size.size,
+      price: size.price,
+      discountedPrice: size.discountedPrice,
+      stock: size.stock,
+      images: defaultGroup.images,
+      imageId: defaultGroup.imageId,
+    })),
+  ];
 
   const handleSubmit = async (content: string) => {
     setPending(true);
@@ -641,38 +911,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       defaultColor: defaultColorName,
       defaultColorHex: defaultColorHex.hex,
       defaultSize,
-      variants:
-        enableVariants && variants.length > 0
-          ? variants.map((v) => ({
-              colorName: typeof v.colorName === "string" ? v.colorName : "",
-              colorHex: typeof v.colorHex === "string" ? v.colorHex : "",
-              size: typeof v.size === "string" ? v.size : "",
-              images: Array.isArray(v.images)
-                ? v.images.filter(
-                    (img): img is string => typeof img === "string",
-                  )
-                : [],
-              price:
-                v.price !== undefined && v.price !== null
-                  ? Number(v.price)
-                  : undefined,
-              discountedPrice:
-                v.discountedPrice !== undefined && v.discountedPrice !== null
-                  ? Number(v.discountedPrice)
-                  : undefined,
-              stock:
-                v.stock !== undefined && v.stock !== null
-                  ? Number(v.stock)
-                  : undefined,
-              sku: generateSKU({
-                categoryName: "XX", // TODO: Replace with actual category name variable if available
-                productId: productId,
-                color:
-                  typeof v.colorName === "string" ? v.colorName : "UNNAMED",
-                size: typeof v.size === "string" ? v.size : undefined,
-              }),
-            }))
-          : undefined,
+      variants: enableVariants ? flatVariants : undefined,
       minQuantity,
       maxQuantity,
       quantityStep,
@@ -1094,38 +1333,41 @@ export default function EditProductForm({ productId }: { productId: string }) {
         {enableVariants && (
           <div className="col-span-2 mt-2 flex flex-col gap-4 rounded-md border bg-gray-50 p-3">
             <Label className="text-base">Product Variants</Label>
-            {variants.map((variant, idx) => (
-              <VariantRow
-                key={idx}
-                variant={variant}
-                idx={idx}
-                handleVariantChange={handleVariantChange}
-                handleVariantImageGallery={handleVariantImageGallery}
-                handleRemoveVariant={handleRemoveVariant}
-                handleVariantImagesUpdate={handleVariantImagesUpdate}
+            {/* Color Groups */}
+            {colorGroups.map((group, groupIdx) => (
+              <ColorGroup
+                key={group.imageId}
+                group={group}
+                groupIdx={groupIdx}
+                onUpdate={handleColorGroupUpdate}
+                onRemove={handleRemoveVariant}
+                onShowImageGallery={handleShowImageGallery}
+                showImageGallery={showImageGallery}
               />
             ))}
-            <Button type="button" onClick={handleAddVariant} className="w-40">
-              Add Variant
+            <Button
+              type="button"
+              onClick={() =>
+                setColorGroups((prev) => [
+                  ...prev,
+                  {
+                    colorName: "",
+                    colorHex: "#ffffff",
+                    imageId: uuid(),
+                    images: [],
+                    sizes: [],
+                  },
+                ])
+              }
+              className="w-full"
+            >
+              Add Color
             </Button>
           </div>
         )}
 
         {/* Variant Image Gallery Modal */}
-        {variantGalleryOpen &&
-          variantGalleryIdx !== null &&
-          variants[variantGalleryIdx] !== undefined && (
-            <VariantImageGalleryModal
-              variantIndex={variantGalleryIdx}
-              images={variants[variantGalleryIdx]?.images ?? []}
-              onClose={() => {
-                setVariantGalleryOpen(false);
-              }}
-              onImagesChange={(imgs: string[]) =>
-                handleVariantImagesUpdate(variantGalleryIdx, imgs)
-              }
-            />
-          )}
+        {/* This modal is no longer needed as variants are managed directly */}
       </div>
     </RichEditor>
   );

@@ -18,7 +18,8 @@ import { z } from "zod";
 // Helper to ensure variants are an array of objects
 function isVariant(v: unknown): v is Variant {
   return (
-    typeof v === "object" && v !== null && !Array.isArray(v) && "sku" in v // 'sku' is a property of Variant
+    typeof v === "object" && v !== null && !Array.isArray(v)
+    // Do NOT require 'sku' property - backend will generate it
   );
 }
 

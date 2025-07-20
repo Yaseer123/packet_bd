@@ -502,9 +502,42 @@ export default function ProductDetails({
   const [selectedColorName, setSelectedColorName] = useState<
     string | undefined
   >(productMain.defaultColor ?? undefined);
-  const [selectedSize, setSelectedSize] = useState<string | undefined>(
-    productMain.defaultSize ?? undefined,
-  );
+  // Initialize selected size with default size if available
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(() => {
+    // If there's a default size, use it
+    if (productMain.defaultSize) {
+      return productMain.defaultSize;
+    }
+    // Otherwise, if there are variants with sizes, use the first available size
+    if (variants && variants.length > 0) {
+      const firstVariantWithSize = variants.find((v) => v.size);
+      return firstVariantWithSize?.size;
+    }
+    return undefined;
+  });
+
+  // Reset and auto-select size when color changes
+  useEffect(() => {
+    if (selectedColorHex) {
+      const availableSizesForColor =
+        getAvailableSizesForColor(selectedColorHex);
+      // If current selected size is not available for the new color, select the first available size
+      if (selectedSize && !availableSizesForColor.includes(selectedSize)) {
+        setSelectedSize(availableSizesForColor[0] ?? undefined);
+      }
+      // If no size is selected but sizes are available, select the first one
+      else if (!selectedSize && availableSizesForColor.length > 0) {
+        setSelectedSize(availableSizesForColor[0]);
+      }
+    }
+  }, [selectedColorHex, selectedSize]);
+
+  // Initialize with default size when component mounts
+  useEffect(() => {
+    if (!selectedSize && productMain.defaultSize) {
+      setSelectedSize(productMain.defaultSize);
+    }
+  }, [selectedSize, productMain.defaultSize]);
 
   // Show default color swatch and name
   const defaultColorHex =
@@ -512,8 +545,11 @@ export default function ProductDetails({
   const defaultColorName =
     productMain.defaultColor ?? productMain.defaultColorHex ?? undefined;
 
-  // Get available colors and sizes based on current selection
-  const availableColors = variants
+  // Helper function to normalize color values for comparison
+  const normalizeColor = (color: string) => color.toLowerCase().trim();
+
+  // Normalize and get available colors from variants
+  const variantColors = variants
     ? variants
         .map((v) => ({
           colorHex: v.colorHex ?? v.colorName ?? "#ffffff",
@@ -521,28 +557,127 @@ export default function ProductDetails({
         }))
         .filter((v) => v.colorHex && v.colorName)
     : [];
-  // console.log(availableColors);
-  const availableSizes = variants
-    ? [
-        ...new Set(
-          variants
-            .filter((v) =>
-              selectedColorHex ? v.colorHex === selectedColorHex : true,
-            )
-            .map((v) => v.size)
-            .filter(Boolean),
-        ),
-      ]
-    : [];
 
-  // Find the most specific variant (for now, only by color)
+  // Build a unified color list: combine default color and variant colors without duplicates
+  const unifiedColors: { colorHex: string; colorName: string }[] = [];
+
+  // Create a map to track unique colors by both hex and name
+  const colorMap = new Map<string, string>();
+
+  // Add default color first (if it exists)
+  if (defaultColorHex) {
+    const normalizedDefaultColor = normalizeColor(defaultColorHex);
+    colorMap.set(normalizedDefaultColor, defaultColorName ?? defaultColorHex);
+  }
+
+  // Add variant colors, checking for duplicates by normalized color values
+  variantColors.forEach((colorObj) => {
+    const normalizedColorHex = normalizeColor(colorObj.colorHex);
+    const normalizedColorName = normalizeColor(colorObj.colorName);
+
+    // Check if this color already exists (by hex or name)
+    let colorExists = false;
+    colorMap.forEach((existingName, existingHex) => {
+      if (
+        normalizeColor(existingHex) === normalizedColorHex ||
+        normalizeColor(existingName) === normalizedColorName
+      ) {
+        colorExists = true;
+      }
+    });
+
+    // Only add if it doesn't exist
+    if (!colorExists) {
+      colorMap.set(normalizedColorHex, colorObj.colorName);
+    }
+  });
+
+  // Convert map to array
+  colorMap.forEach((colorName, colorHex) => {
+    unifiedColors.push({
+      colorHex,
+      colorName,
+    });
+  });
+
+  // Helper to convert color names to hex for common colors
+  const colorNameToHex: Record<string, string> = {
+    white: "#ffffff",
+    black: "#000000",
+    red: "#ff0000",
+    blue: "#0000ff",
+    green: "#008000",
+    yellow: "#ffff00",
+    // ...add more as needed
+  };
+  function normalizeColorValue(color: string) {
+    if (!color) return "";
+    const c = color.trim().toLowerCase();
+    // If it's a hex, return as is
+    if (c.startsWith("#")) return c;
+    // If it's a name, convert to hex if possible
+    return colorNameToHex[c] ?? c;
+  }
+
+  // Get available sizes based on selected color
+  const getAvailableSizesForColor = (colorHex?: string) => {
+    const sizes: string[] = [];
+    if (!colorHex) {
+      // No color selected: show all sizes
+      if (productMain.defaultSize) sizes.push(productMain.defaultSize);
+      if (variants) {
+        variants.forEach((v) => {
+          if (v.size) sizes.push(v.size);
+        });
+      }
+    } else {
+      const selectedNorm = normalizeColorValue(colorHex);
+      // Default product
+      if (
+        productMain.defaultSize &&
+        (normalizeColorValue(defaultColorHex ?? "") === selectedNorm ||
+          normalizeColorValue(defaultColorName ?? "") === selectedNorm)
+      ) {
+        sizes.push(productMain.defaultSize);
+      }
+      // Variants
+      if (variants) {
+        variants.forEach((v) => {
+          const vColorHex = normalizeColorValue(v.colorHex ?? "");
+          const vColorName = normalizeColorValue(v.colorName ?? "");
+          if (
+            (vColorHex && vColorHex === selectedNorm) ||
+            (vColorName && vColorName === selectedNorm)
+          ) {
+            if (v.size) sizes.push(v.size);
+          }
+        });
+      }
+    }
+    return [...new Set(sizes)];
+  };
+
+  const availableSizes = getAvailableSizesForColor(selectedColorHex);
+
+  // Find the most specific variant (for now, only by color and size, using robust normalization)
   let activeVariant: ProductVariant | undefined = undefined;
   if (selectedColorHex && selectedSize) {
-    activeVariant = variants.find(
-      (v) => v.colorHex === selectedColorHex && v.size === selectedSize,
-    );
+    const selectedNorm = normalizeColorValue(selectedColorHex);
+    activeVariant = variants.find((v) => {
+      const vColorHex = normalizeColorValue(v.colorHex ?? "");
+      const vColorName = normalizeColorValue(v.colorName ?? "");
+      return (
+        (vColorHex === selectedNorm || vColorName === selectedNorm) &&
+        v.size === selectedSize
+      );
+    });
   } else if (selectedColorHex) {
-    activeVariant = variants.find((v) => v.colorHex === selectedColorHex);
+    const selectedNorm = normalizeColorValue(selectedColorHex);
+    activeVariant = variants.find((v) => {
+      const vColorHex = normalizeColorValue(v.colorHex ?? "");
+      const vColorName = normalizeColorValue(v.colorName ?? "");
+      return vColorHex === selectedNorm || vColorName === selectedNorm;
+    });
   } else if (selectedSize) {
     activeVariant = variants.find((v) => v.size === selectedSize);
   }
@@ -572,26 +707,6 @@ export default function ProductDetails({
     color: selectedColorName ?? "UNNAMED",
     size: selectedSize,
   });
-
-  // Build a unified color list: default color (if set) + unique variant colors (excluding duplicate with default)
-  const unifiedColors: { colorHex: string; colorName: string }[] = [];
-  if (defaultColorHex) {
-    unifiedColors.push({
-      colorHex: defaultColorHex,
-      colorName: defaultColorName ?? defaultColorHex,
-    });
-  }
-  if (availableColors.length > 0) {
-    availableColors.forEach((colorObj) => {
-      // Avoid duplicate with default color
-      if (!unifiedColors.some((c) => c.colorHex === colorObj.colorHex)) {
-        unifiedColors.push({
-          colorHex: colorObj.colorHex ?? "#ffffff",
-          colorName: colorObj.colorName ?? colorObj.colorHex ?? "Unnamed",
-        });
-      }
-    });
-  }
 
   const [shouldScrollToQuestion, setShouldScrollToQuestion] = useState(false);
 
@@ -854,7 +969,6 @@ export default function ProductDetails({
                               onClick={() => {
                                 setSelectedColorHex(colorObj.colorHex);
                                 setSelectedColorName(colorObj.colorName);
-                                setSelectedSize(undefined);
                               }}
                               aria-label={colorObj.colorName}
                               title={colorObj.colorName}
@@ -891,25 +1005,12 @@ export default function ProductDetails({
                         size ? (
                           <button
                             key={size + idx}
-                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"} ${size === productMain.defaultSize ? "ring-2 ring-blue-400" : ""}`}
+                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"}`}
                             onClick={() => setSelectedSize(size)}
                           >
                             {size}
-                            {size === productMain.defaultSize ? (
-                              <span className="ml-1 text-xs text-blue-600">
-                                (default)
-                              </span>
-                            ) : null}
                           </button>
                         ) : null,
-                      )}
-                      {productMain.defaultSize && (
-                        <button
-                          className={`flex-shrink-0 rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
-                          onClick={() => setSelectedSize(undefined)}
-                        >
-                          {productMain.defaultSize}
-                        </button>
                       )}
                     </div>
                   </div>
