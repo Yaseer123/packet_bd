@@ -131,6 +131,191 @@ function SortableSpecificationItem({
   );
 }
 
+// ColorGroup component to handle individual color groups
+function ColorGroup({
+  group,
+  groupIdx,
+  onUpdate,
+  onRemove,
+  onShowImageGallery,
+  showImageGallery,
+}: {
+  group: VariantGroup;
+  groupIdx: number;
+  onUpdate: (index: number, updates: Partial<VariantGroup>) => void;
+  onRemove: (index: number) => void;
+  onShowImageGallery: (imageId: string) => void;
+  showImageGallery: string;
+}) {
+  const [color, setColor] = useColor(group.colorHex || "#ffffff");
+
+  // Sync local color state with parent state
+  useEffect(() => {
+    if (group.colorHex !== color.hex) {
+      setColor({
+        hex: group.colorHex,
+        rgb: { r: 255, g: 255, b: 255, a: 1 },
+        hsv: { h: 0, s: 0, v: 1, a: 1 },
+      });
+    }
+  }, [group.colorHex, color.hex, setColor]);
+
+  return (
+    <div className="mb-4 border-b pb-4">
+      <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          placeholder="Color Name"
+          value={group.colorName}
+          onChange={(e) => {
+            onUpdate(groupIdx, { colorName: e.target.value });
+          }}
+          className="w-40"
+        />
+        <ColorPicker
+          color={color}
+          onChange={(newColor) => {
+            setColor(newColor);
+            onUpdate(groupIdx, { colorHex: newColor.hex });
+          }}
+          hideInput={["rgb", "hsv"]}
+        />
+        <span
+          style={{
+            display: "inline-block",
+            width: 32,
+            height: 32,
+            backgroundColor: color.hex,
+            borderRadius: "50%",
+            border: "1px solid #ccc",
+          }}
+          aria-label={group.colorName}
+          title={group.colorName}
+        />
+        <span>
+          {group.colorName} ({color.hex})
+        </span>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={() => onRemove(groupIdx)}
+        >
+          Remove Color
+        </Button>
+      </div>
+      {/* Images for color group */}
+      <Button
+        type="button"
+        onClick={() => onShowImageGallery(group.imageId)}
+        className="mt-2 w-full"
+      >
+        Show Image Gallery
+      </Button>
+      {showImageGallery === group.imageId && (
+        <DndImageGallery imageId={group.imageId} onClose={onShowImageGallery} />
+      )}
+      {/* Sizes for this color */}
+      <div className="mt-2">
+        <Label>Sizes for {group.colorName || "Color"}</Label>
+        {group.sizes.map((sizeObj, sizeIdx) => (
+          <div key={sizeIdx} className="mb-2 flex items-center gap-2">
+            <Input
+              type="text"
+              placeholder="Size"
+              value={sizeObj.size}
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx ? { ...s, size: e.target.value } : s,
+                  ),
+                })
+              }
+              className="w-24"
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={sizeObj.price === 0 ? "" : sizeObj.price}
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx
+                      ? { ...s, price: Number(e.target.value) }
+                      : s,
+                  ),
+                })
+              }
+              className="w-24"
+            />
+            <Input
+              type="number"
+              placeholder="Discounted Price"
+              value={
+                sizeObj.discountedPrice === 0 ? "" : sizeObj.discountedPrice
+              }
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx
+                      ? { ...s, discountedPrice: Number(e.target.value) }
+                      : s,
+                  ),
+                })
+              }
+              className="w-32"
+            />
+            <Input
+              type="number"
+              placeholder="Stock"
+              value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+              onChange={(e) =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.map((s, si) =>
+                    si === sizeIdx
+                      ? { ...s, stock: Number(e.target.value) }
+                      : s,
+                  ),
+                })
+              }
+              className="w-20"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() =>
+                onUpdate(groupIdx, {
+                  sizes: group.sizes.filter((_, si) => si !== sizeIdx),
+                })
+              }
+            >
+              Remove Size
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          onClick={() =>
+            onUpdate(groupIdx, {
+              sizes: [
+                ...group.sizes,
+                {
+                  size: "",
+                  price: 0,
+                  discountedPrice: 0,
+                  stock: 0,
+                },
+              ],
+            })
+          }
+          className="w-full"
+        >
+          Add Size
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function EditProductForm({ productId }: { productId: string }) {
   const [product] = api.product.getProductByIdAdmin.useSuspenseQuery({
     id: productId,
@@ -645,6 +830,16 @@ export default function EditProductForm({ productId }: { productId: string }) {
     );
   };
 
+  // Handler for updating color groups
+  const handleColorGroupUpdate = (
+    index: number,
+    updates: Partial<VariantGroup>,
+  ) => {
+    setColorGroups((prev) =>
+      prev.map((g, gi) => (gi === index ? { ...g, ...updates } : g)),
+    );
+  };
+
   // [3] --- FLATTEN VARIANTS ON SUBMIT ---
   // In handleSubmit, before updateProduct.mutate, flatten the grouped structure:
   const flatVariants = [
@@ -1140,221 +1335,15 @@ export default function EditProductForm({ productId }: { productId: string }) {
             <Label className="text-base">Product Variants</Label>
             {/* Color Groups */}
             {colorGroups.map((group, groupIdx) => (
-              <div key={group.imageId} className="mb-4 border-b pb-4">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="text"
-                    placeholder="Color Name"
-                    value={group.colorName}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setColorGroups((prev) =>
-                        prev.map((g, i) =>
-                          i === groupIdx ? { ...g, colorName: val } : g,
-                        ),
-                      );
-                    }}
-                    className="w-40"
-                  />
-                  <ColorPicker
-                    color={{
-                      hex: group.colorHex,
-                      rgb: { r: 255, g: 255, b: 255, a: 1 },
-                      hsv: { h: 0, s: 0, v: 100, a: 1 },
-                    }}
-                    onChange={(color) =>
-                      setColorGroups((prev) =>
-                        prev.map((g, i) =>
-                          i === groupIdx ? { ...g, colorHex: color.hex } : g,
-                        ),
-                      )
-                    }
-                    hideInput={["rgb", "hsv"]}
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() =>
-                      setColorGroups((prev) =>
-                        prev.filter((_, i) => i !== groupIdx),
-                      )
-                    }
-                  >
-                    Remove Color
-                  </Button>
-                </div>
-                {/* Images for color group */}
-                <Button
-                  type="button"
-                  onClick={() => handleShowImageGallery(group.imageId)}
-                  className="mt-2 w-full"
-                >
-                  Show Image Gallery
-                </Button>
-                {showImageGallery === group.imageId && (
-                  <DndImageGallery
-                    imageId={group.imageId}
-                    onClose={handleShowImageGallery}
-                  />
-                )}
-                {/* Sizes for this color */}
-                <div className="mt-2">
-                  <Label>Sizes for {group.colorName || "Color"}</Label>
-                  {group.sizes.map((sizeObj, sizeIdx) => (
-                    <div key={sizeIdx} className="mb-2 flex items-center gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Size"
-                        value={sizeObj.size}
-                        onChange={(e) =>
-                          setColorGroups((prev) =>
-                            prev.map((g, gi) =>
-                              gi === groupIdx
-                                ? {
-                                    ...g,
-                                    sizes: g.sizes.map((s, si) =>
-                                      si === sizeIdx
-                                        ? { ...s, size: e.target.value }
-                                        : s,
-                                    ),
-                                  }
-                                : g,
-                            ),
-                          )
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={sizeObj.price === 0 ? "" : sizeObj.price}
-                        onChange={(e) =>
-                          setColorGroups((prev) =>
-                            prev.map((g, gi) =>
-                              gi === groupIdx
-                                ? {
-                                    ...g,
-                                    sizes: g.sizes.map((s, si) =>
-                                      si === sizeIdx
-                                        ? {
-                                            ...s,
-                                            price: Number(e.target.value),
-                                          }
-                                        : s,
-                                    ),
-                                  }
-                                : g,
-                            ),
-                          )
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Discounted Price"
-                        value={
-                          sizeObj.discountedPrice === 0
-                            ? ""
-                            : sizeObj.discountedPrice
-                        }
-                        onChange={(e) =>
-                          setColorGroups((prev) =>
-                            prev.map((g, gi) =>
-                              gi === groupIdx
-                                ? {
-                                    ...g,
-                                    sizes: g.sizes.map((s, si) =>
-                                      si === sizeIdx
-                                        ? {
-                                            ...s,
-                                            discountedPrice: Number(
-                                              e.target.value,
-                                            ),
-                                          }
-                                        : s,
-                                    ),
-                                  }
-                                : g,
-                            ),
-                          )
-                        }
-                        className="w-32"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Stock"
-                        value={sizeObj.stock === 0 ? "" : sizeObj.stock}
-                        onChange={(e) =>
-                          setColorGroups((prev) =>
-                            prev.map((g, gi) =>
-                              gi === groupIdx
-                                ? {
-                                    ...g,
-                                    sizes: g.sizes.map((s, si) =>
-                                      si === sizeIdx
-                                        ? {
-                                            ...s,
-                                            stock: Number(e.target.value),
-                                          }
-                                        : s,
-                                    ),
-                                  }
-                                : g,
-                            ),
-                          )
-                        }
-                        className="w-20"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() =>
-                          setColorGroups((prev) =>
-                            prev.map((g, gi) =>
-                              gi === groupIdx
-                                ? {
-                                    ...g,
-                                    sizes: g.sizes.filter(
-                                      (_, si) => si !== sizeIdx,
-                                    ),
-                                  }
-                                : g,
-                            ),
-                          )
-                        }
-                      >
-                        Remove Size
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      setColorGroups((prev) =>
-                        prev.map((g, gi) =>
-                          gi === groupIdx
-                            ? {
-                                ...g,
-                                sizes: [
-                                  ...g.sizes,
-                                  {
-                                    size: "",
-                                    price: 0,
-                                    discountedPrice: 0,
-                                    stock: 0,
-                                  },
-                                ],
-                              }
-                            : g,
-                        ),
-                      )
-                    }
-                    className="w-full"
-                  >
-                    Add Size
-                  </Button>
-                </div>
-              </div>
+              <ColorGroup
+                key={group.imageId}
+                group={group}
+                groupIdx={groupIdx}
+                onUpdate={handleColorGroupUpdate}
+                onRemove={handleRemoveVariant}
+                onShowImageGallery={handleShowImageGallery}
+                showImageGallery={showImageGallery}
+              />
             ))}
             <Button
               type="button"
