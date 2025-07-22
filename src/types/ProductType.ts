@@ -70,6 +70,9 @@ export interface ProductType {
   descriptionImageId?: string | null;
   categoryAttributes?: JsonValue;
   position?: number;
+  minQuantity: number;
+  maxQuantity: number | null;
+  quantityStep: number;
 }
 
 export type ProductWithCategory = Product & {
@@ -78,4 +81,7 @@ export type ProductWithCategory = Product & {
   defaultColorHex?: string | null;
   defaultSize?: string | null;
   variants?: Variant[] | null;
+  minQuantity: number;
+  maxQuantity: number | null;
+  quantityStep: number;
 };

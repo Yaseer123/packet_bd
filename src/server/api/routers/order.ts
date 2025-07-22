@@ -11,34 +11,37 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // --- Branded Email Components ---
 const emailHeader = `
   <div style="background: #fff; text-align: center; padding: 24px 0 8px 0;">
-    <img src="https://packetbd.com/images/brand/RINORS.png" alt="Rinors" style="height: 48px;" />
+    <img src="https://www.packetbd.com/light.png" alt="Rinors" style="height: 75px;" />
   </div>
 `;
 const contactInfo = `
   <div style="text-align: center; font-size: 14px; color: #333; margin-bottom: 12px;">
     <strong>Contact:</strong> contact@packetbd.com | <strong>Phone:</strong> 01824443227<br/>
-    <span>41/5 East Badda Dhaka, Bangladesh</span>
+    <span>Plot-1832, Bir Uttam Rafiqul Islam Ave, Dhaka, Bangladesh</span>
   </div>
 `;
 const socialLinks = `
   <div style="text-align: center; margin: 12px 0;">
-    <a href="https://www.facebook.com/profile.php?id=61572946813700" style="margin: 0 6px; text-decoration: none;" target="_blank">
+    <a href="https://www.facebook.com/people/Packet-BD/61578171175015/" style="margin: 0 6px; text-decoration: none;" target="_blank">
       <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/facebook.svg" alt="Facebook" width="24" height="24" style="vertical-align:middle;"/>
     </a>
-    <a href="https://www.instagram.com/rinors_electronic_store/" style="margin: 0 6px; text-decoration: none;" target="_blank">
+    <a href="https://www.instagram.com/packetbd3" style="margin: 0 6px; text-decoration: none;" target="_blank">
       <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/instagram.svg" alt="Instagram" width="24" height="24" style="vertical-align:middle;"/>
     </a>
-    <a href="https://x.com/Rinors_Corpor" style="margin: 0 6px; text-decoration: none;" target="_blank">
-      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg" alt="X (Twitter)" width="24" height="24" style="vertical-align:middle;"/>
-    </a>
-    <a href="https://www.tiktok.com/@rinors_ecommerce" style="margin: 0 6px; text-decoration: none;" target="_blank">
-      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/tiktok.svg" alt="TikTok" width="24" height="24" style="vertical-align:middle;"/>
-    </a>
-    <a href="https://www.youtube.com/@rinorsecommerce" style="margin: 0 6px; text-decoration: none;" target="_blank">
-      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/youtube.svg" alt="YouTube" width="24" height="24" style="vertical-align:middle;"/>
-    </a>
+
   </div>
 `;
+
+// <a href="https://x.com/Rinors_Corpor" style="margin: 0 6px; text-decoration: none;" target="_blank">
+// <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg" alt="X (Twitter)" width="24" height="24" style="vertical-align:middle;"/>
+// </a>
+// <a href="https://www.tiktok.com/@rinors_ecommerce" style="margin: 0 6px; text-decoration: none;" target="_blank">
+// <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/tiktok.svg" alt="TikTok" width="24" height="24" style="vertical-align:middle;"/>
+// </a>
+// <a href="https://www.youtube.com/@rinorsecommerce" style="margin: 0 6px; text-decoration: none;" target="_blank">
+// <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/youtube.svg" alt="YouTube" width="24" height="24" style="vertical-align:middle;"/>
+// </a>
+
 const importantLinks = `
   <div style="text-align: center; margin-bottom: 16px; font-size: 14px;">
     <a href="https://packetbd.com/contact" style="margin: 0 10px; color: #007b55; text-decoration: none;">Contact Us</a> |
@@ -212,10 +215,8 @@ export const orderRouter = createTRPCRouter({
           acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
         0,
       );
-      // const shippingCost = input.shippingCost ?? 0;
-      // const total = productTotal + shippingCost;
-      const shippingCost = 0; // Shipping is free for now
-      const total = productTotal; // No shipping cost added
+      const shippingCost = input.shippingCost ?? 0;
+      const total = productTotal + shippingCost;
 
       // Start transaction (DB only)
       const order = await ctx.db.$transaction(async (tx) => {
@@ -363,7 +364,7 @@ export const orderRouter = createTRPCRouter({
           ${emailHeader}
           <div style="padding: 24px 32px;">
             <h2 style="margin: 0; color: #007b55;">New Order Placed</h2>
-            <p style="font-size: 16px;">A new order has been placed on Rinors Ecommerce Admin.</p>
+            <p style="font-size: 16px;">A new order has been placed on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${productTotal}</div>
             <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div>
@@ -400,11 +401,11 @@ export const orderRouter = createTRPCRouter({
                 <p>Thank you for your order. Your order has been <b>confirmed</b> and is being processed.</p>
                 <p><strong>Order ID:</strong> ${order.id}</p>
                 <p><strong>Subtotal:</strong> ৳${productTotal}</p>
-                <!-- <p><strong>Shipping:</strong> ৳${shippingCost}</p> -->
+                <p><strong>Shipping:</strong> ৳${shippingCost}</p>
                 <p><strong>Total:</strong> ৳${order.total}</p>
                 ${productsTable}
                 ${addressBlock}
-                <!-- ${notesBlock} -->
+                ${notesBlock}
                 <p style="margin-top: 32px; color: #888; font-size: 13px;">If you have any questions, reply to this email.</p>
               </div>
               ${contactInfo}
@@ -676,15 +677,13 @@ export const orderRouter = createTRPCRouter({
       );
 
       // Calculate product total
-      const productTotal = input.cartItems.reduce(
+      const guestProductTotal = input.cartItems.reduce(
         (acc, item) =>
           acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
         0,
       );
-      // const shippingCost = input.shippingCost ?? 0;
-      // const total = productTotal + shippingCost;
-      const shippingCost = 0; // Shipping is free for now
-      const total = productTotal; // No shipping cost added
+      const guestShippingCost = input.shippingCost ?? 0;
+      const guestTotal = guestProductTotal + guestShippingCost;
 
       // Start transaction (DB only)
       const order = await ctx.db.$transaction(async (tx) => {
@@ -697,8 +696,8 @@ export const orderRouter = createTRPCRouter({
         return await tx.order.create({
           data: {
             userId: null,
-            total,
-            shippingCost,
+            total: guestTotal,
+            shippingCost: guestShippingCost,
             ...(input.addressId ? { addressId: input.addressId } : {}),
             notes: input.notes,
             items: {
@@ -821,14 +820,14 @@ export const orderRouter = createTRPCRouter({
           ${emailHeader}
           <div style="padding: 24px 32px;">
             <h2 style="margin: 0; color: #007b55;">New Guest Order Placed</h2>
-            <p style="font-size: 16px;">A new guest order has been placed on Rinors Ecommerce Admin.</p>
+            <p style="font-size: 16px;">A new guest order has been placed on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
-            <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${productTotal}</div>
-            <!-- <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div> -->
-            <div style="margin-bottom: 16px;"><strong>Total:</strong> ৳${order.total}</div>
+            <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${guestProductTotal}</div>
+            <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${guestShippingCost}</div>
+            <div style="margin-bottom: 16px;"><strong>Total:</strong> ৳${guestTotal}</div>
             ${guestProductsTable}
             ${addressBlock}
-            <!-- ${notesBlock} -->
+            ${notesBlock}
             <p style="margin-top: 32px; color: #888; font-size: 13px;">Please process this order promptly.</p>
           </div>
           ${contactInfo}
@@ -854,12 +853,12 @@ export const orderRouter = createTRPCRouter({
               <p>Hi${address.name ? ` ${address.name}` : ""},</p>
               <p>Thank you for your order. Your order has been <b>confirmed</b> and is being processed.</p>
               <p><strong>Order ID:</strong> ${order.id}</p>
-              <p><strong>Subtotal:</strong> ৳${productTotal}</p>
-              <!-- <p><strong>Shipping:</strong> ৳${shippingCost}</p> -->
-              <p><strong>Total:</strong> ৳${order.total}</p>
+              <p><strong>Subtotal:</strong> ৳${guestProductTotal}</p>
+              <p><strong>Shipping:</strong> ৳${guestShippingCost}</p>
+              <p><strong>Total:</strong> ৳${guestTotal}</p>
               ${guestProductsTable}
               ${addressBlock}
-              <!-- ${notesBlock} -->
+              ${notesBlock}
               <p style="margin-top: 32px; color: #888; font-size: 13px;">If you have any questions, reply to this email.</p>
             </div>
             ${contactInfo}

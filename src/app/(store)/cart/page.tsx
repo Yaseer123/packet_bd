@@ -123,25 +123,58 @@ const Cart = () => {
                             <div className="quantity-block bg-surface flex w-24 flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] p-2 focus:border-[#ddd] md:w-20 md:p-3">
                               <Minus
                                 onClick={() => {
-                                  if (product.quantity > 1) {
+                                  if (
+                                    product.quantity >
+                                    (product.minQuantity ?? 1)
+                                  ) {
                                     handleQuantityChange(
                                       product.id,
-                                      product.quantity - 1,
+                                      product.quantity -
+                                        (product.quantityStep ?? 1),
                                     );
                                   }
                                 }}
-                                className={`cursor-pointer text-base disabled:pointer-events-none disabled:text-secondary max-md:text-sm ${product.quantity === 1 ? "disabled" : ""}`}
+                                className={`cursor-pointer text-base disabled:pointer-events-none disabled:text-secondary max-md:text-sm ${product.quantity === (product.minQuantity ?? 1) ? "disabled" : ""}`}
                               />
-                              <div className="quantity text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6">
-                                {product.quantity}
-                              </div>
-                              <Plus
-                                onClick={() =>
-                                  handleQuantityChange(
-                                    product.id,
-                                    product.quantity + 1,
+                              <input
+                                type="number"
+                                className="quantity border-none bg-transparent text-center text-base font-semibold outline-none"
+                                style={{ width: "80px" }}
+                                min={product.minQuantity ?? 1}
+                                max={product.maxQuantity}
+                                step={product.quantityStep ?? 1}
+                                value={product.quantity}
+                                onChange={(e) => {
+                                  let val = Number(e.target.value);
+                                  if (isNaN(val))
+                                    val = product.minQuantity ?? 1;
+                                  if (val < (product.minQuantity ?? 1))
+                                    val = product.minQuantity ?? 1;
+                                  if (
+                                    product.maxQuantity !== undefined &&
+                                    val > product.maxQuantity
                                   )
-                                }
+                                    val = product.maxQuantity;
+                                  handleQuantityChange(product.id, val);
+                                }}
+                              />
+                              <Plus
+                                onClick={() => {
+                                  const next =
+                                    product.quantity +
+                                    (product.quantityStep ?? 1);
+                                  if (
+                                    product.maxQuantity !== undefined &&
+                                    next > product.maxQuantity
+                                  ) {
+                                    handleQuantityChange(
+                                      product.id,
+                                      product.maxQuantity,
+                                    );
+                                  } else {
+                                    handleQuantityChange(product.id, next);
+                                  }
+                                }}
                                 className="cursor-pointer text-base disabled:pointer-events-none disabled:text-secondary max-md:text-sm"
                               />
                             </div>

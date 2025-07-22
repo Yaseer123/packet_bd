@@ -156,7 +156,10 @@ export default function Menu({
 
   return (
     <>
-      <TopNav props="style-one bg-black " />
+      {/* Show TopNav only on mobile and desktop, hide on md and lg (tablets) */}
+      <div className="block md:hidden xl:block">
+        <TopNav props="style-one bg-black " />
+      </div>
 
       {/* Main header - sticky on mobile */}
       <div className="header-menu w-full bg-white lg:pt-5">
@@ -181,7 +184,7 @@ export default function Menu({
                   width={260}
                   height={80}
                   priority
-                  className="h-auto w-[300px] object-contain  ml-[-30px] lg:ml-[-40px]"
+                  className="ml-[-30px] h-auto w-[300px] object-contain lg:ml-[-40px]"
                 />
               </Link>
               <div className="form-search relative flex h-[44px] w-2/3 items-center pl-8 max-lg:hidden">
@@ -398,6 +401,16 @@ export default function Menu({
           <div className="flex h-full items-center justify-between">
             {/* Category navigation menu - left side */}
             <div className="left flex h-full items-center">
+              {/* All Products link */}
+              <div className="group relative h-full">
+                <Link
+                  href="/products"
+                  className="relative flex h-full items-center px-4 text-sm font-medium text-gray-700 transition-colors hover:text-brand-primary"
+                >
+                  <span className="py-3.5">All Products</span>
+                  <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-brand-primary transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                </Link>
+              </div>
               {categories?.map(
                 (
                   category: {

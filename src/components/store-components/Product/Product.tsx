@@ -16,7 +16,7 @@ import type { Product } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
 
 interface ProductProps {
@@ -35,6 +35,23 @@ type WishlistItem = {
   createdAt: Date;
   product: Product;
 };
+
+// Custom hook to detect mobile screen
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
+  );
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < breakpoint);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 export default function Product({ data }: ProductProps) {
   const { openModalCart } = useModalCartStore();
@@ -139,7 +156,7 @@ export default function Product({ data }: ProductProps) {
         "discountedPrice" in data
           ? (data.discountedPrice ?? undefined)
           : undefined,
-      quantity: 1,
+      quantity: data.minQuantity ?? 1,
       coverImage:
         "images" in data && Array.isArray(data.images) && data.images[0]
           ? data.images[0]
@@ -147,6 +164,9 @@ export default function Product({ data }: ProductProps) {
       sku: typeof data.sku === "string" ? data.sku : "",
       color: undefined,
       size: undefined,
+      minQuantity: data.minQuantity ?? 1,
+      maxQuantity: data.maxQuantity ?? undefined,
+      quantityStep: data.quantityStep ?? 1,
     };
     addToCart(cartItem);
     openModalCart();
@@ -267,6 +287,8 @@ export default function Product({ data }: ProductProps) {
           ? ((data as { variants?: JsonValue }).variants ?? null)
           : null,
       sku: typeof data.sku === "string" ? data.sku : "",
+      maxQuantity:
+        typeof data.maxQuantity === "number" ? data.maxQuantity : null,
     };
     openQuickView(productForQuickView);
   };
@@ -280,6 +302,8 @@ export default function Product({ data }: ProductProps) {
   // Calculate amount saved if discounted price is available
   const amountSaved =
     data.discountedPrice != null ? data.price - data.discountedPrice : 0;
+
+  const isMobile = useIsMobile(); // 640px is Tailwind's 'sm' breakpoint
 
   return (
     <div className="product-item style-marketplace h-full min-h-[300px] rounded-[.25rem] border border-[#ddd] bg-white p-4 pt-5 transition-all duration-300 hover:shadow-md focus:border-[#ddd]">
@@ -296,27 +320,41 @@ export default function Product({ data }: ProductProps) {
               top: -12,
               left: -18,
               zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
             }}
           >
-            <span
-              className="mark"
-              style={{
-                background: "var(--brand-primary)",
-                color: "#fff",
-                borderTopRightRadius: "10px",
-                borderBottomRightRadius: "10px",
-                padding: "0px 8px",
-                fontWeight: 700,
-                marginBottom: 2,
-                display: "inline-block",
-              }}
-            >
-              Save: {formatPrice(amountSaved, "৳", false)} (-
-              {discountPercentage}%)
-            </span>
+            {isMobile ? (
+              <span
+                className="mark"
+                style={{
+                  background: "var(--brand-primary)",
+                  color: "#fff",
+                  borderTopRightRadius: "10px",
+                  borderBottomRightRadius: "10px",
+                  padding: "0px 8px",
+                  fontWeight: 700,
+                  marginBottom: 2,
+                  display: "inline-block",
+                }}
+              >
+                -{discountPercentage}%
+              </span>
+            ) : (
+              <span
+                className="mark"
+                style={{
+                  background: "var(--brand-primary)",
+                  color: "#fff",
+                  borderTopRightRadius: "10px",
+                  borderBottomRightRadius: "10px",
+                  padding: "0px 8px",
+                  fontWeight: 700,
+                  marginBottom: 2,
+                  display: "inline-block",
+                }}
+              >
+                Save: {formatPrice(amountSaved, "৳")} (-{discountPercentage}%)
+              </span>
+            )}
           </div>
         )}
 
@@ -414,29 +452,27 @@ export default function Product({ data }: ProductProps) {
           ) : data.discountedPrice != null ? (
             <div className="flex items-center gap-2">
               <span className="text-title discounted-price font-bold">
-                {formatPrice(data.discountedPrice)}
+                {formatPrice(data.discountedPrice, undefined)}
               </span>
               <span className="text-sm text-gray-500 line-through">
-                {formatPrice(data.price)}
+                {formatPrice(data.price, undefined)}
               </span>
             </div>
           ) : (
             <span className="text-title font-bold">
-              {formatPrice(data.price)}
+              {formatPrice(data.price, undefined)}
             </span>
           )}
         </div>
         {/* Buy Now Button at the bottom */}
         {(!("stockStatus" in data) || data.stockStatus !== "OUT_OF_STOCK") && (
-          <button
+          <Link
+            href={`/products/${data.slug}`}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#f5f7ff] px-4 py-2 font-semibold text-[#2952e3] shadow-none transition-colors duration-200 hover:bg-[#e6eaff] focus:outline-none focus:ring-2 focus:ring-[#2952e3]/30 focus:ring-offset-2"
-            onClick={() => {
-              handleAddToCart();
-            }}
           >
             <ShoppingBagOpen size={20} className="text-[#2952e3]" />
             Buy Now
-          </button>
+          </Link>
         )}
       </div>
     </div>

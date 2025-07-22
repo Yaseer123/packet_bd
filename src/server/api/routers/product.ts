@@ -18,7 +18,8 @@ import { z } from "zod";
 // Helper to ensure variants are an array of objects
 function isVariant(v: unknown): v is Variant {
   return (
-    typeof v === "object" && v !== null && !Array.isArray(v) && "sku" in v // 'sku' is a property of Variant
+    typeof v === "object" && v !== null && !Array.isArray(v)
+    // Do NOT require 'sku' property - backend will generate it
   );
 }
 
@@ -562,6 +563,9 @@ export const productRouter = createTRPCRouter({
         categoryAttributes: categoryAttributes || {}, // Store category-specific attributes
         stockStatus, // <-- always set
         variants: input.variants ?? undefined, // Store variants if present
+        minQuantity: input.minQuantity ?? 1,
+        maxQuantity: input.maxQuantity,
+        quantityStep: input.quantityStep ?? 1,
       },
     });
 
@@ -752,6 +756,9 @@ export const productRouter = createTRPCRouter({
           variants: updatedVariantsFromInput ?? undefined, // Update variants with SKUs
           sku: newSKU ?? undefined, // Always set the correct SKU, ensure type safety
           allSkus,
+          minQuantity: input.minQuantity ?? 1,
+          maxQuantity: input.maxQuantity,
+          quantityStep: input.quantityStep ?? 1,
         },
       });
       return product;
@@ -1017,10 +1024,32 @@ export const productRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id } = input;
 
-      // Soft delete: set deletedAt instead of deleting
+      // Fetch the current product to get its slug
+      const product = await ctx.db.product.findUnique({
+        where: { id },
+        select: { slug: true },
+      });
+      if (!product) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Product not found",
+        });
+      }
+
+      // Generate a new slug with '-deleted' suffix, ensuring uniqueness
+      const baseSlug = product.slug.replace(/-deleted(-\d+)?$/, "");
+      let newSlug = `${baseSlug}-deleted`;
+      let counter = 1;
+      // Check for uniqueness
+      while (await ctx.db.product.findUnique({ where: { slug: newSlug } })) {
+        newSlug = `${baseSlug}-deleted-${counter}`;
+        counter++;
+      }
+
+      // Soft delete: set deletedAt and update slug
       return ctx.db.product.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: { deletedAt: new Date(), slug: newSlug },
       });
     }),
 

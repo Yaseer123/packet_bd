@@ -43,7 +43,7 @@ export default function FeaturedProducts() {
           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-black sm:h-10 sm:w-10"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-5 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
           {featuredProducts.filter(isProductWithCategory).map((product) => {
             if (isProductWithCategory(product)) {
               return <Product key={product.id} data={product} />;

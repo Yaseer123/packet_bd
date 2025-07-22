@@ -60,6 +60,9 @@ type CartItem = {
   color?: string;
   colorName?: string;
   size?: string;
+  minQuantity: number;
+  maxQuantity?: number;
+  quantityStep: number;
   // add other fields as needed
 };
 
@@ -119,14 +122,22 @@ const Checkout = () => {
   }, [checkoutItems]);
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    // Find the product to get min/max/step
+    const product = checkoutItems.find((item) => item.id === itemId);
+    if (!product) return;
+
+    const min = product.minQuantity ?? 1;
+    const max = product.maxQuantity;
+    let quantity = Math.max(newQuantity, min);
+    if (max !== undefined) quantity = Math.min(quantity, max);
+
     if (buyNowProduct && buyNowProduct.id === itemId) {
-      // Update buyNowProduct quantity directly
-      if (newQuantity > 0) {
-        setBuyNowProduct({ ...buyNowProduct, quantity: newQuantity });
+      if (quantity > 0) {
+        setBuyNowProduct({ ...buyNowProduct, quantity });
         if (typeof window !== "undefined") {
           window.sessionStorage.setItem(
             "buyNowProduct",
-            JSON.stringify({ ...buyNowProduct, quantity: newQuantity }),
+            JSON.stringify({ ...buyNowProduct, quantity }),
           );
         }
       } else {
@@ -136,9 +147,8 @@ const Checkout = () => {
         }
       }
     } else {
-      // Fallback to cart logic
-      if (newQuantity > 0) {
-        updateCart(itemId, newQuantity);
+      if (quantity > 0) {
+        updateCart(itemId, quantity);
       } else {
         removeFromCart(itemId);
       }
@@ -210,6 +220,58 @@ const Checkout = () => {
 
   const validateCouponMutation =
     api.coupon.validateNewsletterCoupon.useMutation();
+
+  // Restore deliveryMethod state
+  const [deliveryMethod, setDeliveryMethod] = useState<
+    "home" | "pickup" | "express"
+  >("home");
+  const [shippingArea, setShippingArea] = useState<"inside" | "outside">(
+    "inside",
+  );
+  // Calculate home delivery cost based on area
+  const homeDeliveryCost = shippingArea === "inside" ? 80 : 120;
+  const [shippingCost, setShippingCost] = useState<number>(homeDeliveryCost);
+
+  // Update shipping cost based on delivery method and shipping area
+  useEffect(() => {
+    if (deliveryMethod === "home") {
+      setShippingCost(homeDeliveryCost);
+    } else {
+      setShippingCost(0);
+    }
+  }, [deliveryMethod, shippingArea, homeDeliveryCost]);
+
+  // Per-item state for input value and error
+  const [inputStates, setInputStates] = useState<
+    Record<string, { value: string; error: string }>
+  >({});
+
+  // Sync input state with checkoutItems (initialize on mount or checkoutItems change)
+  useEffect(() => {
+    const newStates: Record<string, { value: string; error: string }> = {};
+    checkoutItems.forEach((item) => {
+      newStates[item.id] = {
+        value: String(item.quantity),
+        error: "",
+      };
+    });
+    setInputStates(newStates);
+  }, [checkoutItems]);
+
+  // Validation function
+  const validateQuantity = (val: string, min: number, max?: number): string => {
+    if (val === "" || isNaN(Number(val))) {
+      return "Please enter a quantity.";
+    }
+    const num = Number(val);
+    if (num < min) {
+      return `Minimum quantity is ${min}.`;
+    }
+    if (typeof max === "number" && num > max) {
+      return `Maximum quantity is ${max}.`;
+    }
+    return "";
+  };
 
   const breadcrumbItems = [
     {
@@ -291,18 +353,6 @@ const Checkout = () => {
     }
   };
 
-  const [deliveryMethod, setDeliveryMethod] = useState<
-    "home" | "pickup" | "express"
-  >("home");
-  const [shippingCost, setShippingCost] = useState<number>(60);
-
-  // Update shipping cost when delivery method changes
-  useEffect(() => {
-    if (deliveryMethod === "home") setShippingCost(60);
-    else if (deliveryMethod === "pickup") setShippingCost(0);
-    else if (deliveryMethod === "express") setShippingCost(0); // can update later
-  }, [deliveryMethod]);
-
   const renderAddressSection = () => (
     <div className="mt-5">
       {!session && (
@@ -318,10 +368,31 @@ const Checkout = () => {
           </div>
         </div>
       )}
-      <div className="mb-2 text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-        Shipping Information
+      <div className="mb-2 flex items-center">
+        <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
+          1
+        </span>
+        <span className="text-xl font-semibold">Shipping Information</span>
       </div>
       <hr className="mb-4" />
+      {/* Shipping Area Selection - always visible */}
+      <div className="mb-4">
+        <div className="mb-1 font-medium">Select Shipping Area</div>
+        <RadioGroup
+          value={shippingArea}
+          onValueChange={(val) => setShippingArea(val as "inside" | "outside")}
+          className="flex flex-row gap-4"
+        >
+          <label className="flex cursor-pointer items-center gap-2">
+            <RadioGroupItem value="inside" id="shipping-inside" />
+            <span>Inside Dhaka - 80৳</span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-2">
+            <RadioGroupItem value="outside" id="shipping-outside" />
+            <span>Outside Dhaka - 120৳</span>
+          </label>
+        </RadioGroup>
+      </div>
       <div className="mt-5">
         <form>
           <div className="grid flex-wrap gap-4 gap-y-5 sm:grid-cols-2">
@@ -395,8 +466,8 @@ const Checkout = () => {
             </div>
           </div>
         </form>
-        {/* Additional Notes Field */}
-        {/* <div className="mt-4">
+
+        <div className="mt-4">
           <label htmlFor="additional-notes" className="mb-1 block font-medium">
             Additional Notes (optional)
           </label>
@@ -408,81 +479,78 @@ const Checkout = () => {
             onChange={(e) => setNote(e.target.value)}
             rows={3}
           />
-        </div> */}
+        </div>
       </div>
     </div>
   );
 
-  // const renderDeliveryMethodSection = () => (
-  //   <div className="mb-8 mt-8">
-  //     <div className="mb-2 flex items-center">
-  //       <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
-  //         3
-  //       </span>
-  //       <span className="text-xl font-semibold">Delivery Method</span>
-  //     </div>
-  //     <hr className="mb-4" />
-  //     <div className="mb-2 font-medium">Select a delivery method</div>
-  //     <RadioGroup
-  //       value={deliveryMethod}
-  //       onValueChange={(val) =>
-  //         setDeliveryMethod(val as "home" | "pickup" | "express")
-  //       }
-  //       className="flex flex-col gap-2"
-  //     >
-  //       <label className="flex cursor-pointer items-center gap-2">
-  //         <RadioGroupItem value="home" id="delivery-home" />
-  //         <span>Home Delivery - 60৳</span>
-  //       </label>
-  //       <label className="flex cursor-pointer items-center gap-2">
-  //         <RadioGroupItem value="pickup" id="delivery-pickup" />
-  //         <span>Store Pickup - 0৳</span>
-  //       </label>
-  //       <label className="flex cursor-pointer items-center gap-2">
-  //         <RadioGroupItem value="express" id="delivery-express" />
-  //         <span>Request Express - Charge Applicable</span>
-  //       </label>
-  //     </RadioGroup>
-  //   </div>
-  // );
+  const renderDeliveryMethodSection = () => (
+    <div className="mb-8 mt-8">
+      <div className="mb-2 flex items-center">
+        <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
+          3
+        </span>
+        <span className="text-xl font-semibold">Delivery Method</span>
+      </div>
+      <hr className="mb-4" />
+      <div className="mb-2 font-medium">Select a delivery method</div>
+      <RadioGroup
+        value={deliveryMethod}
+        onValueChange={(val) =>
+          setDeliveryMethod(val as "home" | "pickup" | "express")
+        }
+        className="flex flex-col gap-2"
+      >
+        <label className="flex cursor-pointer items-center gap-2">
+          <RadioGroupItem value="home" id="delivery-home" />
+          <span>
+            Home Delivery - {homeDeliveryCost}৳ (
+            {shippingArea === "inside" ? "Inside Dhaka" : "Outside Dhaka"})
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-center gap-2">
+          <RadioGroupItem value="pickup" id="delivery-pickup" />
+          <span>Store Pickup - 0৳</span>
+        </label>
+        {/* <label className="flex cursor-pointer items-center gap-2">
+          <RadioGroupItem value="express" id="delivery-express" />
+          <span>Request Express - Charge Applicable</span>
+        </label> */}
+      </RadioGroup>
+    </div>
+  );
 
-  // const renderPaymentSection = () => (
-  //   <div className="mt-6 md:mt-10">
-  //     <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-  //       <span className="mb-2 mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
-  //         2
-  //       </span>
-  //       Choose payment Option:
-  //     </div>
-  //     <hr className="mb-4" />
-  //     <div className="mt-5 bg-white">
-  //       <div
-  //         className={`bg-surface rounded-lg border border-[#ddd] p-5 focus:border-[#ddd]`}
-  //       >
-  //         <input
-  //           className="cursor-pointer"
-  //           type="radio"
-  //           id="delivery"
-  //           name="payment"
-  //           checked={true}
-  //           readOnly
-  //         />
-  //         <label
-  //           className="cursor-pointer pl-2 text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6"
-  //           htmlFor="delivery"
-  //         >
-  //           Cash on delivery
-  //         </label>
-  //         <div className="visible max-h-[1000px] opacity-100">
-  //           <div className="pt-4">
-  //             You will pay in cash when your order is delivered to your address.
-  //             Please ensure your shipping information is correct.
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
+  const renderPaymentSection = () => (
+    <div className="mt-6 md:mt-10">
+      <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
+        <span className="mb-2 mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 font-bold text-red-500">
+          2
+        </span>
+        Choose payment Option:
+      </div>
+      <hr className="mb-4" />
+      <div className="mt-5 bg-white">
+        <div
+          className={`bg-surface rounded-lg border border-[#ddd] p-5 focus:border-[#ddd]`}
+        >
+          <RadioGroup value="delivery">
+            <label className="flex cursor-pointer items-center">
+              <RadioGroupItem value="delivery" id="delivery" />
+              <span className="cursor-pointer pl-2 text-base font-semibold capitalize leading-[26px] md:text-base md:leading-6">
+                Cash on delivery
+              </span>
+            </label>
+          </RadioGroup>
+          <div className="visible max-h-[1000px] opacity-100">
+            <div className="pt-4">
+              You will pay in cash when your order is delivered to your address.
+              Please ensure your shipping information is correct.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const placeOrder = api.order.placeOrder.useMutation({
     onSuccess: (data: OrderSuccessType) => {
@@ -584,7 +652,7 @@ const Checkout = () => {
           color: item.colorName ?? item.color,
           size: item.size,
           sku: item.sku,
-          deliveryMethod,
+          deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
         })),
         addressId,
         notes: note,
@@ -598,7 +666,7 @@ const Checkout = () => {
           color: item.colorName ?? item.color,
           size: item.size,
           sku: item.sku,
-          deliveryMethod,
+          deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
         })),
         addressId,
         notes: note,
@@ -618,8 +686,8 @@ const Checkout = () => {
 
   const paymentAndOrderSection = (
     <>
-      {/* {renderPaymentSection()} */}
-      {/* {renderDeliveryMethodSection()} */}
+      {renderPaymentSection()}
+      {renderDeliveryMethodSection()}
 
       <div className="mt-6 md:mt-10">
         <button
@@ -714,111 +782,186 @@ const Checkout = () => {
                       No product in cart
                     </p>
                   ) : (
-                    checkoutItems.map((product) => (
-                      <div
-                        key={product.id}
-                        className="mt-5 flex w-full items-start gap-4 border-b border-[#ddd] bg-white p-3 pb-5 focus:border-[#ddd]"
-                      >
-                        <div className="bg-img aspect-square w-[100px] flex-shrink-0 overflow-hidden rounded-lg">
-                          <Image
-                            src={
-                              product.coverImage ??
-                              "/images/product/1000x1000.png"
-                            }
-                            width={500}
-                            height={500}
-                            alt="img"
-                            className="h-full w-full"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <div className="flex w-full items-start justify-between gap-4">
-                            <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
-                              {product.name}
+                    checkoutItems.map((product) => {
+                      const min = product.minQuantity ?? 1;
+                      const max = product.maxQuantity;
+                      const step = product.quantityStep ?? 1;
+                      const inputState = inputStates[product.id] ?? {
+                        value: String(product.quantity),
+                        error: "",
+                      };
+                      return (
+                        <div
+                          key={product.id}
+                          className="mt-5 flex w-full items-start gap-4 border-b border-[#ddd] bg-white p-3 pb-5 focus:border-[#ddd]"
+                        >
+                          <div className="bg-img aspect-square w-[100px] flex-shrink-0 overflow-hidden rounded-lg">
+                            <Image
+                              src={
+                                product.coverImage ??
+                                "/images/product/1000x1000.png"
+                              }
+                              width={500}
+                              height={500}
+                              alt="img"
+                              className="h-full w-full"
+                            />
+                          </div>
+                          <div className="w-full">
+                            <div className="flex w-full items-start justify-between gap-4">
+                              <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
+                                {product.name}
+                              </div>
+                              <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
+                                {formatPrice(
+                                  product.discountedPrice ?? product.price,
+                                )}
+                              </div>
                             </div>
-                            <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
+
+                            {(product.sku ?? product.color ?? product.size) && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                {product.sku && <span>SKU: {product.sku}</span>}
+                                {(product.colorName ?? product.color) && (
+                                  <span className="ml-2">
+                                    Color: {product.colorName ?? product.color}
+                                  </span>
+                                )}
+                                {product.size && (
+                                  <span className="ml-2">
+                                    Size: {product.size}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="mt-2 text-base font-medium capitalize leading-6 md:hidden md:text-base md:leading-5">
                               {formatPrice(
                                 product.discountedPrice ?? product.price,
                               )}
                             </div>
-                          </div>
 
-                          {(product.sku ?? product.color ?? product.size) && (
-                            <div className="mt-1 text-xs text-gray-500">
-                              {product.sku && <span>SKU: {product.sku}</span>}
-                              {(product.colorName ?? product.color) && (
-                                <span className="ml-2">
-                                  Color: {product.colorName ?? product.color}
-                                </span>
-                              )}
-                              {product.size && (
-                                <span className="ml-2">
-                                  Size: {product.size}
-                                </span>
-                              )}
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                                onClick={() => {
+                                  const current =
+                                    Number(inputState.value) || min;
+                                  const next = Math.max(current - step, min);
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: String(next),
+                                      error: "",
+                                    },
+                                  }));
+                                  handleQuantityChange(product.id, next);
+                                }}
+                                disabled={Number(inputState.value) === min}
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <input
+                                type="text"
+                                className="w-14 border-none bg-transparent text-center text-base font-medium outline-none"
+                                min={min}
+                                max={max}
+                                step={step}
+                                value={inputState.value}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const error = validateQuantity(val, min, max);
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: val,
+                                      error,
+                                    },
+                                  }));
+                                  if (!error) {
+                                    handleQuantityChange(
+                                      product.id,
+                                      Number(val),
+                                    );
+                                  }
+                                }}
+                                onBlur={() => {
+                                  const val = inputState.value;
+                                  const error = validateQuantity(val, min, max);
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: val,
+                                      error,
+                                    },
+                                  }));
+                                  if (!error) {
+                                    handleQuantityChange(
+                                      product.id,
+                                      Number(val),
+                                    );
+                                  }
+                                }}
+                              />
+                              <button
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                                onClick={() => {
+                                  const current =
+                                    Number(inputState.value) || min;
+                                  const next =
+                                    max !== undefined
+                                      ? Math.min(current + step, max)
+                                      : current + step;
+                                  setInputStates((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      value: String(next),
+                                      error: "",
+                                    },
+                                  }));
+                                  handleQuantityChange(product.id, next);
+                                }}
+                                disabled={
+                                  max !== undefined &&
+                                  Number(inputState.value) === max
+                                }
+                              >
+                                <Plus size={16} />
+                              </button>
                             </div>
-                          )}
-
-                          <div className="mt-2 text-base font-medium capitalize leading-6 md:hidden md:text-base md:leading-5">
-                            {formatPrice(
-                              product.discountedPrice ?? product.price,
+                            {inputState.error && (
+                              <div className="mt-1 text-xs text-red-500">
+                                {inputState.error}
+                              </div>
                             )}
                           </div>
-
-                          <div className="mt-2 flex items-center">
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(
-                                  product.id,
-                                  product.quantity - 1,
-                                )
-                              }
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                            >
-                              <Minus size={16} />
-                            </button>
-                            <span className="quantity px-3 text-base font-medium">
-                              {product.quantity}
-                            </span>
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(
-                                  product.id,
-                                  product.quantity + 1,
-                                )
-                              }
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                            >
-                              <Plus size={16} />
-                            </button>
-                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
-                {/* <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
+                <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     Discounts
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     -{formatPrice(discountValue)}
                   </div>
-                </div> */}
-                {/* <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
+                </div>
+                <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     Shipping
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     {shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
                   </div>
-                </div> */}
+                </div>
                 <div className="flex justify-between pt-5">
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
                     Total
                   </div>
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-                    {formatPrice(totalCart - discountValue)}
+                    {formatPrice(totalCart - discountValue + shippingCost)}
                   </div>
                 </div>
               </div>

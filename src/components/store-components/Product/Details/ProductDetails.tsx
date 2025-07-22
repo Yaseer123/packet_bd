@@ -8,7 +8,6 @@ import { generateSKU } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import type { ProductWithCategory } from "@/types/ProductType";
 import {
-  ArrowClockwise,
   CaretDown,
   DotsThree,
   HandsClapping,
@@ -90,7 +89,13 @@ export default function ProductDetails({
   const [activeTab, setActiveTab] = useState<string | undefined>(
     "specifications",
   );
-  const [productQuantity, setProductQuantity] = useState<number>(1);
+  const minQuantity = productMain.minQuantity ?? 1;
+  const maxQuantity = productMain.maxQuantity;
+  const quantityStep = productMain.quantityStep ?? 1;
+  const [productQuantity, setProductQuantity] = useState<number | "">(
+    minQuantity,
+  );
+  const [quantityError, setQuantityError] = useState<string>("");
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
     comment: "",
@@ -191,14 +196,54 @@ export default function ProductDetails({
   };
 
   const handleIncreaseQuantity = () => {
-    setProductQuantity(productQuantity + 1);
+    if (typeof productQuantity !== "number") return;
+    const next = productQuantity + quantityStep;
+    if (maxQuantity !== null && maxQuantity !== undefined && next > maxQuantity)
+      return setProductQuantity(maxQuantity);
+    setProductQuantity(next);
   };
 
   const handleDecreaseQuantity = () => {
-    if (productQuantity > 1) {
-      setProductQuantity(productQuantity - 1);
-      // updateCart(productMain.id, productMain.quantityPurchase - 1);
+    if (typeof productQuantity !== "number") return;
+    const next = productQuantity - quantityStep;
+    return next < minQuantity
+      ? setProductQuantity(minQuantity)
+      : setProductQuantity(next);
+  };
+
+  const validateQuantity = (qty: number | "") => {
+    if (qty === "" || isNaN(Number(qty))) {
+      return "Please enter a quantity.";
     }
+    if (typeof qty === "number") {
+      if (qty < minQuantity) {
+        return `Minimum quantity is ${minQuantity}.`;
+      }
+      if (
+        maxQuantity !== undefined &&
+        maxQuantity !== null &&
+        qty > maxQuantity
+      ) {
+        return `Maximum quantity is ${maxQuantity}.`;
+      }
+    }
+    return "";
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === "") {
+      setProductQuantity("");
+      setQuantityError("Please enter a quantity.");
+      return;
+    }
+    const num = Number(val);
+    setProductQuantity(num);
+    setQuantityError(validateQuantity(num));
+  };
+
+  const handleQuantityBlur = () => {
+    setQuantityError(validateQuantity(productQuantity));
   };
 
   // Fetch category hierarchy for primary category name
@@ -212,14 +257,13 @@ export default function ProductDetails({
   );
 
   const handleAddToCart = () => {
-    // Determine if a variant is selected
-    const isVariantSelected = !!(selectedColorHex && selectedSize);
-    // Build cart item
+    const error = validateQuantity(productQuantity);
+    setQuantityError(error);
+    if (error || typeof productQuantity !== "number") return;
+    // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     const cartItem = {
-      id: isVariantSelected
-        ? `${productMain.id}-${selectedColorHex}-${selectedSize}`
-        : productMain.id,
+      id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
       price:
         typeof activeVariant?.price === "number"
@@ -236,17 +280,25 @@ export default function ProductDetails({
         activeVariant?.images?.[0] ??
         productMain.images?.[0] ??
         "/images/product/1000x1000.png",
-      sku: generateSKU({
-        categoryName: primaryCategoryName,
-        productId: productMain.id,
-        color: selectedColorName,
-        size: selectedSize,
-      }),
+      sku: displaySKU,
       color: selectedColorHex, // for swatch
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      minQuantity: productMain.minQuantity ?? 1,
+      maxQuantity: productMain.maxQuantity ?? undefined,
+      quantityStep: productMain.quantityStep ?? 1,
     };
+    console.log(
+      "[AddToCart] selectedColorHex:",
+      selectedColorHex,
+      "selectedColorName:",
+      selectedColorName,
+      "selectedSize:",
+      selectedSize,
+      "cartItem:",
+      cartItem,
+    );
     // Add to cart (allow multiple variants)
     if (!cartArray.find((item) => item.id === cartItem.id)) {
       addToCart(cartItem);
@@ -344,6 +396,9 @@ export default function ProductDetails({
   const router = useRouter();
 
   const handleBuyNow = () => {
+    const error = validateQuantity(productQuantity);
+    setQuantityError(error);
+    if (error || typeof productQuantity !== "number") return;
     // Determine if a variant is selected
     const isVariantSelected = !!(selectedColorHex && selectedSize);
     // Build buy-now product object
@@ -377,6 +432,9 @@ export default function ProductDetails({
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      minQuantity: productMain.minQuantity ?? 1,
+      maxQuantity: productMain.maxQuantity ?? undefined,
+      quantityStep: productMain.quantityStep ?? 1,
     };
     // Store in sessionStorage for checkout page
     if (typeof window !== "undefined") {
@@ -444,9 +502,42 @@ export default function ProductDetails({
   const [selectedColorName, setSelectedColorName] = useState<
     string | undefined
   >(productMain.defaultColor ?? undefined);
-  const [selectedSize, setSelectedSize] = useState<string | undefined>(
-    productMain.defaultSize ?? undefined,
-  );
+  // Initialize selected size with default size if available
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(() => {
+    // If there's a default size, use it
+    if (productMain.defaultSize) {
+      return productMain.defaultSize;
+    }
+    // Otherwise, if there are variants with sizes, use the first available size
+    if (variants && variants.length > 0) {
+      const firstVariantWithSize = variants.find((v) => v.size);
+      return firstVariantWithSize?.size;
+    }
+    return undefined;
+  });
+
+  // Reset and auto-select size when color changes
+  useEffect(() => {
+    if (selectedColorHex) {
+      const availableSizesForColor =
+        getAvailableSizesForColor(selectedColorHex);
+      // If current selected size is not available for the new color, select the first available size
+      if (selectedSize && !availableSizesForColor.includes(selectedSize)) {
+        setSelectedSize(availableSizesForColor[0] ?? undefined);
+      }
+      // If no size is selected but sizes are available, select the first one
+      else if (!selectedSize && availableSizesForColor.length > 0) {
+        setSelectedSize(availableSizesForColor[0]);
+      }
+    }
+  }, [selectedColorHex, selectedSize]);
+
+  // Initialize with default size when component mounts
+  useEffect(() => {
+    if (!selectedSize && productMain.defaultSize) {
+      setSelectedSize(productMain.defaultSize);
+    }
+  }, [selectedSize, productMain.defaultSize]);
 
   // Show default color swatch and name
   const defaultColorHex =
@@ -454,8 +545,11 @@ export default function ProductDetails({
   const defaultColorName =
     productMain.defaultColor ?? productMain.defaultColorHex ?? undefined;
 
-  // Get available colors and sizes based on current selection
-  const availableColors = variants
+  // Helper function to normalize color values for comparison
+  const normalizeColor = (color: string) => color.toLowerCase().trim();
+
+  // Normalize and get available colors from variants
+  const variantColors = variants
     ? variants
         .map((v) => ({
           colorHex: v.colorHex ?? v.colorName ?? "#ffffff",
@@ -463,28 +557,127 @@ export default function ProductDetails({
         }))
         .filter((v) => v.colorHex && v.colorName)
     : [];
-  console.log(availableColors);
-  const availableSizes = variants
-    ? [
-        ...new Set(
-          variants
-            .filter((v) =>
-              selectedColorHex ? v.colorHex === selectedColorHex : true,
-            )
-            .map((v) => v.size)
-            .filter(Boolean),
-        ),
-      ]
-    : [];
 
-  // Find the most specific variant (for now, only by color)
+  // Build a unified color list: combine default color and variant colors without duplicates
+  const unifiedColors: { colorHex: string; colorName: string }[] = [];
+
+  // Create a map to track unique colors by both hex and name
+  const colorMap = new Map<string, string>();
+
+  // Add default color first (if it exists)
+  if (defaultColorHex) {
+    const normalizedDefaultColor = normalizeColor(defaultColorHex);
+    colorMap.set(normalizedDefaultColor, defaultColorName ?? defaultColorHex);
+  }
+
+  // Add variant colors, checking for duplicates by normalized color values
+  variantColors.forEach((colorObj) => {
+    const normalizedColorHex = normalizeColor(colorObj.colorHex);
+    const normalizedColorName = normalizeColor(colorObj.colorName);
+
+    // Check if this color already exists (by hex or name)
+    let colorExists = false;
+    colorMap.forEach((existingName, existingHex) => {
+      if (
+        normalizeColor(existingHex) === normalizedColorHex ||
+        normalizeColor(existingName) === normalizedColorName
+      ) {
+        colorExists = true;
+      }
+    });
+
+    // Only add if it doesn't exist
+    if (!colorExists) {
+      colorMap.set(normalizedColorHex, colorObj.colorName);
+    }
+  });
+
+  // Convert map to array
+  colorMap.forEach((colorName, colorHex) => {
+    unifiedColors.push({
+      colorHex,
+      colorName,
+    });
+  });
+
+  // Helper to convert color names to hex for common colors
+  const colorNameToHex: Record<string, string> = {
+    white: "#ffffff",
+    black: "#000000",
+    red: "#ff0000",
+    blue: "#0000ff",
+    green: "#008000",
+    yellow: "#ffff00",
+    // ...add more as needed
+  };
+  function normalizeColorValue(color: string) {
+    if (!color) return "";
+    const c = color.trim().toLowerCase();
+    // If it's a hex, return as is
+    if (c.startsWith("#")) return c;
+    // If it's a name, convert to hex if possible
+    return colorNameToHex[c] ?? c;
+  }
+
+  // Get available sizes based on selected color
+  const getAvailableSizesForColor = (colorHex?: string) => {
+    const sizes: string[] = [];
+    if (!colorHex) {
+      // No color selected: show all sizes
+      if (productMain.defaultSize) sizes.push(productMain.defaultSize);
+      if (variants) {
+        variants.forEach((v) => {
+          if (v.size) sizes.push(v.size);
+        });
+      }
+    } else {
+      const selectedNorm = normalizeColorValue(colorHex);
+      // Default product
+      if (
+        productMain.defaultSize &&
+        (normalizeColorValue(defaultColorHex ?? "") === selectedNorm ||
+          normalizeColorValue(defaultColorName ?? "") === selectedNorm)
+      ) {
+        sizes.push(productMain.defaultSize);
+      }
+      // Variants
+      if (variants) {
+        variants.forEach((v) => {
+          const vColorHex = normalizeColorValue(v.colorHex ?? "");
+          const vColorName = normalizeColorValue(v.colorName ?? "");
+          if (
+            (vColorHex && vColorHex === selectedNorm) ||
+            (vColorName && vColorName === selectedNorm)
+          ) {
+            if (v.size) sizes.push(v.size);
+          }
+        });
+      }
+    }
+    return [...new Set(sizes)];
+  };
+
+  const availableSizes = getAvailableSizesForColor(selectedColorHex);
+
+  // Find the most specific variant (for now, only by color and size, using robust normalization)
   let activeVariant: ProductVariant | undefined = undefined;
   if (selectedColorHex && selectedSize) {
-    activeVariant = variants.find(
-      (v) => v.colorHex === selectedColorHex && v.size === selectedSize,
-    );
+    const selectedNorm = normalizeColorValue(selectedColorHex);
+    activeVariant = variants.find((v) => {
+      const vColorHex = normalizeColorValue(v.colorHex ?? "");
+      const vColorName = normalizeColorValue(v.colorName ?? "");
+      return (
+        (vColorHex === selectedNorm || vColorName === selectedNorm) &&
+        v.size === selectedSize
+      );
+    });
   } else if (selectedColorHex) {
-    activeVariant = variants.find((v) => v.colorHex === selectedColorHex);
+    const selectedNorm = normalizeColorValue(selectedColorHex);
+    activeVariant = variants.find((v) => {
+      const vColorHex = normalizeColorValue(v.colorHex ?? "");
+      const vColorName = normalizeColorValue(v.colorName ?? "");
+      return vColorHex === selectedNorm || vColorName === selectedNorm;
+    });
   } else if (selectedSize) {
     activeVariant = variants.find((v) => v.size === selectedSize);
   }
@@ -515,26 +708,6 @@ export default function ProductDetails({
     size: selectedSize,
   });
 
-  // Build a unified color list: default color (if set) + unique variant colors (excluding duplicate with default)
-  const unifiedColors: { colorHex: string; colorName: string }[] = [];
-  if (defaultColorHex) {
-    unifiedColors.push({
-      colorHex: defaultColorHex,
-      colorName: defaultColorName ?? defaultColorHex,
-    });
-  }
-  if (availableColors.length > 0) {
-    availableColors.forEach((colorObj) => {
-      // Avoid duplicate with default color
-      if (!unifiedColors.some((c) => c.colorHex === colorObj.colorHex)) {
-        unifiedColors.push({
-          colorHex: colorObj.colorHex ?? "#ffffff",
-          colorName: colorObj.colorName ?? colorObj.colorHex ?? "Unnamed",
-        });
-      }
-    });
-  }
-
   const [shouldScrollToQuestion, setShouldScrollToQuestion] = useState(false);
 
   useEffect(() => {
@@ -547,6 +720,12 @@ export default function ProductDetails({
     }
   }, [activeTab, shouldScrollToQuestion]);
 
+  // Add this inside the ProductDetails component
+  const [currentUrl, setCurrentUrl] = useState("");
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
+
   return (
     <>
       <div className="product-detail sale mb-5">
@@ -556,33 +735,47 @@ export default function ProductDetails({
             <div className="flex flex-row items-center justify-between gap-3 rounded-full border bg-white px-6 py-3 shadow md:flex-row md:gap-0 md:px-6 md:py-2">
               <div className="flex items-center justify-center gap-2">
                 <span className="font-semibold text-gray-700">Share:</span>
-                {/* Messenger */}
+                {/* Messenger (commented out) */}
                 {/* <a
-                  href={`https://www.facebook.com/dialog/send?link=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  href={`https://www.facebook.com/dialog/send?link=${encodeURIComponent(currentUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#101828] text-white hover:opacity-80"
                   title="Share on Messenger"
+                  aria-disabled={!currentUrl}
+                  tabIndex={!currentUrl ? -1 : 0}
                 >
                   <FaFacebookMessenger size={18} />
                 </a> */}
                 {/* Pinterest */}
                 <a
-                  href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  href={
+                    currentUrl
+                      ? `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(currentUrl)}`
+                      : undefined
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#101828] text-white hover:opacity-80"
                   title="Share on Pinterest"
+                  aria-disabled={!currentUrl}
+                  tabIndex={!currentUrl ? -1 : 0}
                 >
                   <FaPinterestP size={18} />
                 </a>
                 {/* WhatsApp */}
                 <a
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  href={
+                    currentUrl
+                      ? `https://api.whatsapp.com/send?text=${encodeURIComponent(currentUrl)}`
+                      : undefined
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#101828] text-white hover:opacity-80"
                   title="Share on WhatsApp"
+                  aria-disabled={!currentUrl}
+                  tabIndex={!currentUrl ? -1 : 0}
                 >
                   <FaWhatsapp size={18} />
                 </a>
@@ -776,7 +969,6 @@ export default function ProductDetails({
                               onClick={() => {
                                 setSelectedColorHex(colorObj.colorHex);
                                 setSelectedColorName(colorObj.colorName);
-                                setSelectedSize(undefined);
                               }}
                               aria-label={colorObj.colorName}
                               title={colorObj.colorName}
@@ -813,38 +1005,48 @@ export default function ProductDetails({
                         size ? (
                           <button
                             key={size + idx}
-                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"} ${size === productMain.defaultSize ? "ring-2 ring-blue-400" : ""}`}
+                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"}`}
                             onClick={() => setSelectedSize(size)}
                           >
                             {size}
-                            {size === productMain.defaultSize ? (
-                              <span className="ml-1 text-xs text-blue-600">
-                                (default)
-                              </span>
-                            ) : null}
                           </button>
                         ) : null,
-                      )}
-                      {productMain.defaultSize && (
-                        <button
-                          className={`flex-shrink-0 rounded border px-3 py-1 ${!selectedSize ? "bg-black text-white" : "bg-white text-black"}`}
-                          onClick={() => setSelectedSize(undefined)}
-                        >
-                          {productMain.defaultSize}
-                        </button>
                       )}
                     </div>
                   </div>
                 )}
                 <div className="text-title mt-5">Quantity:</div>
                 <div className="choose-quantity mt-3 flex items-center gap-5 gap-y-3 lg:justify-between">
-                  <div className="quantity-block flex w-[120px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[180px] md:p-3">
+                  <div className="quantity-block flex w-[180px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[220px] md:p-3">
                     <Minus
                       size={20}
                       onClick={handleDecreaseQuantity}
-                      className={`${productQuantity === 1 ? "disabled" : ""} cursor-pointer`}
+                      className={`${productQuantity === minQuantity ? "disabled" : ""} cursor-pointer`}
                     />
-                    <div className="body1 font-semibold">{productQuantity}</div>
+                    <input
+                      type="text"
+                      className="quantity-input body1 border-none bg-transparent text-center font-semibold outline-none"
+                      min={minQuantity}
+                      max={maxQuantity ?? undefined}
+                      step={quantityStep}
+                      value={productQuantity}
+                      onChange={handleQuantityChange}
+                      onBlur={handleQuantityBlur}
+                      style={{
+                        width: "80px",
+                        padding: "2px 4px",
+                        fontSize: "1.1rem",
+                        margin: 0,
+                        fontFamily: "monospace",
+                      }}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                    />
+                    {/* {quantityError && (
+                      <div className="mt-1 w-full text-center text-xs text-red-500">
+                        {quantityError}
+                      </div>
+                    )} */}
                     <Plus
                       size={20}
                       onClick={handleIncreaseQuantity}
@@ -853,15 +1055,22 @@ export default function ProductDetails({
                   </div>
                   <div
                     onClick={handleAddToCart}
-                    className="duration-400 md:text-md inline-block w-full cursor-pointer rounded-[.25rem] border border-black bg-white px-0 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4"
+                    className={`duration-400 md:text-md inline-block w-full rounded-[.25rem] border border-black bg-white px-0 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4 ${quantityError ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                    style={quantityError ? { pointerEvents: "none" } : {}}
                   >
                     Add To Cart
                   </div>
                 </div>
                 <div className="button-block mt-5">
+                  {quantityError && (
+                    <div className="text-md mb-2 w-full text-center text-red-500">
+                      {quantityError}
+                    </div>
+                  )}
                   <div
-                    className="duration-400 md:text-md hover:bg-black/75/75 hover:bg-green inline-block w-full cursor-pointer rounded-[.25rem] bg-black px-10 py-4 text-center text-sm font-semibold uppercase leading-5 text-white transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4"
+                    className={`duration-400 md:text-md hover:bg-black/75/75 hover:bg-green inline-block w-full rounded-[.25rem] bg-black px-10 py-4 text-center text-sm font-semibold uppercase leading-5 text-white transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4 ${quantityError ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     onClick={handleBuyNow}
+                    style={quantityError ? { pointerEvents: "none" } : {}}
                   >
                     Buy It Now
                   </div>
@@ -869,10 +1078,10 @@ export default function ProductDetails({
                 <div className="mt-5 flex items-center gap-8 border-b border-[#ddd] pb-6 focus:border-[#ddd] lg:gap-20"></div>
                 <div className="more-infor mt-6">
                   <div className="flex flex-wrap items-center gap-4">
-                    <Link href={"/faqs"} className="flex items-center gap-1">
+                    {/* <Link href={"/faqs"} className="flex items-center gap-1">
                       <ArrowClockwise className="body1" />
                       <div className="text-title">Delivery & Return</div>
-                    </Link>
+                    </Link> */}
                     <button
                       type="button"
                       className="flex items-center gap-1"
@@ -909,13 +1118,13 @@ export default function ProductDetails({
                 </div>
               </div>
 
-              <div className="get-it mt-6 flex flex-col gap-4 sm:flex-row">
+              {/* <div className="get-it mt-6 flex flex-col gap-4 sm:flex-row">
                 <div className="item mt-4 flex flex-col items-start gap-2 bg-white px-3 py-1 sm:flex-row sm:items-center sm:gap-3">
                   <div>
                     <div className="icon-delivery-truck text-3xl sm:text-4xl"></div>
                     <div className="text-title">Free shipping</div>
                     <div className="mt-1 text-sm font-normal leading-5 text-secondary md:text-[13px]">
-                      Free shipping on orders over {formatPrice(7500)}.
+                      Free shipping on orders over {formatPrice(7500, undefined, true)}.
                     </div>
                   </div>
                 </div>
@@ -941,7 +1150,7 @@ export default function ProductDetails({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -1430,6 +1639,17 @@ export default function ProductDetails({
           />
         </div>
       </div>
+      <style jsx global>{`
+        /* Hide number input spinners for all browsers */
+        input.quantity-input::-webkit-outer-spin-button,
+        input.quantity-input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input.quantity-input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
     </>
   );
 }

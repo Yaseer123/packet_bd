@@ -14,7 +14,6 @@ export const formatTimeAgo = (date: Date): string => {
 export const formatPrice = (
   price: number | undefined | null,
   currency = "৳",
-  showDecimals = false,
 ): string => {
   if (price === undefined || price === null || isNaN(Number(price))) {
     return `${currency}0`;
@@ -23,10 +22,11 @@ export const formatPrice = (
     return `${currency}0`;
   }
 
-  // Format with commas for thousands separators
+  // Check if price has decimals
+  const hasDecimals = price % 1 !== 0;
   const formattedNumber = price.toLocaleString("en-US", {
-    minimumFractionDigits: showDecimals ? 2 : 0,
-    maximumFractionDigits: showDecimals ? 2 : 0,
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: hasDecimals ? 2 : 0,
   });
 
   return `${currency}${formattedNumber}`;

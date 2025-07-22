@@ -28,11 +28,21 @@ import { formatPrice } from "../../../utils/format";
 import Rate from "../Rate";
 
 const ModalQuickView = () => {
+  // Extend Product type to include minQuantity, maxQuantity, quantityStep
+  type ProductWithQuantity = Product & {
+    minQuantity?: number | null;
+    maxQuantity?: number | null;
+    quantityStep?: number | null;
+  };
   const { selectedProduct, closeQuickView } = useModalQuickViewStore() as {
-    selectedProduct: Product | null;
+    selectedProduct: ProductWithQuantity | null;
     closeQuickView: () => void;
   };
-  const [quantity, setQuantity] = useState<number>(1);
+  // Use safe fallbacks for quantity fields
+  const minQuantity = (selectedProduct?.minQuantity ?? 1) || 1;
+  const maxQuantity = selectedProduct?.maxQuantity ?? undefined;
+  const quantityStep = (selectedProduct?.quantityStep ?? 1) || 1;
+  const [quantity, setQuantity] = useState<number>(minQuantity);
   const { addToCart, updateCart, cartArray } = useCartStore();
   const { openModalCart } = useModalCartStore();
   const { addToWishlist, removeFromWishlist, wishlistArray } =
@@ -50,8 +60,8 @@ const ModalQuickView = () => {
 
   // Reset quantity when selected product changes
   useEffect(() => {
-    setQuantity(1);
-  }, [selectedProduct]);
+    setQuantity(minQuantity);
+  }, [selectedProduct, minQuantity]);
 
   const percentSale =
     selectedProduct?.discountedPrice &&
@@ -61,13 +71,19 @@ const ModalQuickView = () => {
     );
 
   const handleIncreaseQuantity = () => {
-    setQuantity((prev) => prev + 1);
+    setQuantity((prev) => {
+      const next = prev + quantityStep;
+      if (typeof maxQuantity === "number" && next > maxQuantity)
+        return maxQuantity;
+      return next;
+    });
   };
 
   const handleDecreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
+    setQuantity((prev) => {
+      const next = prev - quantityStep;
+      return next < minQuantity ? minQuantity : next;
+    });
   };
 
   const getVariantField = (field: keyof Variant): string | undefined => {
@@ -122,6 +138,9 @@ const ModalQuickView = () => {
           color,
           size,
           productId: selectedProduct.id,
+          minQuantity: minQuantity,
+          maxQuantity: maxQuantity,
+          quantityStep: quantityStep,
         });
       }
       // Always update the quantity whether it's a new item or existing one
@@ -161,6 +180,9 @@ const ModalQuickView = () => {
           color,
           size,
           productId: selectedProduct.id,
+          minQuantity: minQuantity,
+          maxQuantity: maxQuantity,
+          quantityStep: quantityStep,
         });
       }
       updateCart(selectedProduct.id, quantity);
