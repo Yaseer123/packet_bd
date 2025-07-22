@@ -999,7 +999,9 @@ export default function ProductDetails({
                 {/* Size selector (always show if availableSizes.length > 0) */}
                 {availableSizes.length > 0 && (
                   <div className="mb-4 flex items-center gap-2">
-                    <span className="flex-shrink-0 font-semibold">Size:</span>
+                    <span className="flex-shrink-0 font-semibold">
+                      {productMain.variantLabel || "Size"}:
+                    </span>
                     <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
                       {availableSizes.map((size, idx) =>
                         size ? (

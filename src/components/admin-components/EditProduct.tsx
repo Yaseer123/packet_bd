@@ -915,6 +915,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       minQuantity,
       maxQuantity,
       quantityStep,
+      variantLabel, // <--- Pass variantLabel
     });
   };
 
@@ -933,6 +934,10 @@ export default function EditProductForm({ productId }: { productId: string }) {
     }
   }, [brand, brands]);
 
+  const [variantLabel, setVariantLabel] = useState<string>(
+    product?.variantLabel ?? "Size",
+  ); // <--- Fix: add this line
+
   if (!product) return null;
 
   return (
@@ -944,6 +949,19 @@ export default function EditProductForm({ productId }: { productId: string }) {
       submitButtonText="Update Product"
     >
       <div className="grid grid-cols-2 gap-3">
+        {/* Variant Label Input */}
+        <div className="col-span-2 flex w-full flex-col space-y-2">
+          <Label className="text-base">
+            Variant Label (e.g. Size, Material, Length)
+          </Label>
+          <Input
+            type="text"
+            placeholder="Variant Label (e.g. Size, Material, Length)"
+            value={variantLabel}
+            onChange={(e) => setVariantLabel(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </div>
         <div>
           <Label>Product Title</Label>
           <Input

@@ -165,6 +165,7 @@ export default function AddProductForm(_unused?: unknown) {
 
   // Add state for the specification rich editor
   const [specTextContent, setSpecTextContent] = useState("");
+  const [variantLabel, setVariantLabel] = useState<string>("Size"); // <--- Add this line
 
   // Configure sensors for drag-and-drop
   const sensors = useSensors(
@@ -179,6 +180,7 @@ export default function AddProductForm(_unused?: unknown) {
   // Add state for default product color and size
   const [defaultColorName, setDefaultColorName] = useState<string>("");
   const [defaultColorHex, setDefaultColorHex] = useColor("#ffffff");
+  const [defaultSize, setDefaultSize] = useState<string>(""); // <-- Add this line
 
   // [1] --- VARIANT STATE REFACTOR ---
   // Replace old variants state with grouped structure
@@ -733,6 +735,8 @@ export default function AddProductForm(_unused?: unknown) {
       minQuantity,
       maxQuantity,
       quantityStep,
+      variantLabel, // <--- Pass variantLabel
+      defaultSize, // <--- Pass defaultSize
     });
     // Do not clear the form here! Only clear on success.
   };
@@ -756,6 +760,19 @@ export default function AddProductForm(_unused?: unknown) {
       pending={pending}
       submitButtonText="Add Product"
     >
+      {/* Variant Label Input */}
+      <div className="flex w-full flex-col space-y-2">
+        <Label className="text-base">
+          Variant Label (e.g. Size, Material, Length)
+        </Label>
+        <Input
+          type="text"
+          placeholder="Variant Label (e.g. Size, Material, Length)"
+          value={variantLabel}
+          onChange={(e) => setVariantLabel(e.target.value)}
+          style={{ width: "100%" }}
+        />
+      </div>
       {/* Default Product Color/Size */}
       <div className="flex w-full flex-col space-y-2">
         <Label className="text-base">Default Product Color (optional)</Label>
@@ -788,6 +805,17 @@ export default function AddProductForm(_unused?: unknown) {
             {defaultColorName} ({defaultColorHex.hex})
           </span>
         </div>
+      </div>
+      {/* Default Product Size (optional) */}
+      <div className="flex w-full flex-col space-y-2">
+        <Label className="text-base">Default Product Size (optional)</Label>
+        <Input
+          type="text"
+          placeholder="Size"
+          value={defaultSize}
+          onChange={(e) => setDefaultSize(e.target.value)}
+          style={{ width: "100%" }}
+        />
       </div>
       {/* Variants Toggle */}
       <div className="flex items-center gap-2">
