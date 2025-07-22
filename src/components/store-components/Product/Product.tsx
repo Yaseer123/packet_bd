@@ -289,6 +289,9 @@ export default function Product({ data }: ProductProps) {
       sku: typeof data.sku === "string" ? data.sku : "",
       maxQuantity:
         typeof data.maxQuantity === "number" ? data.maxQuantity : null,
+      // FIX: Ensure variantLabel is string or null, never undefined
+      variantLabel:
+        typeof data.variantLabel === "string" ? data.variantLabel : null,
     };
     openQuickView(productForQuickView);
   };
