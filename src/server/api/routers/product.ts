@@ -88,9 +88,11 @@ function toProductWithCategory(product: unknown): ProductWithCategory {
   } else {
     variants = [];
   }
+  const { variantLabel, ...rest } = prod;
   return {
-    ...prod,
-    variants: variants,
+    ...rest,
+    variants,
+    variantLabel: variantLabel ?? "",
   };
 }
 
