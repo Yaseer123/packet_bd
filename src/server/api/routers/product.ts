@@ -1024,10 +1024,32 @@ export const productRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id } = input;
 
-      // Soft delete: set deletedAt instead of deleting
+      // Fetch the current product to get its slug
+      const product = await ctx.db.product.findUnique({
+        where: { id },
+        select: { slug: true },
+      });
+      if (!product) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Product not found",
+        });
+      }
+
+      // Generate a new slug with '-deleted' suffix, ensuring uniqueness
+      const baseSlug = product.slug.replace(/-deleted(-\d+)?$/, "");
+      let newSlug = `${baseSlug}-deleted`;
+      let counter = 1;
+      // Check for uniqueness
+      while (await ctx.db.product.findUnique({ where: { slug: newSlug } })) {
+        newSlug = `${baseSlug}-deleted-${counter}`;
+        counter++;
+      }
+
+      // Soft delete: set deletedAt and update slug
       return ctx.db.product.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: { deletedAt: new Date(), slug: newSlug },
       });
     }),
 
