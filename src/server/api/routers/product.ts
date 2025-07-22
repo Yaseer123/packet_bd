@@ -566,6 +566,7 @@ export const productRouter = createTRPCRouter({
         minQuantity: input.minQuantity ?? 1,
         maxQuantity: input.maxQuantity,
         quantityStep: input.quantityStep ?? 1,
+        variantLabel: input.variantLabel, // <-- Added this line
       },
     });
 
@@ -598,7 +599,12 @@ export const productRouter = createTRPCRouter({
     ].filter((sku): sku is string => typeof sku === "string");
     const product = await ctx.db.product.update({
       where: { id: createdProduct.id },
-      data: { sku: realSKU, variants: updatedVariants, allSkus },
+      data: {
+        sku: realSKU,
+        variants: updatedVariants,
+        allSkus,
+        variantLabel: input.variantLabel, // <-- Added this line
+      },
       include: { category: true },
     });
 
@@ -759,6 +765,7 @@ export const productRouter = createTRPCRouter({
           minQuantity: input.minQuantity ?? 1,
           maxQuantity: input.maxQuantity,
           quantityStep: input.quantityStep ?? 1,
+          variantLabel: input.variantLabel, // <-- Added this line
         },
       });
       return product;

@@ -88,6 +88,7 @@ model Product {
     defaultColor          String?
     defaultColorHex       String?
     defaultSize           String?
+    variantLabel          String?     // <--- Add this line
     sold                  Int         @default(0)
     estimatedDeliveryTime Int? // Changed to Int to represent days
     categoryId            String? // Foreign key to Category
