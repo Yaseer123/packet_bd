@@ -74,6 +74,7 @@ export const orderRouter = createTRPCRouter({
             sku: true,
             deliveryMethod: true,
             product: true,
+            variantLabel: true,
           },
         },
         address: true,
@@ -106,6 +107,7 @@ export const orderRouter = createTRPCRouter({
               sku: true,
               deliveryMethod: true,
               product: true,
+              variantLabel: true,
             },
           },
           address: true,
@@ -129,6 +131,7 @@ export const orderRouter = createTRPCRouter({
             sku: true,
             deliveryMethod: true,
             product: true,
+            variantLabel: true,
           },
         },
         address: true,
@@ -154,6 +157,7 @@ export const orderRouter = createTRPCRouter({
               sku: true,
               deliveryMethod: true,
               product: true,
+              variantLabel: true,
             },
           },
           address: true,
@@ -173,6 +177,7 @@ export const orderRouter = createTRPCRouter({
             sku: z.string().optional(),
             colorName: z.string().optional(),
             deliveryMethod: z.string().optional(),
+            variantLabel: z.string().optional(),
           }),
         ),
         addressId: z.string().optional(),
@@ -249,6 +254,7 @@ export const orderRouter = createTRPCRouter({
               sku: item.sku,
               colorName: item.colorName,
               deliveryMethod: item.deliveryMethod,
+              variantLabel: item.variantLabel,
             })),
           },
         };
@@ -271,6 +277,7 @@ export const orderRouter = createTRPCRouter({
               sku: true,
               deliveryMethod: true,
               product: true,
+              variantLabel: true,
             },
           },
           address: true,
@@ -309,7 +316,7 @@ export const orderRouter = createTRPCRouter({
             ? `<br/><span style='color:#555;'>Color: ${item.color}</span>`
             : "";
           const size = item.size
-            ? `<br/><span style='color:#555;'>Size: ${item.size}</span>`
+            ? `<br/><span style='color:#555;'>${item.variantLabel ?? "Size"}: ${item.size}</span>`
             : "";
           const sku = item.sku
             ? `<br/><span style='color:#555;'>SKU: ${item.sku}</span>`
@@ -469,6 +476,7 @@ export const orderRouter = createTRPCRouter({
                     sku: true,
                     deliveryMethod: true,
                     product: true,
+                    variantLabel: true,
                   },
                 },
                 address: true,
@@ -498,7 +506,7 @@ export const orderRouter = createTRPCRouter({
                   ? `<br/><span style='color:#555;'>Color: ${item.color}</span>`
                   : "";
                 const size = item.size
-                  ? `<br/><span style='color:#555;'>Size: ${item.size}</span>`
+                  ? `<br/><span style='color:#555;'>${item.variantLabel ?? "Size"}: ${item.size}</span>`
                   : "";
                 const sku = item.sku
                   ? `<br/><span style='color:#555;'>SKU: ${item.sku}</span>`
@@ -623,6 +631,7 @@ export const orderRouter = createTRPCRouter({
             sku: true,
             deliveryMethod: true,
             product: true,
+            variantLabel: true,
           },
         },
         address: true,
@@ -731,6 +740,7 @@ export const orderRouter = createTRPCRouter({
               sku: true,
               deliveryMethod: true,
               product: true,
+              variantLabel: true,
             },
           },
         },
@@ -765,7 +775,7 @@ export const orderRouter = createTRPCRouter({
             ? `<br/><span style='color:#555;'>Color: ${item.color}</span>`
             : "";
           const size = item.size
-            ? `<br/><span style='color:#555;'>Size: ${item.size}</span>`
+            ? `<br/><span style='color:#555;'>${item.variantLabel ?? "Size"}: ${item.size}</span>`
             : "";
           const sku = item.sku
             ? `<br/><span style='color:#555;'>SKU: ${item.sku}</span>`
@@ -934,6 +944,7 @@ export const orderRouter = createTRPCRouter({
                   sku: true,
                   deliveryMethod: true,
                   product: true,
+                  variantLabel: true,
                 },
               },
               address: true,
@@ -963,7 +974,7 @@ export const orderRouter = createTRPCRouter({
                 ? `<br/><span style='color:#555;'>Color: ${item.color}</span>`
                 : "";
               const size = item.size
-                ? `<br/><span style='color:#555;'>Size: ${item.size}</span>`
+                ? `<br/><span style='color:#555;'>${item.variantLabel ?? "Size"}: ${item.size}</span>`
                 : "";
               const sku = item.sku
                 ? `<br/><span style='color:#555;'>SKU: ${item.sku}</span>`

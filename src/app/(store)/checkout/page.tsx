@@ -63,6 +63,7 @@ type CartItem = {
   minQuantity: number;
   maxQuantity?: number;
   quantityStep: number;
+  variantLabel?: string; // <-- add this line
   // add other fields as needed
 };
 
@@ -653,6 +654,7 @@ const Checkout = () => {
           size: item.size,
           sku: item.sku,
           deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
+          variantLabel: item.variantLabel, // <-- add this line
         })),
         addressId,
         notes: note,
@@ -667,6 +669,7 @@ const Checkout = () => {
           size: item.size,
           sku: item.sku,
           deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
+          variantLabel: item.variantLabel, // <-- add this line
         })),
         addressId,
         notes: note,
@@ -829,7 +832,8 @@ const Checkout = () => {
                                 )}
                                 {product.size && (
                                   <span className="ml-2">
-                                    Size: {product.size}
+                                    {(product.variantLabel ?? "Size") + ": "}
+                                    {product.size}
                                   </span>
                                 )}
                               </div>
