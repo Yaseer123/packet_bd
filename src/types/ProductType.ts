@@ -74,6 +74,11 @@ export interface ProductType {
   minQuantity: number;
   maxQuantity: number | null;
   quantityStep: number;
+  quantityDiscounts?: Array<{
+    minQty: number;
+    maxQty: number;
+    discountPercent: number;
+  }>;
 }
 
 export type ProductWithCategory = Product & {
@@ -86,4 +91,9 @@ export type ProductWithCategory = Product & {
   maxQuantity: number | null;
   quantityStep: number;
   variantLabel?: string;
+  quantityDiscounts?: Array<{
+    minQty: number;
+    maxQty: number;
+    discountPercent: number;
+  }>;
 };

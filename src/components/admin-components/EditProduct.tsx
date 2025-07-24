@@ -731,6 +731,40 @@ export default function EditProductForm({ productId }: { productId: string }) {
   );
   const [quantityStep, setQuantityStep] = useState(product?.quantityStep ?? 1);
 
+  // Add state for quantity discounts, pre-fill from product if available
+  const [quantityDiscounts, setQuantityDiscounts] = useState<
+    Array<{ minQty: number; maxQty: number; discountPercent: number }>
+  >(() => {
+    if (product && Array.isArray(product.quantityDiscounts)) {
+      return product.quantityDiscounts;
+    }
+    return [{ minQty: 1, maxQty: 1, discountPercent: 0 }];
+  });
+
+  // Helper to add a new discount row
+  const handleAddDiscountRow = () => {
+    setQuantityDiscounts((prev) => [
+      ...prev,
+      { minQty: 1, maxQty: 1, discountPercent: 0 },
+    ]);
+  };
+
+  // Helper to update a discount row
+  const handleDiscountChange = (
+    idx: number,
+    field: "minQty" | "maxQty" | "discountPercent",
+    value: number,
+  ) => {
+    setQuantityDiscounts((prev) =>
+      prev.map((row, i) => (i === idx ? { ...row, [field]: value } : row)),
+    );
+  };
+
+  // Helper to remove a discount row
+  const handleRemoveDiscountRow = (idx: number) => {
+    setQuantityDiscounts((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   // [1] --- VARIANT STATE REFACTOR ---
   // Remove old variants state and enableVariants state
   // Add grouped state:
@@ -916,6 +950,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       maxQuantity,
       quantityStep,
       variantLabel, // <--- Pass variantLabel
+      quantityDiscounts, // <--- Add this line
     });
   };
 
@@ -1332,6 +1367,92 @@ export default function EditProductForm({ productId }: { productId: string }) {
             value={defaultSize}
             onChange={(e) => setDefaultSize(e.target.value)}
           />
+        </div>
+
+        {/* Quantity Discount Table UI */}
+        <div className="col-span-2 my-4 flex flex-col space-y-2 rounded-md border border-gray-200 p-4">
+          <Label className="mb-2 text-base">Quantity Discounts</Label>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="px-2 py-1 text-left">Min QTY</th>
+                  <th className="px-2 py-1 text-left">Max QTY</th>
+                  <th className="px-2 py-1 text-left">Discount %</th>
+                  <th className="px-2 py-1"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {quantityDiscounts.map((row, idx) => (
+                  <tr key={idx}>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min={1}
+                        value={row.minQty}
+                        onChange={(e) =>
+                          handleDiscountChange(
+                            idx,
+                            "minQty",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-20"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min={row.minQty}
+                        value={row.maxQty}
+                        onChange={(e) =>
+                          handleDiscountChange(
+                            idx,
+                            "maxQty",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-20"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={row.discountPercent}
+                        onChange={(e) =>
+                          handleDiscountChange(
+                            idx,
+                            "discountPercent",
+                            Number(e.target.value),
+                          )
+                        }
+                        className="w-20"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => handleRemoveDiscountRow(idx)}
+                        disabled={quantityDiscounts.length === 1}
+                      >
+                        Remove
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Button
+            type="button"
+            onClick={handleAddDiscountRow}
+            className="mt-2 w-fit"
+          >
+            Add Discount Row
+          </Button>
         </div>
 
         {/* Variants Toggle */}

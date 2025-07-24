@@ -49,6 +49,51 @@ type ProductVariant = {
   images?: string[];
 };
 
+// Add a type guard for discount objects
+function isDiscountObject(
+  d: unknown,
+): d is { minQty: number; maxQty: number; discountPercent: number } {
+  if (typeof d !== "object" || d === null) return false;
+  const obj = d as Record<string, unknown>;
+  return (
+    typeof obj.minQty === "number" &&
+    typeof obj.maxQty === "number" &&
+    typeof obj.discountPercent === "number"
+  );
+}
+
+// Normalize variants field to always be ProductVariant[] | null
+function isProductVariant(v: unknown): v is ProductVariant {
+  return typeof v === "object" && v !== null;
+}
+function normalizeVariants(variants: unknown): ProductVariant[] | null {
+  if (Array.isArray(variants)) return variants.filter(isProductVariant);
+  if (typeof variants === "string") {
+    try {
+      const parsed: unknown = JSON.parse(variants);
+      if (Array.isArray(parsed)) return parsed.filter(isProductVariant);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+// Normalize a wishlist item from backend to expected frontend type
+type BackendWishlistItem = Omit<WishlistItem, "product"> & {
+  product: ProductWithCategory & { variants?: unknown };
+};
+
+function normalizeWishlistItem(item: BackendWishlistItem): WishlistItem {
+  return {
+    ...item,
+    product: {
+      ...item.product,
+      variants: normalizeVariants(item.product.variants),
+    },
+  };
+}
+
 // Utility to get category prefix (with mapping and fallback)
 export function getCategoryPrefix(categoryName?: string) {
   if (!categoryName) return "XX";
@@ -96,10 +141,10 @@ export default function ProductDetails({
     minQuantity,
   );
   const [quantityError, setQuantityError] = useState<string>("");
-  const [reviewForm, setReviewForm] = useState({
-    rating: 5,
-    comment: "",
-  });
+  const [reviewForm, setReviewForm] = useState<{
+    rating: number;
+    comment: string;
+  }>({ rating: 5, comment: "" });
   const [reviewSortOrder, setReviewSortOrder] = useState("newest");
 
   const { addToCart, updateCart, cartArray } = useCartStore();
@@ -107,8 +152,13 @@ export default function ProductDetails({
   const { openModalWishlist } = useModalWishlistStore();
   const utils = api.useUtils();
 
-  const [wishlistResponse] = api.wishList.getWishList.useSuspenseQuery();
-  const wishlist = wishlistResponse ?? [];
+  const wishlistResponseRaw = api.wishList.getWishList.useSuspenseQuery()[0] as
+    | BackendWishlistItem[]
+    | undefined;
+  const wishlistResponse = wishlistResponseRaw;
+  const wishlist: WishlistItem[] = Array.isArray(wishlistResponse)
+    ? wishlistResponse.map(normalizeWishlistItem)
+    : [];
 
   const { data: reviews, refetch: refetchReviews } =
     api.review.getReviewsByProduct.useQuery(productMain.id, {
@@ -161,7 +211,12 @@ export default function ProductDetails({
       context?: { previousWishlist?: WishlistItem[] },
     ) => {
       if (context?.previousWishlist) {
-        utils.wishList.getWishList.setData(undefined, context.previousWishlist);
+        utils.wishList.getWishList.setData(
+          undefined,
+          context.previousWishlist as unknown as Parameters<
+            typeof utils.wishList.getWishList.setData
+          >[1],
+        );
       }
       if (err instanceof Error) {
         console.error(err.message);
@@ -317,11 +372,14 @@ export default function ProductDetails({
   const handleAddToWishlist = () => {
     if (isInWishlist(productMain.id)) {
       // **Optimistic UI Update: Remove item immediately**
-      utils.wishList.getWishList.setData(
-        undefined,
-        (old: WishlistItem[] | undefined) =>
-          old?.filter((item) => item.product.id !== productMain.id) ?? [],
-      );
+      utils.wishList.getWishList.setData(undefined, ((
+        old: WishlistItem[] | undefined,
+      ) => {
+        if (!old) return [];
+        return old.filter((item) => item.product.id !== productMain.id);
+      }) as unknown as Parameters<
+        typeof utils.wishList.getWishList.setData
+      >[1]);
 
       removeFromWishlistMutation.mutate(
         { productId: productMain.id },
@@ -334,19 +392,20 @@ export default function ProductDetails({
       );
     } else {
       // **Optimistic UI Update: Add item immediately**
-      utils.wishList.getWishList.setData(
-        undefined,
-        (old: WishlistItem[] | undefined) => [
-          ...(old ?? []),
-          {
-            id: uuid(),
-            product: productMain,
-            createdAt: new Date(),
-            userId: session?.user.id ?? "temp-user",
-            productId: productMain.id,
-          },
-        ],
-      );
+      utils.wishList.getWishList.setData(undefined, ((
+        old: WishlistItem[] | undefined,
+      ) => [
+        ...(old ?? []),
+        normalizeWishlistItem({
+          id: uuid(),
+          product: productMain as ProductWithCategory & { variants?: unknown },
+          createdAt: new Date(),
+          userId: session?.user.id ?? "temp-user",
+          productId: productMain.id,
+        }),
+      ]) as unknown as Parameters<
+        typeof utils.wishList.getWishList.setData
+      >[1]);
 
       addToWishlistMutation.mutate(
         { productId: productMain.id },
@@ -728,6 +787,54 @@ export default function ProductDetails({
     setCurrentUrl(window.location.href);
   }, []);
 
+  // Helper to get the correct unit price based on quantity and discount ranges
+  function getDiscountedUnitPrice(
+    quantity: number,
+    basePrice: number,
+    discounts?:
+      | Array<{
+          minQty: number;
+          maxQty: number;
+          discountPercent: number;
+        }>
+      | string
+      | null,
+  ) {
+    let normalized: Array<{
+      minQty: number;
+      maxQty: number;
+      discountPercent: number;
+    }> = [];
+    if (Array.isArray(discounts)) {
+      normalized = discounts as Array<{
+        minQty: number;
+        maxQty: number;
+        discountPercent: number;
+      }>;
+    } else if (typeof discounts === "string") {
+      try {
+        const parsed: unknown = JSON.parse(discounts);
+        if (Array.isArray(parsed) && parsed.every(isDiscountObject)) {
+          normalized = parsed as Array<{
+            minQty: number;
+            maxQty: number;
+            discountPercent: number;
+          }>;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (normalized.length === 0) return basePrice;
+    const matched = normalized.find(
+      (d) => quantity >= d.minQty && quantity <= d.maxQty,
+    );
+    if (matched) {
+      return basePrice - (basePrice * matched.discountPercent) / 100;
+    }
+    return basePrice;
+  }
+
   return (
     <>
       <div className="product-detail sale mb-5">
@@ -1057,6 +1164,7 @@ export default function ProductDetails({
                       className="cursor-pointer"
                     />
                   </div>
+
                   <div
                     onClick={handleAddToCart}
                     className={`duration-400 md:text-md inline-block w-full rounded-[.25rem] border border-black bg-white px-0 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4 ${quantityError ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
@@ -1064,6 +1172,34 @@ export default function ProductDetails({
                   >
                     Add To Cart
                   </div>
+                </div>
+                {/* Total Price Display */}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="font-semibold">Total Price:</span>
+                  <span className="text-lg font-bold">
+                    {(() => {
+                      const qty =
+                        typeof productQuantity === "number"
+                          ? productQuantity
+                          : 0;
+                      // --- UPDATED LOGIC START ---
+                      const baseUnitPrice =
+                        typeof activeVariant?.discountedPrice === "number"
+                          ? activeVariant.discountedPrice
+                          : typeof productMain.discountedPrice === "number"
+                            ? productMain.discountedPrice
+                            : typeof activeVariant?.price === "number"
+                              ? activeVariant.price
+                              : productMain.price;
+                      const unit = getDiscountedUnitPrice(
+                        qty,
+                        baseUnitPrice,
+                        productMain.quantityDiscounts,
+                      );
+                      // --- UPDATED LOGIC END ---
+                      return formatPrice(unit * qty);
+                    })()}
+                  </span>
                 </div>
                 <div className="button-block mt-5">
                   {quantityError && (
