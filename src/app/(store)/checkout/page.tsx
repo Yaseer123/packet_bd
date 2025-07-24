@@ -19,6 +19,9 @@ import {
 } from "react";
 import { formatPrice } from "../../../utils/format";
 
+// Add import for TRPC
+import type { ProductWithCategory } from "@/types/ProductType";
+
 type OrderWithRelations = Order & {
   address?: {
     name: string;
@@ -67,6 +70,92 @@ type CartItem = {
   // add other fields as needed
 };
 
+// Helper to get the correct unit price based on quantity and discount ranges
+function getDiscountedUnitPrice(
+  quantity: number,
+  basePrice: number,
+  discounts?:
+    | Array<{
+        minQty: number;
+        maxQty: number;
+        discountPercent: number;
+      }>
+    | string
+    | null,
+) {
+  let normalized: Array<{
+    minQty: number;
+    maxQty: number;
+    discountPercent: number;
+  }> = [];
+  if (Array.isArray(discounts)) {
+    normalized = discounts as Array<{
+      minQty: number;
+      maxQty: number;
+      discountPercent: number;
+    }>;
+  } else if (typeof discounts === "string") {
+    try {
+      const parsed: unknown = JSON.parse(discounts);
+      if (Array.isArray(parsed)) {
+        normalized = parsed as Array<{
+          minQty: number;
+          maxQty: number;
+          discountPercent: number;
+        }>;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  if (normalized.length === 0) return basePrice;
+  const matched = normalized.find(
+    (d) => quantity >= d.minQty && quantity <= d.maxQty,
+  );
+  if (matched) {
+    return basePrice - (basePrice * matched.discountPercent) / 100;
+  }
+  return basePrice;
+}
+
+// Helper to normalize quantityDiscounts to always be an array of the correct type
+function normalizeQuantityDiscounts(
+  discounts: unknown,
+): Array<{ minQty: number; maxQty: number; discountPercent: number }> {
+  type Discount = { minQty: number; maxQty: number; discountPercent: number };
+  function isDiscountObject(d: unknown): d is Discount {
+    if (typeof d !== "object" || d === null) return false;
+    const obj = d as Record<string, unknown>;
+    return (
+      typeof obj.minQty === "number" &&
+      typeof obj.maxQty === "number" &&
+      typeof obj.discountPercent === "number"
+    );
+  }
+  if (Array.isArray(discounts)) {
+    return discounts.filter(isDiscountObject).map((d) => ({
+      minQty: d.minQty,
+      maxQty: d.maxQty,
+      discountPercent: d.discountPercent,
+    }));
+  }
+  if (typeof discounts === "string") {
+    try {
+      const parsed: unknown = JSON.parse(discounts);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(isDiscountObject).map((d) => ({
+          minQty: d.minQty,
+          maxQty: d.maxQty,
+          discountPercent: d.discountPercent,
+        }));
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 const Checkout = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -92,7 +181,6 @@ const Checkout = () => {
       updateCart: (itemId: string, quantity: number) => void;
       removeFromCart: (itemId: string) => void;
     };
-  const [totalCart, setTotalCart] = useState<number>(0);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessType>(null);
   const [orderError, setOrderError] = useState("");
 
@@ -114,13 +202,53 @@ const Checkout = () => {
     [buyNowProduct, cartArray],
   );
 
-  useEffect(() => {
-    const sum = checkoutItems.reduce(
-      (acc, item) => acc + (item.discountedPrice ?? item.price) * item.quantity,
-      0,
+  // --- Fetch product data for all cart items ---
+  const uniqueProductIds = useMemo(
+    () => Array.from(new Set(checkoutItems.map((item) => item.productId))),
+    [checkoutItems],
+  );
+  // Fetch all products in parallel
+  const productQueries = uniqueProductIds.map((id) => {
+    const query = api.product.getProductById.useQuery(
+      { id },
+      { enabled: !!id },
     );
+    return query;
+  });
+  // Build a map of productId -> productData
+  const productMap = useMemo(() => {
+    const map: Record<string, ProductWithCategory | undefined> = {};
+    uniqueProductIds.forEach((id, idx) => {
+      const query = productQueries[idx];
+      if (query && "data" in query && query.data) {
+        map[id] = query.data as ProductWithCategory;
+      }
+    });
+    return map;
+  }, [productQueries, uniqueProductIds]);
+
+  // --- Calculate total using quantity-based discounts ---
+  const [totalCart, setTotalCart] = useState<number>(0);
+  useEffect(() => {
+    let sum = 0;
+    for (const item of checkoutItems) {
+      const product = productMap[item.productId];
+      // Use discountedPrice if available, else price
+      const baseUnitPrice =
+        typeof item.discountedPrice === "number"
+          ? item.discountedPrice
+          : typeof product?.discountedPrice === "number"
+            ? product.discountedPrice
+            : item.price;
+      const unit = getDiscountedUnitPrice(
+        item.quantity,
+        baseUnitPrice,
+        product?.quantityDiscounts,
+      );
+      sum += unit * item.quantity;
+    }
     setTotalCart(sum);
-  }, [checkoutItems]);
+  }, [checkoutItems, productMap]);
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     // Find the product to get min/max/step
@@ -793,6 +921,31 @@ const Checkout = () => {
                         value: String(product.quantity),
                         error: "",
                       };
+                      const productData = productMap[product.productId];
+                      // Use discountedPrice if available, else price
+                      const baseUnitPrice =
+                        typeof product.discountedPrice === "number"
+                          ? product.discountedPrice
+                          : typeof productData?.discountedPrice === "number"
+                            ? productData.discountedPrice
+                            : product.price;
+                      const unit = getDiscountedUnitPrice(
+                        product.quantity,
+                        baseUnitPrice,
+                        productData?.quantityDiscounts,
+                      );
+                      const discountsArr = normalizeQuantityDiscounts(
+                        productData?.quantityDiscounts,
+                      );
+                      const discountPercent = (() => {
+                        if (!discountsArr.length) return 0;
+                        const match = discountsArr.find(
+                          (d) =>
+                            product.quantity >= d.minQty &&
+                            product.quantity <= d.maxQty,
+                        );
+                        return match ? match.discountPercent : 0;
+                      })();
                       return (
                         <div
                           key={product.id}
@@ -816,8 +969,11 @@ const Checkout = () => {
                                 {product.name}
                               </div>
                               <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
-                                {formatPrice(
-                                  product.discountedPrice ?? product.price,
+                                {formatPrice(unit)}
+                                {discountPercent > 0 && (
+                                  <span className="ml-2 text-xs text-green-600">
+                                    ({discountPercent}% off)
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -840,8 +996,11 @@ const Checkout = () => {
                             )}
 
                             <div className="mt-2 text-base font-medium capitalize leading-6 md:hidden md:text-base md:leading-5">
-                              {formatPrice(
-                                product.discountedPrice ?? product.price,
+                              {formatPrice(unit)}
+                              {discountPercent > 0 && (
+                                <span className="ml-2 text-xs text-green-600">
+                                  ({discountPercent}% off)
+                                </span>
                               )}
                             </div>
 
