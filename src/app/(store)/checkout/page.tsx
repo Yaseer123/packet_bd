@@ -235,9 +235,9 @@ const Checkout = () => {
       const product = productMap[item.productId];
       // Use discountedPrice if available, else price
       const unit =
-        typeof product.discountedPrice === "number"
+        product && typeof product.discountedPrice === "number"
           ? product.discountedPrice
-          : typeof product.discountedPrice === "undefined" &&
+          : typeof product?.discountedPrice === "undefined" &&
               typeof item.discountedPrice === "number"
             ? item.discountedPrice
             : item.price;
