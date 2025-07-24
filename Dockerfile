@@ -22,7 +22,22 @@ COPY . .
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Accept build args and set as envs for build-time and runtime secrets
+ENV AUTH_GOOGLE_ID="463067814945-5lbfb9e1lesom5kjf78ibqvfkrg776i9.apps.googleusercontent.com"
+ENV AUTH_GOOGLE_SECRET="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"
+ENV DATABASE_URL="postgresql://postgres.lruqkuukifiztacepfhv:44UcRxF3vZCDeo5A@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+ENV AUTH_SECRET="packetbd"
+ENV BUCKET_REGION="ap-southeast-1"
+ENV ACCESS_KEY="AKIAT7FGTGIJP3S4T34P"
+ENV SECRET_KEY="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"
+ENV BUCKET_NAME="packetbd"
+ENV NODE_ENV="production"
+ENV AUTH_TRUST_HOST="true"
+ENV RESEND_API_KEY="re_EbtKpWfm_7JiaG6wvNhjTsSnDzqDDg2z2"
+ENV ROOT_DOMAIN="packetbd.com"
+ENV NEXTAUTH_URL="https://packetbd.com"
 
 # Install dependencies and build
 RUN pnpm install --prefer-offline --no-frozen-lockfile
@@ -35,6 +50,18 @@ WORKDIR /app
 # Set environment to production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV AUTH_GOOGLE_ID="463067814945-5lbfb9e1lesom5kjf78ibqvfkrg776i9.apps.googleusercontent.com"
+ENV AUTH_GOOGLE_SECRET="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"
+ENV DATABASE_URL="postgresql://postgres.lruqkuukifiztacepfhv:44UcRxF3vZCDeo5A@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+ENV AUTH_SECRET="packetbd"
+ENV BUCKET_REGION="ap-southeast-1"
+ENV ACCESS_KEY="AKIAT7FGTGIJP3S4T34P"
+ENV SECRET_KEY="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"
+ENV BUCKET_NAME="packetbd"
+ENV AUTH_TRUST_HOST="true"
+ENV RESEND_API_KEY="re_EbtKpWfm_7JiaG6wvNhjTsSnDzqDDg2z2"
+ENV ROOT_DOMAIN="packetbd.com"
+ENV NEXTAUTH_URL="https://packetbd.com"
 
 # Create non-root user and group
 RUN addgroup --system --gid 1001 nodejs \
