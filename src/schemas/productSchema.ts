@@ -19,6 +19,13 @@ export const variantSchema = z.object({
   sku: z.string().optional(), // Add SKU for each variant
 });
 
+// Add schema for quantity discounts
+export const quantityDiscountSchema = z.object({
+  minQty: z.number().min(1),
+  maxQty: z.number().min(1),
+  discountPercent: z.number().min(0).max(100),
+});
+
 export const productSchema = z.object({
   title: z.string().min(3),
   slug: z.string().min(3),
@@ -43,6 +50,7 @@ export const productSchema = z.object({
   minQuantity: z.number().min(1).default(1),
   maxQuantity: z.number().nullable().optional(),
   quantityStep: z.number().min(1).default(1),
+  quantityDiscounts: z.array(quantityDiscountSchema).default([]),
 });
 
 export const updateProductSchema = z.object({
@@ -69,6 +77,7 @@ export const updateProductSchema = z.object({
   minQuantity: z.number().min(1).optional(),
   maxQuantity: z.number().nullable().optional(),
   quantityStep: z.number().min(1).optional(),
+  quantityDiscounts: z.array(quantityDiscountSchema).optional(),
 });
 
 export type Product = z.infer<typeof productSchema>;

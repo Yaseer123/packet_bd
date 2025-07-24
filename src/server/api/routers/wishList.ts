@@ -8,7 +8,7 @@ export const wishListRouter = createTRPCRouter({
     }
     const wishLists = await ctx.db.wishList.findMany({
       where: { userId: ctx.session.user.id },
-      include: { product: true },
+      include: { product: { include: { category: true } } },
     });
     return wishLists;
   }),

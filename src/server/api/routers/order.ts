@@ -178,6 +178,7 @@ export const orderRouter = createTRPCRouter({
             colorName: z.string().optional(),
             deliveryMethod: z.string().optional(),
             variantLabel: z.string().optional(),
+            price: z.number(), // <-- require price from frontend
           }),
         ),
         addressId: z.string().optional(),
@@ -209,15 +210,9 @@ export const orderRouter = createTRPCRouter({
         }
       }
 
-      // Create a map of product prices
-      const productPriceMap = new Map(
-        products.map((product) => [product.id, product.discountedPrice]),
-      );
-
-      // Calculate product total
+      // Calculate product total using frontend-provided price
       const productTotal = input.cartItems.reduce(
-        (acc, item) =>
-          acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
+        (acc, item) => acc + item.quantity * item.price,
         0,
       );
       const shippingCost = input.shippingCost ?? 0;
@@ -248,7 +243,7 @@ export const orderRouter = createTRPCRouter({
             create: input.cartItems.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: productPriceMap.get(item.productId) ?? 0,
+              price: item.price, // <-- use frontend price
               color: item.color,
               size: item.size,
               sku: item.sku,
@@ -652,6 +647,8 @@ export const orderRouter = createTRPCRouter({
             sku: z.string().optional(),
             colorName: z.string().optional(),
             deliveryMethod: z.string().optional(),
+            variantLabel: z.string().optional(),
+            price: z.number(), // <-- require price from frontend
           }),
         ),
         addressId: z.string().optional(),
@@ -680,15 +677,9 @@ export const orderRouter = createTRPCRouter({
         }
       }
 
-      // Create a map of product prices
-      const productPriceMap = new Map(
-        products.map((product) => [product.id, product.discountedPrice]),
-      );
-
-      // Calculate product total
+      // Calculate product total using frontend-provided price
       const guestProductTotal = input.cartItems.reduce(
-        (acc, item) =>
-          acc + item.quantity * (productPriceMap.get(item.productId) ?? 0),
+        (acc, item) => acc + item.quantity * item.price,
         0,
       );
       const guestShippingCost = input.shippingCost ?? 0;
@@ -713,7 +704,7 @@ export const orderRouter = createTRPCRouter({
               create: input.cartItems.map((item) => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                price: productPriceMap.get(item.productId) ?? 0,
+                price: item.price, // <-- use frontend price
                 color: item.color,
                 size: item.size,
                 sku: item.sku,

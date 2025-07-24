@@ -2,24 +2,182 @@
 
 import { useModalQuickViewStore } from "@/context/store-context/ModalQuickViewContext";
 import { api } from "@/trpc/react";
-import type { ProductWithCategory } from "@/types/ProductType";
+import type { ProductType, ProductWithCategory } from "@/types/ProductType";
 import { X } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
 
+// Local type for JSON value
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | { [x: string]: JsonValue }
+  | Array<JsonValue>
+  | null;
+// Local type for Variant
+type Variant = {
+  [key: string]: string | number | string[] | undefined;
+  colorName?: string;
+  colorHex?: string;
+  size?: string;
+  images?: string[];
+  price?: number;
+  discountedPrice?: number;
+  stock?: number;
+  imageId?: string;
+  sku?: string;
+};
+
+// Utility to convert ProductWithCategory to ProductType
+function toProductType(product: ProductWithCategory): ProductType {
+  // Normalize categoryAttributes to JsonValue
+  let normalizedCategoryAttributes: JsonValue = null;
+  if (
+    product.categoryAttributes === null ||
+    product.categoryAttributes === undefined
+  ) {
+    normalizedCategoryAttributes = null;
+  } else if (typeof product.categoryAttributes === "string") {
+    try {
+      const parsed: unknown = JSON.parse(product.categoryAttributes);
+      if (
+        typeof parsed === "string" ||
+        typeof parsed === "number" ||
+        typeof parsed === "boolean" ||
+        parsed === null ||
+        Array.isArray(parsed) ||
+        (typeof parsed === "object" && parsed !== null)
+      ) {
+        normalizedCategoryAttributes = parsed as JsonValue;
+      } else {
+        normalizedCategoryAttributes = null;
+      }
+    } catch {
+      normalizedCategoryAttributes = null;
+    }
+  } else if (
+    typeof product.categoryAttributes === "object" &&
+    product.categoryAttributes !== null
+  ) {
+    try {
+      const parsed: unknown = JSON.parse(
+        JSON.stringify(product.categoryAttributes),
+      );
+      if (
+        typeof parsed === "string" ||
+        typeof parsed === "number" ||
+        typeof parsed === "boolean" ||
+        parsed === null ||
+        Array.isArray(parsed) ||
+        (typeof parsed === "object" && parsed !== null)
+      ) {
+        normalizedCategoryAttributes = parsed as JsonValue;
+      } else {
+        normalizedCategoryAttributes = null;
+      }
+    } catch {
+      normalizedCategoryAttributes = null;
+    }
+  } else {
+    normalizedCategoryAttributes = null;
+  }
+
+  // Normalize variants to Variant[] | null | undefined
+  let normalizedVariants: Variant[] | null | undefined = undefined;
+  if (Array.isArray(product.variants)) {
+    normalizedVariants = product.variants.filter(isVariant);
+  } else if (typeof product.variants === "string") {
+    try {
+      const parsed: unknown = JSON.parse(product.variants);
+      normalizedVariants = Array.isArray(parsed)
+        ? parsed.filter(isVariant)
+        : null;
+    } catch {
+      normalizedVariants = null;
+    }
+  } else if (product.variants === null || product.variants === undefined) {
+    normalizedVariants = null;
+  } else {
+    normalizedVariants = undefined;
+  }
+
+  return {
+    id: product.id,
+    title: product.title,
+    featured: product.featured ?? false,
+    shortDescription: product.shortDescription ?? "",
+    published: product.published ?? false,
+    discountedPrice: product.discountedPrice ?? null,
+    stockStatus:
+      product.stockStatus as import("@/types/ProductType").StockStatus,
+    category: product.category?.name ?? "",
+    name: product.title ?? "",
+    new: product.new ?? false,
+    sale: product.sale ?? false,
+    rate: 0,
+    price: product.price ?? 0,
+    originPrice: product.price ?? 0,
+    brand: product.brand ?? "",
+    defaultColor: product.defaultColor ?? undefined,
+    defaultColorHex: product.defaultColorHex ?? undefined,
+    defaultSize: product.defaultSize ?? undefined,
+    variantLabel: product.variantLabel ?? undefined,
+    sold: 0,
+    quantity: 0,
+    quantityPurchase: 0,
+    sizes: [],
+    images: Array.isArray(product.images)
+      ? product.images.filter((img): img is string => typeof img === "string")
+      : [],
+    description: product.description ?? null,
+    action: "",
+    slug: product.slug ?? "",
+    attributes:
+      typeof product.attributes === "object" &&
+      product.attributes !== null &&
+      !Array.isArray(product.attributes)
+        ? (product.attributes as Record<string, string>)
+        : {},
+    variants: normalizedVariants,
+    sku: product.sku ?? undefined,
+    imageId: product.imageId ?? undefined,
+    createdAt: product.createdAt ?? undefined,
+    updatedAt: product.updatedAt ?? undefined,
+    stock: product.stock ?? undefined,
+    estimatedDeliveryTime: product.estimatedDeliveryTime ?? undefined,
+    categoryId: product.categoryId ?? undefined,
+    deletedAt: product.deletedAt ?? undefined,
+    descriptionImageId: product.descriptionImageId ?? undefined,
+    categoryAttributes: normalizedCategoryAttributes,
+    position: product.position ?? undefined,
+    minQuantity: product.minQuantity ?? 1,
+    maxQuantity: product.maxQuantity ?? null,
+    quantityStep: product.quantityStep ?? 1,
+    quantityDiscounts: product.quantityDiscounts ?? [],
+  };
+}
+
+// Helper type guard for Variant
+function isVariant(v: unknown): v is Variant {
+  return typeof v === "object" && v !== null;
+}
+
 const ModalNewsletter = () => {
   const [open, setOpen] = useState<boolean>(false);
   const router = useRouter();
   const { openQuickView } = useModalQuickViewStore();
 
-  const productDataResult = api.product.getAll.useSuspenseQuery();
-  const productData =
-    Array.isArray(productDataResult) &&
-    productDataResult[0] &&
-    Array.isArray(productDataResult[0].products)
-      ? productDataResult[0]
+  // Use correct type for productDataResult and productData
+  const [productDataResult] = api.product.getAll.useSuspenseQuery() as [
+    { products: ProductWithCategory[] } | undefined,
+    unknown,
+  ];
+  const productData: { products: ProductWithCategory[] } =
+    productDataResult && Array.isArray(productDataResult.products)
+      ? productDataResult
       : { products: [] };
 
   const handleDetailProduct = (productId: string) => {
@@ -137,7 +295,9 @@ const ModalNewsletter = () => {
                             </div>
                             <button
                               className="quick-view-btn button-main hover:bg-green whitespace-nowrap rounded-full bg-black px-4 py-2 text-white hover:bg-black/75 sm:px-5 sm:py-3"
-                              onClick={() => openQuickView(product)}
+                              onClick={() =>
+                                openQuickView(toProductType(product))
+                              }
                             >
                               QUICK VIEW
                             </button>
