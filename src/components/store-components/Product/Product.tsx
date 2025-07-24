@@ -5,14 +5,8 @@ import { useModalCartStore } from "@/context/store-context/ModalCartContext";
 import { useModalQuickViewStore } from "@/context/store-context/ModalQuickViewContext";
 import { useModalWishlistStore } from "@/context/store-context/ModalWishlistContext";
 import { api } from "@/trpc/react";
-import type {
-  JsonValue,
-  ProductType,
-  ProductWithCategory,
-} from "@/types/ProductType";
-import { StockStatus } from "@/types/ProductType";
+import type { ProductType, ProductWithCategory } from "@/types/ProductType";
 import { Eye, Heart, ShoppingBagOpen } from "@phosphor-icons/react/dist/ssr";
-import type { Product } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,17 +18,208 @@ interface ProductProps {
   style?: string;
 }
 
+// Local type for JSON value
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | { [x: string]: JsonValue }
+  | Array<JsonValue>
+  | null;
+// Local type for Variant
+type Variant = {
+  [key: string]: string | number | string[] | undefined;
+  colorName?: string;
+  colorHex?: string;
+  size?: string;
+  images?: string[];
+  price?: number;
+  discountedPrice?: number;
+  stock?: number;
+  imageId?: string;
+  sku?: string;
+};
+
 // Helper for stockStatus
-// const validStockStatuses = ["IN_STOCK", "OUT_OF_STOCK", "PRE_ORDER"] as const;
-// type StockStatus = (typeof validStockStatuses)[number];
+const validStockStatuses = ["IN_STOCK", "OUT_OF_STOCK", "PRE_ORDER"] as const;
+type StockStatus = (typeof validStockStatuses)[number];
+
+// Helper type guard for Variant
+function isVariant(v: unknown): v is Variant {
+  return typeof v === "object" && v !== null;
+}
+
+// Utility to convert ProductWithCategory to ProductType
+function toProductType(product: ProductWithCategory): ProductType {
+  // Normalize categoryAttributes to JsonValue
+  let normalizedCategoryAttributes: JsonValue = null;
+  if (
+    product.categoryAttributes === null ||
+    product.categoryAttributes === undefined
+  ) {
+    normalizedCategoryAttributes = null;
+  } else if (typeof product.categoryAttributes === "string") {
+    try {
+      const parsed: unknown = JSON.parse(product.categoryAttributes);
+      if (
+        typeof parsed === "string" ||
+        typeof parsed === "number" ||
+        typeof parsed === "boolean" ||
+        parsed === null ||
+        Array.isArray(parsed) ||
+        (typeof parsed === "object" && parsed !== null)
+      ) {
+        normalizedCategoryAttributes = parsed as JsonValue;
+      } else {
+        normalizedCategoryAttributes = null;
+      }
+    } catch {
+      normalizedCategoryAttributes = null;
+    }
+  } else if (
+    typeof product.categoryAttributes === "object" &&
+    product.categoryAttributes !== null
+  ) {
+    try {
+      const parsed: unknown = JSON.parse(
+        JSON.stringify(product.categoryAttributes),
+      );
+      if (
+        typeof parsed === "string" ||
+        typeof parsed === "number" ||
+        typeof parsed === "boolean" ||
+        parsed === null ||
+        Array.isArray(parsed) ||
+        (typeof parsed === "object" && parsed !== null)
+      ) {
+        normalizedCategoryAttributes = parsed as JsonValue;
+      } else {
+        normalizedCategoryAttributes = null;
+      }
+    } catch {
+      normalizedCategoryAttributes = null;
+    }
+  } else {
+    normalizedCategoryAttributes = null;
+  }
+
+  // Normalize variants to Variant[] | null | undefined
+  let normalizedVariants: Variant[] | null | undefined = undefined;
+  if (Array.isArray(product.variants)) {
+    normalizedVariants = product.variants.filter(isVariant);
+  } else if (typeof product.variants === "string") {
+    try {
+      const parsed: unknown = JSON.parse(product.variants);
+      normalizedVariants = Array.isArray(parsed)
+        ? parsed.filter(isVariant)
+        : null;
+    } catch {
+      normalizedVariants = null;
+    }
+  } else if (product.variants === null || product.variants === undefined) {
+    normalizedVariants = null;
+  } else {
+    normalizedVariants = undefined;
+  }
+
+  return {
+    id: product.id,
+    title: product.title,
+    featured: product.featured ?? false,
+    shortDescription: product.shortDescription ?? "",
+    published: product.published ?? false,
+    discountedPrice: product.discountedPrice ?? null,
+    stockStatus: product.stockStatus as StockStatus,
+    category: product.category?.name ?? "",
+    name: product.title ?? "",
+    new: product.new ?? false,
+    sale: product.sale ?? false,
+    rate: 0,
+    price: product.price ?? 0,
+    originPrice: product.price ?? 0,
+    brand: product.brand ?? "",
+    defaultColor: product.defaultColor ?? undefined,
+    defaultColorHex: product.defaultColorHex ?? undefined,
+    defaultSize: product.defaultSize ?? undefined,
+    variantLabel: product.variantLabel ?? undefined,
+    sold: 0,
+    quantity: 0,
+    quantityPurchase: 0,
+    sizes: [],
+    images: Array.isArray(product.images)
+      ? product.images.filter((img): img is string => typeof img === "string")
+      : [],
+    description: product.description ?? null,
+    action: "",
+    slug: product.slug ?? "",
+    attributes:
+      typeof product.attributes === "object" &&
+      product.attributes !== null &&
+      !Array.isArray(product.attributes)
+        ? (product.attributes as Record<string, string>)
+        : {},
+    variants: normalizedVariants,
+    sku: product.sku ?? undefined,
+    imageId: product.imageId ?? undefined,
+    createdAt: product.createdAt ?? undefined,
+    updatedAt: product.updatedAt ?? undefined,
+    stock: product.stock ?? undefined,
+    estimatedDeliveryTime: product.estimatedDeliveryTime ?? undefined,
+    categoryId: product.categoryId ?? undefined,
+    deletedAt: product.deletedAt ?? undefined,
+    descriptionImageId: product.descriptionImageId ?? undefined,
+    categoryAttributes: normalizedCategoryAttributes,
+    position: product.position ?? undefined,
+    minQuantity: product.minQuantity ?? 1,
+    maxQuantity: product.maxQuantity ?? null,
+    quantityStep: product.quantityStep ?? 1,
+    quantityDiscounts: product.quantityDiscounts ?? [],
+  };
+}
 
 type WishlistItem = {
   id: string;
   productId: string;
   userId: string;
   createdAt: Date;
-  product: Product;
+  product: ProductWithCategory;
 };
+
+// Normalize variants field to always be Variant[] | null
+function normalizeVariants(variants: unknown): Variant[] | null {
+  if (Array.isArray(variants)) {
+    return variants.filter(
+      (v): v is Variant => typeof v === "object" && v !== null,
+    );
+  }
+  if (typeof variants === "string") {
+    try {
+      const parsed: unknown = JSON.parse(variants);
+      return Array.isArray(parsed)
+        ? parsed.filter(
+            (v): v is Variant => typeof v === "object" && v !== null,
+          )
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+// Normalize a wishlist item from backend to expected frontend type
+type BackendWishlistItem = Omit<WishlistItem, "product"> & {
+  product: ProductWithCategory & { variants?: unknown };
+};
+function normalizeWishlistItem(item: BackendWishlistItem): WishlistItem {
+  return {
+    ...item,
+    product: {
+      ...item.product,
+      variants: normalizeVariants(item.product.variants),
+    },
+  };
+}
 
 // Custom hook to detect mobile screen
 function useIsMobile(breakpoint = 640) {
@@ -62,20 +247,32 @@ export default function Product({ data }: ProductProps) {
 
   const utils = api.useUtils();
 
-  const { data: wishlist = [] } = api.wishList.getWishList.useQuery(undefined, {
-    enabled: !!session?.user, // Only fetch wishlist if the user is logged in
-  });
+  const { data: wishlistRaw = [] } = api.wishList.getWishList.useQuery(
+    undefined,
+    {
+      enabled: !!session?.user, // Only fetch wishlist if the user is logged in
+    },
+  );
+  const wishlist: WishlistItem[] = Array.isArray(wishlistRaw)
+    ? (wishlistRaw as BackendWishlistItem[]).map((item: BackendWishlistItem) =>
+        normalizeWishlistItem(item),
+      )
+    : [];
 
   const addToWishlistMutation = api.wishList.addToWishList.useMutation({
     onMutate: async ({ productId: _productId }) => {
       // Cancel outgoing refetch to avoid overwriting optimistic update
       await utils.wishList.getWishList.cancel();
 
-      // Get current wishlist data
-      const previousWishlist = utils.wishList.getWishList.getData();
-
-      // Check if item already exists to prevent duplicates
-      // (No optimistic update for adding, only for removal)
+      // Get current wishlist data and normalize it
+      const previousWishlistRaw = utils.wishList.getWishList.getData();
+      const previousWishlist: WishlistItem[] = Array.isArray(
+        previousWishlistRaw,
+      )
+        ? (previousWishlistRaw as BackendWishlistItem[]).map(
+            (item: BackendWishlistItem) => normalizeWishlistItem(item),
+          )
+        : [];
 
       return { previousWishlist };
     },
@@ -85,7 +282,12 @@ export default function Product({ data }: ProductProps) {
       context?: { previousWishlist?: WishlistItem[] },
     ) => {
       if (context?.previousWishlist) {
-        utils.wishList.getWishList.setData(undefined, context.previousWishlist);
+        utils.wishList.getWishList.setData(
+          undefined,
+          context.previousWishlist as unknown as Parameters<
+            typeof utils.wishList.getWishList.setData
+          >[1],
+        );
       }
       if (err instanceof Error) {
         console.error(err.message);
@@ -101,16 +303,24 @@ export default function Product({ data }: ProductProps) {
     api.wishList.removeFromWishList.useMutation({
       onMutate: async ({ productId: _productId }) => {
         await utils.wishList.getWishList.cancel();
-        const previousWishlist = utils.wishList.getWishList.getData();
+        const previousWishlistRaw = utils.wishList.getWishList.getData();
+        const previousWishlist: WishlistItem[] = Array.isArray(
+          previousWishlistRaw,
+        )
+          ? (previousWishlistRaw as BackendWishlistItem[]).map(
+              normalizeWishlistItem,
+            )
+          : [];
 
         // Optimistically update the wishlist by removing the item
-        utils.wishList.getWishList.setData(
-          undefined,
-          (old: WishlistItem[] | undefined) => {
-            if (!old) return [];
-            return old.filter((item) => item.id !== _productId);
-          },
-        );
+        utils.wishList.getWishList.setData(undefined, ((
+          old: WishlistItem[] | undefined,
+        ) => {
+          if (!old) return [];
+          return old.filter((item: WishlistItem) => item.id !== _productId);
+        }) as unknown as Parameters<
+          typeof utils.wishList.getWishList.setData
+        >[1]);
 
         return { previousWishlist };
       },
@@ -122,7 +332,9 @@ export default function Product({ data }: ProductProps) {
         if (context?.previousWishlist) {
           utils.wishList.getWishList.setData(
             undefined,
-            context.previousWishlist,
+            context.previousWishlist as unknown as Parameters<
+              typeof utils.wishList.getWishList.setData
+            >[1],
           );
         }
         if (err instanceof Error) {
@@ -136,7 +348,8 @@ export default function Product({ data }: ProductProps) {
 
   const isInWishlist = (itemId: string): boolean => {
     return wishlist.some(
-      (item: WishlistItem) => item.id === itemId || item.product?.id === itemId,
+      (item: WishlistItem) =>
+        item.productId === itemId || item.product?.id === itemId,
     );
   };
 
@@ -228,71 +441,10 @@ export default function Product({ data }: ProductProps) {
     const getNumber = (field: keyof (ProductType | ProductWithCategory)) => {
       return typeof data[field] === "number" ? (data[field] as number) : 0;
     };
-    const productForQuickView: Product = {
-      ...data,
-      id: typeof data.id === "string" ? data.id : "",
-      title: getString("title"),
-      new: getBoolean("new"),
-      sale: getBoolean("sale"),
-      featured: getBoolean("featured"),
-      slug: getString("slug"),
-      shortDescription: getString("shortDescription"),
-      description:
-        typeof data.description === "string" ? data.description : null,
-      published: getBoolean("published"),
-      price: getNumber("price"),
-      discountedPrice:
-        typeof data.discountedPrice === "number" ? data.discountedPrice : null,
-      stock: typeof data.stock === "number" ? data.stock : 0,
-      stockStatus: ["IN_STOCK", "OUT_OF_STOCK", "PRE_ORDER"].includes(
-        data.stockStatus ?? "IN_STOCK",
-      )
-        ? (data.stockStatus! as StockStatus)
-        : StockStatus.IN_STOCK,
-      defaultColor:
-        typeof data.defaultColor === "string" ? data.defaultColor : null,
-      defaultColorHex:
-        typeof data.defaultColorHex === "string" ? data.defaultColorHex : null,
-      defaultSize:
-        typeof data.defaultSize === "string" ? data.defaultSize : null,
-      estimatedDeliveryTime:
-        typeof data.estimatedDeliveryTime === "number"
-          ? data.estimatedDeliveryTime
-          : null,
-      categoryId: typeof data.categoryId === "string" ? data.categoryId : null,
-      createdAt: data.createdAt ?? new Date(),
-      updatedAt: data.updatedAt ?? new Date(),
-      imageId: typeof data.imageId === "string" ? data.imageId : "",
-      descriptionImageId:
-        typeof data.descriptionImageId === "string"
-          ? data.descriptionImageId
-          : null,
-      allSkus:
-        "allSkus" in data &&
-        Array.isArray((data as { allSkus?: unknown }).allSkus)
-          ? (data as { allSkus: unknown[] }).allSkus.filter(
-              (sku): sku is string => typeof sku === "string",
-            )
-          : [],
-      categoryAttributes: data.categoryAttributes ?? {},
-      position: typeof data.position === "number" ? data.position : 0,
-      deletedAt:
-        typeof data.deletedAt === "object" || data.deletedAt === null
-          ? (data.deletedAt ?? null)
-          : null,
-      variants:
-        "variants" in data &&
-        (Array.isArray((data as { variants?: unknown }).variants) ||
-          typeof (data as { variants?: unknown }).variants === "string")
-          ? ((data as { variants?: JsonValue }).variants ?? null)
-          : null,
-      sku: typeof data.sku === "string" ? data.sku : "",
-      maxQuantity:
-        typeof data.maxQuantity === "number" ? data.maxQuantity : null,
-      // FIX: Ensure variantLabel is string or null, never undefined
-      variantLabel:
-        typeof data.variantLabel === "string" ? data.variantLabel : null,
-    };
+    const productForQuickView: ProductType =
+      "category" in data && typeof data.category === "object"
+        ? toProductType(data as ProductWithCategory)
+        : (data as ProductType);
     openQuickView(productForQuickView);
   };
 

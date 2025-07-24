@@ -108,6 +108,7 @@ model Product {
     minQuantity           Int         @default(1) // Minimum quantity allowed per order
     maxQuantity           Int?        // Maximum quantity allowed per order (optional)
     quantityStep          Int         @default(1) // Quantity increment step
+    quantityDiscounts     Json?       // <-- Add this line for quantity-based discounts
 
     reviews   Review[]
     orders    OrderItem[]

@@ -88,11 +88,43 @@ function toProductWithCategory(product: unknown): ProductWithCategory {
   } else {
     variants = [];
   }
+
+  // --- Parse/normalize quantityDiscounts ---
+  const rawQuantityDiscounts: unknown = (
+    prod as { quantityDiscounts?: unknown }
+  ).quantityDiscounts;
+  let quantityDiscounts: Array<{
+    minQty: number;
+    maxQty: number;
+    discountPercent: number;
+  }> = [];
+  if (Array.isArray(rawQuantityDiscounts)) {
+    quantityDiscounts = rawQuantityDiscounts as Array<{
+      minQty: number;
+      maxQty: number;
+      discountPercent: number;
+    }>;
+  } else if (typeof rawQuantityDiscounts === "string") {
+    try {
+      const parsed: unknown = JSON.parse(rawQuantityDiscounts);
+      if (Array.isArray(parsed)) {
+        quantityDiscounts = parsed as Array<{
+          minQty: number;
+          maxQty: number;
+          discountPercent: number;
+        }>;
+      }
+    } catch {
+      quantityDiscounts = [];
+    }
+  }
+
   const { variantLabel, ...rest } = prod;
   return {
     ...rest,
     variants,
     variantLabel: variantLabel ?? "",
+    quantityDiscounts,
   };
 }
 
@@ -543,6 +575,14 @@ export const productRouter = createTRPCRouter({
       if (cat?.name) categoryName = cat.name;
     }
 
+    // Prepare quantityDiscounts for DB (must be string or JSON-serializable)
+    let quantityDiscountsToSave: string | undefined = undefined;
+    if (Array.isArray(input.quantityDiscounts)) {
+      quantityDiscountsToSave = JSON.stringify(input.quantityDiscounts);
+    } else if (typeof input.quantityDiscounts === "string") {
+      quantityDiscountsToSave = input.quantityDiscounts;
+    }
+
     // Create product without SKU first to get the ID
     const createdProduct = await ctx.db.product.create({
       data: {
@@ -569,6 +609,9 @@ export const productRouter = createTRPCRouter({
         maxQuantity: input.maxQuantity,
         quantityStep: input.quantityStep ?? 1,
         variantLabel: input.variantLabel, // <-- Added this line
+        ...(quantityDiscountsToSave !== undefined
+          ? { quantityDiscounts: quantityDiscountsToSave }
+          : {}),
       },
     });
 
@@ -678,6 +721,14 @@ export const productRouter = createTRPCRouter({
       }
       // --- End stock status auto logic ---
 
+      // Prepare quantityDiscounts for DB (must be string or JSON-serializable)
+      let quantityDiscountsToSave: string | undefined = undefined;
+      if (Array.isArray(input.quantityDiscounts)) {
+        quantityDiscountsToSave = JSON.stringify(input.quantityDiscounts);
+      } else if (typeof input.quantityDiscounts === "string") {
+        quantityDiscountsToSave = input.quantityDiscounts;
+      }
+
       // Fetch product to get current values if needed
       const existingProduct = await ctx.db.product.findUnique({
         where: { id },
@@ -768,6 +819,9 @@ export const productRouter = createTRPCRouter({
           maxQuantity: input.maxQuantity,
           quantityStep: input.quantityStep ?? 1,
           variantLabel: input.variantLabel, // <-- Added this line
+          ...(quantityDiscountsToSave !== undefined
+            ? { quantityDiscounts: quantityDiscountsToSave }
+            : {}),
         },
       });
       return product;

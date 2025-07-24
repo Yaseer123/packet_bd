@@ -49,6 +49,51 @@ type ProductVariant = {
   images?: string[];
 };
 
+// Add a type guard for discount objects
+function isDiscountObject(
+  d: unknown,
+): d is { minQty: number; maxQty: number; discountPercent: number } {
+  if (typeof d !== "object" || d === null) return false;
+  const obj = d as Record<string, unknown>;
+  return (
+    typeof obj.minQty === "number" &&
+    typeof obj.maxQty === "number" &&
+    typeof obj.discountPercent === "number"
+  );
+}
+
+// Normalize variants field to always be ProductVariant[] | null
+function isProductVariant(v: unknown): v is ProductVariant {
+  return typeof v === "object" && v !== null;
+}
+function normalizeVariants(variants: unknown): ProductVariant[] | null {
+  if (Array.isArray(variants)) return variants.filter(isProductVariant);
+  if (typeof variants === "string") {
+    try {
+      const parsed: unknown = JSON.parse(variants);
+      if (Array.isArray(parsed)) return parsed.filter(isProductVariant);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+// Normalize a wishlist item from backend to expected frontend type
+type BackendWishlistItem = Omit<WishlistItem, "product"> & {
+  product: ProductWithCategory & { variants?: unknown };
+};
+
+function normalizeWishlistItem(item: BackendWishlistItem): WishlistItem {
+  return {
+    ...item,
+    product: {
+      ...item.product,
+      variants: normalizeVariants(item.product.variants),
+    },
+  };
+}
+
 // Utility to get category prefix (with mapping and fallback)
 export function getCategoryPrefix(categoryName?: string) {
   if (!categoryName) return "XX";
@@ -73,6 +118,44 @@ type WishlistItem = {
   product: Product;
 };
 
+// Helper to normalize quantityDiscounts to always be an array
+function normalizeQuantityDiscounts(
+  discounts: unknown,
+): Array<{ minQty: number; maxQty: number; discountPercent: number }> {
+  type Discount = { minQty: number; maxQty: number; discountPercent: number };
+  function isDiscountObject(d: unknown): d is Discount {
+    if (typeof d !== "object" || d === null) return false;
+    const obj = d as Record<string, unknown>;
+    return (
+      typeof obj.minQty === "number" &&
+      typeof obj.maxQty === "number" &&
+      typeof obj.discountPercent === "number"
+    );
+  }
+  if (Array.isArray(discounts)) {
+    return discounts.filter(isDiscountObject).map((d) => ({
+      minQty: d.minQty,
+      maxQty: d.maxQty,
+      discountPercent: d.discountPercent,
+    }));
+  }
+  if (typeof discounts === "string") {
+    try {
+      const parsed: unknown = JSON.parse(discounts);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(isDiscountObject).map((d) => ({
+          minQty: d.minQty,
+          maxQty: d.maxQty,
+          discountPercent: d.discountPercent,
+        }));
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 export default function ProductDetails({
   productMain,
 }: {
@@ -96,10 +179,10 @@ export default function ProductDetails({
     minQuantity,
   );
   const [quantityError, setQuantityError] = useState<string>("");
-  const [reviewForm, setReviewForm] = useState({
-    rating: 5,
-    comment: "",
-  });
+  const [reviewForm, setReviewForm] = useState<{
+    rating: number;
+    comment: string;
+  }>({ rating: 5, comment: "" });
   const [reviewSortOrder, setReviewSortOrder] = useState("newest");
 
   const { addToCart, updateCart, cartArray } = useCartStore();
@@ -107,8 +190,13 @@ export default function ProductDetails({
   const { openModalWishlist } = useModalWishlistStore();
   const utils = api.useUtils();
 
-  const [wishlistResponse] = api.wishList.getWishList.useSuspenseQuery();
-  const wishlist = wishlistResponse ?? [];
+  const wishlistResponseRaw = api.wishList.getWishList.useSuspenseQuery()[0] as
+    | BackendWishlistItem[]
+    | undefined;
+  const wishlistResponse = wishlistResponseRaw;
+  const wishlist: WishlistItem[] = Array.isArray(wishlistResponse)
+    ? wishlistResponse.map(normalizeWishlistItem)
+    : [];
 
   const { data: reviews, refetch: refetchReviews } =
     api.review.getReviewsByProduct.useQuery(productMain.id, {
@@ -161,7 +249,12 @@ export default function ProductDetails({
       context?: { previousWishlist?: WishlistItem[] },
     ) => {
       if (context?.previousWishlist) {
-        utils.wishList.getWishList.setData(undefined, context.previousWishlist);
+        utils.wishList.getWishList.setData(
+          undefined,
+          context.previousWishlist as unknown as Parameters<
+            typeof utils.wishList.getWishList.setData
+          >[1],
+        );
       }
       if (err instanceof Error) {
         console.error(err.message);
@@ -262,6 +355,27 @@ export default function ProductDetails({
     if (error || typeof productQuantity !== "number") return;
     // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
+    // --- Calculate correct discounted price based on quantityDiscounts ---
+    const qty = productQuantity;
+    const baseUnitPrice =
+      typeof activeVariant?.discountedPrice === "number"
+        ? activeVariant.discountedPrice
+        : typeof productMain.discountedPrice === "number"
+          ? productMain.discountedPrice
+          : typeof activeVariant?.price === "number"
+            ? activeVariant.price
+            : productMain.price;
+    const discountsArr = normalizeQuantityDiscounts(
+      productMain.quantityDiscounts,
+    );
+    const unit = getDiscountedUnitPrice(qty, baseUnitPrice, discountsArr);
+    const discountPercent = (() => {
+      if (!discountsArr.length) return 0;
+      const match = discountsArr.find(
+        (d) => qty >= d.minQty && qty <= d.maxQty,
+      );
+      return match ? match.discountPercent : 0;
+    })();
     const cartItem = {
       id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
@@ -269,12 +383,7 @@ export default function ProductDetails({
         typeof activeVariant?.price === "number"
           ? activeVariant.price
           : (productMain.discountedPrice ?? productMain.price),
-      discountedPrice:
-        typeof activeVariant?.discountedPrice === "number"
-          ? activeVariant.discountedPrice
-          : typeof productMain.discountedPrice === "number"
-            ? productMain.discountedPrice
-            : undefined,
+      discountedPrice: unit, // <-- use the calculated unit price
       quantity: productQuantity,
       coverImage:
         activeVariant?.images?.[0] ??
@@ -289,6 +398,7 @@ export default function ProductDetails({
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
       variantLabel: productMain.variantLabel, // <-- added
+      discountPercent, // <-- add this for modal cart display
     };
     console.log(
       "[AddToCart] selectedColorHex:",
@@ -317,11 +427,14 @@ export default function ProductDetails({
   const handleAddToWishlist = () => {
     if (isInWishlist(productMain.id)) {
       // **Optimistic UI Update: Remove item immediately**
-      utils.wishList.getWishList.setData(
-        undefined,
-        (old: WishlistItem[] | undefined) =>
-          old?.filter((item) => item.product.id !== productMain.id) ?? [],
-      );
+      utils.wishList.getWishList.setData(undefined, ((
+        old: WishlistItem[] | undefined,
+      ) => {
+        if (!old) return [];
+        return old.filter((item) => item.product.id !== productMain.id);
+      }) as unknown as Parameters<
+        typeof utils.wishList.getWishList.setData
+      >[1]);
 
       removeFromWishlistMutation.mutate(
         { productId: productMain.id },
@@ -334,19 +447,20 @@ export default function ProductDetails({
       );
     } else {
       // **Optimistic UI Update: Add item immediately**
-      utils.wishList.getWishList.setData(
-        undefined,
-        (old: WishlistItem[] | undefined) => [
-          ...(old ?? []),
-          {
-            id: uuid(),
-            product: productMain,
-            createdAt: new Date(),
-            userId: session?.user.id ?? "temp-user",
-            productId: productMain.id,
-          },
-        ],
-      );
+      utils.wishList.getWishList.setData(undefined, ((
+        old: WishlistItem[] | undefined,
+      ) => [
+        ...(old ?? []),
+        normalizeWishlistItem({
+          id: uuid(),
+          product: productMain as ProductWithCategory & { variants?: unknown },
+          createdAt: new Date(),
+          userId: session?.user.id ?? "temp-user",
+          productId: productMain.id,
+        }),
+      ]) as unknown as Parameters<
+        typeof utils.wishList.getWishList.setData
+      >[1]);
 
       addToWishlistMutation.mutate(
         { productId: productMain.id },
@@ -728,6 +842,54 @@ export default function ProductDetails({
     setCurrentUrl(window.location.href);
   }, []);
 
+  // Helper to get the correct unit price based on quantity and discount ranges
+  function getDiscountedUnitPrice(
+    quantity: number,
+    basePrice: number,
+    discounts?:
+      | Array<{
+          minQty: number;
+          maxQty: number;
+          discountPercent: number;
+        }>
+      | string
+      | null,
+  ) {
+    let normalized: Array<{
+      minQty: number;
+      maxQty: number;
+      discountPercent: number;
+    }> = [];
+    if (Array.isArray(discounts)) {
+      normalized = discounts as Array<{
+        minQty: number;
+        maxQty: number;
+        discountPercent: number;
+      }>;
+    } else if (typeof discounts === "string") {
+      try {
+        const parsed: unknown = JSON.parse(discounts);
+        if (Array.isArray(parsed) && parsed.every(isDiscountObject)) {
+          normalized = parsed as Array<{
+            minQty: number;
+            maxQty: number;
+            discountPercent: number;
+          }>;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (normalized.length === 0) return basePrice;
+    const matched = normalized.find(
+      (d) => quantity >= d.minQty && quantity <= d.maxQty,
+    );
+    if (matched) {
+      return basePrice - (basePrice * matched.discountPercent) / 100;
+    }
+    return basePrice;
+  }
+
   return (
     <>
       <div className="product-detail sale mb-5">
@@ -916,6 +1078,78 @@ export default function ProductDetails({
                   {reviewStats.totalCount === 1 ? "review" : "reviews"})
                 </span>
               </div>
+              {/* Unified Color Selector */}
+              {unifiedColors.length > 0 && (
+                <div className="mb-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex-shrink-0 font-semibold">Color:</span>
+                    <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
+                      {unifiedColors.map((colorObj, idx) => (
+                        <div
+                          key={String(colorObj.colorHex) + idx}
+                          className="mx-1 flex flex-shrink-0 flex-col items-center"
+                        >
+                          <button
+                            className={`rounded-full border p-0 ${selectedColorHex === colorObj.colorHex ? "border-2 border-blue-500 ring-2 ring-blue-400" : "border"}`}
+                            style={{
+                              width: 28,
+                              height: 28,
+                              backgroundColor: colorObj.colorHex,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            onClick={() => {
+                              setSelectedColorHex(colorObj.colorHex);
+                              setSelectedColorName(colorObj.colorName);
+                            }}
+                            aria-label={colorObj.colorName}
+                            title={colorObj.colorName}
+                          >
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 20,
+                                height: 20,
+                                backgroundColor: colorObj.colorHex,
+                                borderRadius: "50%",
+                                // border: "1px solid #ccc",
+                              }}
+                            />
+                          </button>
+                          <span
+                            className="mt-1 text-center text-xs"
+                            style={{ maxWidth: 48, wordBreak: "break-word" }}
+                          >
+                            {colorObj.colorName}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Size selector (always show if availableSizes.length > 0) */}
+              {availableSizes.length > 0 && (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex-shrink-0 font-semibold">
+                    {productMain.variantLabel || "Size"}:
+                  </span>
+                  <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
+                    {availableSizes.map((size, idx) =>
+                      size ? (
+                        <button
+                          key={size + idx}
+                          className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"}`}
+                          onClick={() => setSelectedSize(size)}
+                        >
+                          {size}
+                        </button>
+                      ) : null,
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {displayStock === 0 ? (
                   <div className="product-price heading5 font-bold text-red-500">
@@ -944,81 +1178,62 @@ export default function ProductDetails({
               >
                 {productMain.shortDescription}
               </div>
+
               <div className="list-action mt-6">
-                {/* Unified Color Selector */}
-                {unifiedColors.length > 0 && (
-                  <div className="mb-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex-shrink-0 font-semibold">
-                        Color:
-                      </span>
-                      <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
-                        {unifiedColors.map((colorObj, idx) => (
-                          <div
-                            key={String(colorObj.colorHex) + idx}
-                            className="mx-1 flex flex-shrink-0 flex-col items-center"
-                          >
-                            <button
-                              className={`rounded-full border p-0 ${selectedColorHex === colorObj.colorHex ? "border-2 border-blue-500 ring-2 ring-blue-400" : "border"}`}
-                              style={{
-                                width: 28,
-                                height: 28,
-                                backgroundColor: colorObj.colorHex,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                              onClick={() => {
-                                setSelectedColorHex(colorObj.colorHex);
-                                setSelectedColorName(colorObj.colorName);
-                              }}
-                              aria-label={colorObj.colorName}
-                              title={colorObj.colorName}
-                            >
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: 20,
-                                  height: 20,
-                                  backgroundColor: colorObj.colorHex,
-                                  borderRadius: "50%",
-                                  // border: "1px solid #ccc",
-                                }}
-                              />
-                            </button>
-                            <span
-                              className="mt-1 text-center text-xs"
-                              style={{ maxWidth: 48, wordBreak: "break-word" }}
-                            >
-                              {colorObj.colorName}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                {/* Quantity Discount Table (Bulk Order Discounts) */}
+                {normalizeQuantityDiscounts(productMain.quantityDiscounts)
+                  .length > 0 && (
+                  <div className="my-4">
+                    <h4 className="mb-2 text-base font-semibold">
+                      Bulk Order Discounts
+                    </h4>
+                    <table className="min-w-full rounded border border-gray-200 text-sm">
+                      <thead>
+                        <tr>
+                          <th className="px-2 py-1 text-left">Min Qty</th>
+                          <th className="px-2 py-1 text-left">Max Qty</th>
+                          <th className="px-2 py-1 text-left">Discount %</th>
+                          <th className="px-2 py-1 text-left">Unit Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {normalizeQuantityDiscounts(
+                          productMain.quantityDiscounts,
+                        ).map((row, idx) => {
+                          // Calculate the discounted unit price for the minQty in this range
+                          const baseUnitPrice =
+                            typeof activeVariant?.discountedPrice === "number"
+                              ? activeVariant.discountedPrice
+                              : typeof productMain.discountedPrice === "number"
+                                ? productMain.discountedPrice
+                                : typeof activeVariant?.price === "number"
+                                  ? activeVariant.price
+                                  : productMain.price;
+                          const unit = getDiscountedUnitPrice(
+                            row.minQty,
+                            baseUnitPrice,
+                            productMain.quantityDiscounts,
+                          );
+                          return (
+                            <tr key={idx} className="border-t border-gray-100">
+                              <td className="px-2 py-1">{row.minQty}</td>
+                              <td className="px-2 py-1">{row.maxQty}</td>
+                              <td className="px-2 py-1">
+                                {row.discountPercent}%
+                              </td>
+                              <td className="px-2 py-1">{formatPrice(unit)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="mt-1 text-xs text-gray-500">
+                      * Discount applies automatically when you order within the
+                      specified quantity range.
                     </div>
                   </div>
                 )}
-                {/* Size selector (always show if availableSizes.length > 0) */}
-                {availableSizes.length > 0 && (
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="flex-shrink-0 font-semibold">
-                      {productMain.variantLabel || "Size"}:
-                    </span>
-                    <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
-                      {availableSizes.map((size, idx) =>
-                        size ? (
-                          <button
-                            key={size + idx}
-                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"}`}
-                            onClick={() => setSelectedSize(size)}
-                          >
-                            {size}
-                          </button>
-                        ) : null,
-                      )}
-                    </div>
-                  </div>
-                )}
+
                 <div className="text-title mt-5">Quantity:</div>
                 <div className="choose-quantity mt-3 flex items-center gap-5 gap-y-3 lg:justify-between">
                   <div className="quantity-block flex w-[180px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[220px] md:p-3">
@@ -1057,6 +1272,7 @@ export default function ProductDetails({
                       className="cursor-pointer"
                     />
                   </div>
+
                   <div
                     onClick={handleAddToCart}
                     className={`duration-400 md:text-md inline-block w-full rounded-[.25rem] border border-black bg-white px-0 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4 ${quantityError ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
@@ -1064,6 +1280,37 @@ export default function ProductDetails({
                   >
                     Add To Cart
                   </div>
+                </div>
+                {/* Total Price Display */}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="font-semibold">Total Price:</span>
+                  <span className="text-lg font-bold">
+                    {(() => {
+                      const qty =
+                        typeof productQuantity === "number"
+                          ? productQuantity
+                          : 0;
+                      // --- UPDATED LOGIC START ---
+                      const baseUnitPrice =
+                        typeof activeVariant?.discountedPrice === "number"
+                          ? activeVariant.discountedPrice
+                          : typeof productMain.discountedPrice === "number"
+                            ? productMain.discountedPrice
+                            : typeof activeVariant?.price === "number"
+                              ? activeVariant.price
+                              : productMain.price;
+                      const discountsArr = normalizeQuantityDiscounts(
+                        productMain.quantityDiscounts,
+                      );
+                      const unit = getDiscountedUnitPrice(
+                        qty,
+                        baseUnitPrice,
+                        discountsArr,
+                      );
+                      // --- UPDATED LOGIC END ---
+                      return formatPrice(unit * qty);
+                    })()}
+                  </span>
                 </div>
                 <div className="button-block mt-5">
                   {quantityError && (
