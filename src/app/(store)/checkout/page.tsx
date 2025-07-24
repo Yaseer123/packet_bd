@@ -21,6 +21,8 @@ import { formatPrice } from "../../../utils/format";
 
 // Add import for TRPC
 import type { ProductWithCategory } from "@/types/ProductType";
+import { useQueries } from "@tanstack/react-query";
+// Remove: import { useTRPCContext } from "@trpc/react-query";
 
 type OrderWithRelations = Order & {
   address?: {
@@ -202,26 +204,30 @@ const Checkout = () => {
     [buyNowProduct, cartArray],
   );
 
+  const utils = api.useUtils();
   // --- Fetch product data for all cart items ---
   const uniqueProductIds = useMemo(
-    () => Array.from(new Set(checkoutItems.map((item) => item.productId))),
+    () =>
+      Array.from(new Set((checkoutItems ?? []).map((item) => item.productId))),
     [checkoutItems],
   );
-  // Fetch all products in parallel
-  const productQueries = uniqueProductIds.map((id) => {
-    const query = api.product.getProductById.useQuery(
-      { id },
-      { enabled: !!id },
-    );
-    return query;
+
+  // Fetch all products in parallel using useQueries
+  const productQueries = useQueries({
+    queries: (uniqueProductIds ?? []).map((id) => ({
+      queryKey: ["product", id],
+      queryFn: () => utils.product.getProductById.fetch({ id }),
+      enabled: !!id,
+    })),
   });
+
   // Build a map of productId -> productData
   const productMap = useMemo(() => {
     const map: Record<string, ProductWithCategory | undefined> = {};
-    uniqueProductIds.forEach((id, idx) => {
-      const query = productQueries[idx];
-      if (query && "data" in query && query.data) {
-        map[id] = query.data as ProductWithCategory;
+    (uniqueProductIds ?? []).forEach((id, idx) => {
+      const data = productQueries?.[idx]?.data;
+      if (data) {
+        map[id] = data as ProductWithCategory;
       }
     });
     return map;
