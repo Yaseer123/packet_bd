@@ -22,7 +22,6 @@ const Cart = () => {
 
   const [totalCart, setTotalCart] = useState<number>(0);
   const [discountCart] = useState<number>(0);
-  const [shipCart] = useState<number>(30);
 
   useEffect(() => {
     const total = cartArray.reduce(
@@ -33,7 +32,7 @@ const Cart = () => {
   }, [cartArray]);
 
   const redirectToCheckout = () => {
-    router.push(`/checkout?discount=${discountCart}&ship=${shipCart}`);
+    router.push(`/checkout?discount=${discountCart}`);
   };
 
   return (
@@ -277,7 +276,7 @@ const Cart = () => {
                     Total
                   </div>
                   <div className="text-[24px] font-semibold capitalize leading-[30px] md:text-base md:leading-[26px] lg:text-[22px] lg:leading-[28px]">
-                    {formatPrice(totalCart - discountCart + shipCart)}
+                    {formatPrice(totalCart - discountCart)}
                   </div>
                 </div>
                 <div className="block-button mt-5 flex flex-col items-center gap-y-4">
