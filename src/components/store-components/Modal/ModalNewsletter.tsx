@@ -88,7 +88,11 @@ function toProductType(product: ProductWithCategory): ProductType {
   // Normalize variants to Variant[] | null | undefined
   let normalizedVariants: Variant[] | null | undefined = undefined;
   if (Array.isArray(product.variants)) {
-    normalizedVariants = product.variants.filter(isVariant);
+    // TypeScript: product.variants is JsonValue[], which can include nulls, but filter will remove them
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    normalizedVariants = (product.variants as unknown[]).filter(
+      isVariant,
+    ) as Variant[];
   } else if (typeof product.variants === "string") {
     try {
       const parsed: unknown = JSON.parse(product.variants);
