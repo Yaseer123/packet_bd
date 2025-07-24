@@ -44,6 +44,11 @@ type Variant = {
 const validStockStatuses = ["IN_STOCK", "OUT_OF_STOCK", "PRE_ORDER"] as const;
 type StockStatus = (typeof validStockStatuses)[number];
 
+// Helper type guard for Variant
+function isVariant(v: unknown): v is Variant {
+  return typeof v === "object" && v !== null;
+}
+
 // Utility to convert ProductWithCategory to ProductType
 function toProductType(product: ProductWithCategory): ProductType {
   // Normalize categoryAttributes to JsonValue
@@ -101,16 +106,12 @@ function toProductType(product: ProductWithCategory): ProductType {
   // Normalize variants to Variant[] | null | undefined
   let normalizedVariants: Variant[] | null | undefined = undefined;
   if (Array.isArray(product.variants)) {
-    normalizedVariants = product.variants.filter(
-      (v): v is Variant => typeof v === "object" && v !== null,
-    );
+    normalizedVariants = product.variants.filter(isVariant);
   } else if (typeof product.variants === "string") {
     try {
       const parsed: unknown = JSON.parse(product.variants);
       normalizedVariants = Array.isArray(parsed)
-        ? parsed.filter(
-            (v): v is Variant => typeof v === "object" && v !== null,
-          )
+        ? parsed.filter(isVariant)
         : null;
     } catch {
       normalizedVariants = null;
