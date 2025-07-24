@@ -118,6 +118,44 @@ type WishlistItem = {
   product: Product;
 };
 
+// Helper to normalize quantityDiscounts to always be an array
+function normalizeQuantityDiscounts(
+  discounts: unknown,
+): Array<{ minQty: number; maxQty: number; discountPercent: number }> {
+  type Discount = { minQty: number; maxQty: number; discountPercent: number };
+  function isDiscountObject(d: unknown): d is Discount {
+    if (typeof d !== "object" || d === null) return false;
+    const obj = d as Record<string, unknown>;
+    return (
+      typeof obj.minQty === "number" &&
+      typeof obj.maxQty === "number" &&
+      typeof obj.discountPercent === "number"
+    );
+  }
+  if (Array.isArray(discounts)) {
+    return discounts.filter(isDiscountObject).map((d) => ({
+      minQty: d.minQty,
+      maxQty: d.maxQty,
+      discountPercent: d.discountPercent,
+    }));
+  }
+  if (typeof discounts === "string") {
+    try {
+      const parsed: unknown = JSON.parse(discounts);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(isDiscountObject).map((d) => ({
+          minQty: d.minQty,
+          maxQty: d.maxQty,
+          discountPercent: d.discountPercent,
+        }));
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 export default function ProductDetails({
   productMain,
 }: {
@@ -317,6 +355,27 @@ export default function ProductDetails({
     if (error || typeof productQuantity !== "number") return;
     // Debug log for color/size selection and cart item
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
+    // --- Calculate correct discounted price based on quantityDiscounts ---
+    const qty = productQuantity;
+    const baseUnitPrice =
+      typeof activeVariant?.discountedPrice === "number"
+        ? activeVariant.discountedPrice
+        : typeof productMain.discountedPrice === "number"
+          ? productMain.discountedPrice
+          : typeof activeVariant?.price === "number"
+            ? activeVariant.price
+            : productMain.price;
+    const discountsArr = normalizeQuantityDiscounts(
+      productMain.quantityDiscounts,
+    );
+    const unit = getDiscountedUnitPrice(qty, baseUnitPrice, discountsArr);
+    const discountPercent = (() => {
+      if (!discountsArr.length) return 0;
+      const match = discountsArr.find(
+        (d) => qty >= d.minQty && qty <= d.maxQty,
+      );
+      return match ? match.discountPercent : 0;
+    })();
     const cartItem = {
       id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
@@ -324,12 +383,7 @@ export default function ProductDetails({
         typeof activeVariant?.price === "number"
           ? activeVariant.price
           : (productMain.discountedPrice ?? productMain.price),
-      discountedPrice:
-        typeof activeVariant?.discountedPrice === "number"
-          ? activeVariant.discountedPrice
-          : typeof productMain.discountedPrice === "number"
-            ? productMain.discountedPrice
-            : undefined,
+      discountedPrice: unit, // <-- use the calculated unit price
       quantity: productQuantity,
       coverImage:
         activeVariant?.images?.[0] ??
@@ -344,6 +398,7 @@ export default function ProductDetails({
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
       variantLabel: productMain.variantLabel, // <-- added
+      discountPercent, // <-- add this for modal cart display
     };
     console.log(
       "[AddToCart] selectedColorHex:",
@@ -1191,10 +1246,13 @@ export default function ProductDetails({
                             : typeof activeVariant?.price === "number"
                               ? activeVariant.price
                               : productMain.price;
+                      const discountsArr = normalizeQuantityDiscounts(
+                        productMain.quantityDiscounts,
+                      );
                       const unit = getDiscountedUnitPrice(
                         qty,
                         baseUnitPrice,
-                        productMain.quantityDiscounts,
+                        discountsArr,
                       );
                       // --- UPDATED LOGIC END ---
                       return formatPrice(unit * qty);
