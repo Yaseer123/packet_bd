@@ -1078,6 +1078,78 @@ export default function ProductDetails({
                   {reviewStats.totalCount === 1 ? "review" : "reviews"})
                 </span>
               </div>
+              {/* Unified Color Selector */}
+              {unifiedColors.length > 0 && (
+                <div className="mb-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex-shrink-0 font-semibold">Color:</span>
+                    <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
+                      {unifiedColors.map((colorObj, idx) => (
+                        <div
+                          key={String(colorObj.colorHex) + idx}
+                          className="mx-1 flex flex-shrink-0 flex-col items-center"
+                        >
+                          <button
+                            className={`rounded-full border p-0 ${selectedColorHex === colorObj.colorHex ? "border-2 border-blue-500 ring-2 ring-blue-400" : "border"}`}
+                            style={{
+                              width: 28,
+                              height: 28,
+                              backgroundColor: colorObj.colorHex,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            onClick={() => {
+                              setSelectedColorHex(colorObj.colorHex);
+                              setSelectedColorName(colorObj.colorName);
+                            }}
+                            aria-label={colorObj.colorName}
+                            title={colorObj.colorName}
+                          >
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 20,
+                                height: 20,
+                                backgroundColor: colorObj.colorHex,
+                                borderRadius: "50%",
+                                // border: "1px solid #ccc",
+                              }}
+                            />
+                          </button>
+                          <span
+                            className="mt-1 text-center text-xs"
+                            style={{ maxWidth: 48, wordBreak: "break-word" }}
+                          >
+                            {colorObj.colorName}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Size selector (always show if availableSizes.length > 0) */}
+              {availableSizes.length > 0 && (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex-shrink-0 font-semibold">
+                    {productMain.variantLabel || "Size"}:
+                  </span>
+                  <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
+                    {availableSizes.map((size, idx) =>
+                      size ? (
+                        <button
+                          key={size + idx}
+                          className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"}`}
+                          onClick={() => setSelectedSize(size)}
+                        >
+                          {size}
+                        </button>
+                      ) : null,
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {displayStock === 0 ? (
                   <div className="product-price heading5 font-bold text-red-500">
@@ -1106,81 +1178,62 @@ export default function ProductDetails({
               >
                 {productMain.shortDescription}
               </div>
+
               <div className="list-action mt-6">
-                {/* Unified Color Selector */}
-                {unifiedColors.length > 0 && (
-                  <div className="mb-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex-shrink-0 font-semibold">
-                        Color:
-                      </span>
-                      <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
-                        {unifiedColors.map((colorObj, idx) => (
-                          <div
-                            key={String(colorObj.colorHex) + idx}
-                            className="mx-1 flex flex-shrink-0 flex-col items-center"
-                          >
-                            <button
-                              className={`rounded-full border p-0 ${selectedColorHex === colorObj.colorHex ? "border-2 border-blue-500 ring-2 ring-blue-400" : "border"}`}
-                              style={{
-                                width: 28,
-                                height: 28,
-                                backgroundColor: colorObj.colorHex,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                              onClick={() => {
-                                setSelectedColorHex(colorObj.colorHex);
-                                setSelectedColorName(colorObj.colorName);
-                              }}
-                              aria-label={colorObj.colorName}
-                              title={colorObj.colorName}
-                            >
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: 20,
-                                  height: 20,
-                                  backgroundColor: colorObj.colorHex,
-                                  borderRadius: "50%",
-                                  // border: "1px solid #ccc",
-                                }}
-                              />
-                            </button>
-                            <span
-                              className="mt-1 text-center text-xs"
-                              style={{ maxWidth: 48, wordBreak: "break-word" }}
-                            >
-                              {colorObj.colorName}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                {/* Quantity Discount Table (Bulk Order Discounts) */}
+                {normalizeQuantityDiscounts(productMain.quantityDiscounts)
+                  .length > 0 && (
+                  <div className="my-4">
+                    <h4 className="mb-2 text-base font-semibold">
+                      Bulk Order Discounts
+                    </h4>
+                    <table className="min-w-full rounded border border-gray-200 text-sm">
+                      <thead>
+                        <tr>
+                          <th className="px-2 py-1 text-left">Min Qty</th>
+                          <th className="px-2 py-1 text-left">Max Qty</th>
+                          <th className="px-2 py-1 text-left">Discount %</th>
+                          <th className="px-2 py-1 text-left">Unit Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {normalizeQuantityDiscounts(
+                          productMain.quantityDiscounts,
+                        ).map((row, idx) => {
+                          // Calculate the discounted unit price for the minQty in this range
+                          const baseUnitPrice =
+                            typeof activeVariant?.discountedPrice === "number"
+                              ? activeVariant.discountedPrice
+                              : typeof productMain.discountedPrice === "number"
+                                ? productMain.discountedPrice
+                                : typeof activeVariant?.price === "number"
+                                  ? activeVariant.price
+                                  : productMain.price;
+                          const unit = getDiscountedUnitPrice(
+                            row.minQty,
+                            baseUnitPrice,
+                            productMain.quantityDiscounts,
+                          );
+                          return (
+                            <tr key={idx} className="border-t border-gray-100">
+                              <td className="px-2 py-1">{row.minQty}</td>
+                              <td className="px-2 py-1">{row.maxQty}</td>
+                              <td className="px-2 py-1">
+                                {row.discountPercent}%
+                              </td>
+                              <td className="px-2 py-1">{formatPrice(unit)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="mt-1 text-xs text-gray-500">
+                      * Discount applies automatically when you order within the
+                      specified quantity range.
                     </div>
                   </div>
                 )}
-                {/* Size selector (always show if availableSizes.length > 0) */}
-                {availableSizes.length > 0 && (
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="flex-shrink-0 font-semibold">
-                      {productMain.variantLabel || "Size"}:
-                    </span>
-                    <div className="flex flex-wrap gap-x-2 gap-y-2 py-1">
-                      {availableSizes.map((size, idx) =>
-                        size ? (
-                          <button
-                            key={size + idx}
-                            className={`flex-shrink-0 rounded border px-3 py-1 ${selectedSize === size ? "border-2 border-blue-500 bg-black text-white" : "bg-white text-black"}`}
-                            onClick={() => setSelectedSize(size)}
-                          >
-                            {size}
-                          </button>
-                        ) : null,
-                      )}
-                    </div>
-                  </div>
-                )}
+
                 <div className="text-title mt-5">Quantity:</div>
                 <div className="choose-quantity mt-3 flex items-center gap-5 gap-y-3 lg:justify-between">
                   <div className="quantity-block flex w-[180px] flex-shrink-0 items-center justify-between rounded-lg border border-[#ddd] bg-white focus:border-[#ddd] max-md:px-3 max-md:py-1.5 sm:w-[220px] md:p-3">
