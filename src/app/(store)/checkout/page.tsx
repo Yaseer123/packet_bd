@@ -800,6 +800,32 @@ const Checkout = () => {
           sku: item.sku,
           deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
           variantLabel: item.variantLabel, // <-- add this line
+          price: (() => {
+            // Use the same logic as the displayed price
+            const product = productMap[item.productId];
+            const unit =
+              product && typeof product.discountedPrice === "number"
+                ? product.discountedPrice
+                : typeof product?.discountedPrice === "undefined" &&
+                    typeof item.discountedPrice === "number"
+                  ? item.discountedPrice
+                  : item.price;
+            const discountsArr = normalizeQuantityDiscounts(
+              product?.quantityDiscounts,
+            );
+            const discountPercent = (() => {
+              if (!discountsArr.length) return 0;
+              const match = discountsArr.find(
+                (d) => item.quantity >= d.minQty && item.quantity <= d.maxQty,
+              );
+              return match ? match.discountPercent : 0;
+            })();
+            return getDiscountedUnitPrice(
+              item.quantity,
+              unit,
+              product?.quantityDiscounts,
+            );
+          })(),
         })),
         addressId,
         notes: note,
@@ -815,6 +841,32 @@ const Checkout = () => {
           sku: item.sku,
           deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
           variantLabel: item.variantLabel, // <-- add this line
+          price: (() => {
+            // Use the same logic as the displayed price
+            const product = productMap[item.productId];
+            const unit =
+              product && typeof product.discountedPrice === "number"
+                ? product.discountedPrice
+                : typeof product?.discountedPrice === "undefined" &&
+                    typeof item.discountedPrice === "number"
+                  ? item.discountedPrice
+                  : item.price;
+            const discountsArr = normalizeQuantityDiscounts(
+              product?.quantityDiscounts,
+            );
+            const discountPercent = (() => {
+              if (!discountsArr.length) return 0;
+              const match = discountsArr.find(
+                (d) => item.quantity >= d.minQty && item.quantity <= d.maxQty,
+              );
+              return match ? match.discountPercent : 0;
+            })();
+            return getDiscountedUnitPrice(
+              item.quantity,
+              unit,
+              product?.quantityDiscounts,
+            );
+          })(),
         })),
         addressId,
         notes: note,
