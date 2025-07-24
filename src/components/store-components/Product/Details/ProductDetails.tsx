@@ -288,6 +288,7 @@ export default function ProductDetails({
       minQuantity: productMain.minQuantity ?? 1,
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
+      variantLabel: productMain.variantLabel, // <-- added
     };
     console.log(
       "[AddToCart] selectedColorHex:",
@@ -435,6 +436,7 @@ export default function ProductDetails({
       minQuantity: productMain.minQuantity ?? 1,
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
+      variantLabel: productMain.variantLabel, // <-- added
     };
     // Store in sessionStorage for checkout page
     if (typeof window !== "undefined") {
