@@ -1283,14 +1283,13 @@ export default function ProductDetails({
                 </div>
                 {/* Total Price Display */}
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="font-semibold">Total Price:</span>
+                  <span className="font-semibold">Total Price</span>
                   <span className="text-lg font-bold">
                     {(() => {
                       const qty =
                         typeof productQuantity === "number"
                           ? productQuantity
                           : 0;
-                      // --- UPDATED LOGIC START ---
                       const baseUnitPrice =
                         typeof activeVariant?.discountedPrice === "number"
                           ? activeVariant.discountedPrice
@@ -1307,8 +1306,8 @@ export default function ProductDetails({
                         baseUnitPrice,
                         discountsArr,
                       );
-                      // --- UPDATED LOGIC END ---
-                      return formatPrice(unit * qty);
+                      const total = unit * qty;
+                      return `= ${formatPrice(unit)} × ${qty} = ${formatPrice(total)}`;
                     })()}
                   </span>
                 </div>
