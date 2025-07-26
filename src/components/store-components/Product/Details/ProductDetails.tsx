@@ -371,10 +371,15 @@ export default function ProductDetails({
     const unit = getDiscountedUnitPrice(qty, baseUnitPrice, discountsArr);
     const discountPercent = (() => {
       if (!discountsArr.length) return 0;
-      const match = discountsArr.find(
-        (d) => qty >= d.minQty && qty <= d.maxQty,
+      // Sort discounts by minQty to ensure we find the highest applicable tier
+      const sortedDiscounts = [...discountsArr].sort(
+        (a, b) => a.minQty - b.minQty,
       );
-      return match ? match.discountPercent : 0;
+      // Find the highest tier where quantity >= minQty
+      const applicableDiscount = sortedDiscounts
+        .filter((d) => qty >= d.minQty)
+        .pop(); // Get the highest tier that applies
+      return applicableDiscount ? applicableDiscount.discountPercent : 0;
     })();
     const cartItem = {
       id: displaySKU, // Use SKU as unique cart item id
@@ -881,11 +886,18 @@ export default function ProductDetails({
       }
     }
     if (normalized.length === 0) return basePrice;
-    const matched = normalized.find(
-      (d) => quantity >= d.minQty && quantity <= d.maxQty,
-    );
-    if (matched) {
-      return basePrice - (basePrice * matched.discountPercent) / 100;
+
+    // Sort discounts by minQty to ensure we find the highest applicable tier
+    const sortedDiscounts = [...normalized].sort((a, b) => a.minQty - b.minQty);
+
+    // Find the highest tier where quantity >= minQty
+    // This handles quantities above maxQty by applying the highest tier discount
+    const applicableDiscount = sortedDiscounts
+      .filter((d) => quantity >= d.minQty)
+      .pop(); // Get the highest tier that applies
+
+    if (applicableDiscount) {
+      return basePrice - (basePrice * applicableDiscount.discountPercent) / 100;
     }
     return basePrice;
   }
@@ -1229,7 +1241,8 @@ export default function ProductDetails({
                     </table>
                     <div className="mt-1 text-xs text-gray-500">
                       * Discount applies automatically when you order within the
-                      specified quantity range.
+                      specified quantity range. Quantities above the maximum
+                      range will receive the highest tier discount.
                     </div>
                   </div>
                 )}
