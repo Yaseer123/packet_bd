@@ -768,36 +768,43 @@ export default function EditProductForm({ productId }: { productId: string }) {
   // [1] --- VARIANT STATE REFACTOR ---
   // Remove old variants state and enableVariants state
   // Add grouped state:
-  const [enableVariants, setEnableVariants] = useState(
-    Array.isArray(product?.variants) && product.variants.length > 0,
-  );
+  const [enableVariants, setEnableVariants] = useState(() => {
+    if (!Array.isArray(product?.variants)) return false;
+    return product.variants.length > 0;
+  });
   const [colorGroups, setColorGroups] = useState<VariantGroup[]>(() => {
     if (!Array.isArray(product?.variants)) return [];
+
+    console.log("Processing variants in EditProduct:", product.variants);
+
     const groups: Record<string, VariantGroup> = {};
     (product.variants as Variant[]).forEach((v) => {
-      const key = (v.colorName ?? "") + "|" + (v.colorHex ?? "");
-      if (!groups[key]) {
-        groups[key] = {
-          colorName: v.colorName ?? "",
-          colorHex: v.colorHex ?? "#ffffff",
-          imageId: v.imageId ?? uuid(),
-          images: v.images ?? [],
-          sizes: [],
-        };
-      }
-      if (v.size) {
-        groups[key].sizes.push({
-          size: v.size,
-          price: v.price ?? 0,
-          discountedPrice: v.discountedPrice ?? 0,
-          stock: v.stock ?? 0,
-        });
+      console.log("Processing variant:", v);
+      // Only group variants that have color information
+      if (v.colorName || v.colorHex) {
+        const key = (v.colorName ?? "") + "|" + (v.colorHex ?? "");
+        if (!groups[key]) {
+          groups[key] = {
+            colorName: v.colorName ?? "",
+            colorHex: v.colorHex ?? "#ffffff",
+            imageId: v.imageId ?? uuid(),
+            images: v.images ?? [],
+            sizes: [],
+          };
+        }
+        if (v.size) {
+          groups[key].sizes.push({
+            size: v.size,
+            price: v.price ?? 0,
+            discountedPrice: v.discountedPrice ?? 0,
+            stock: v.stock ?? 0,
+          });
+        }
       }
     });
-    // Remove default group (no color) from colorGroups
-    return Object.values(groups).filter(
-      (g) => g.colorName !== "" || g.colorHex !== "",
-    );
+
+    console.log("Color groups created:", Object.values(groups));
+    return Object.values(groups);
   });
   const [defaultGroup, setDefaultGroup] = useState<{
     imageId: string;
@@ -809,11 +816,14 @@ export default function EditProductForm({ productId }: { productId: string }) {
       stock: number;
     }>;
   }>(() => {
-    // Find variants with no colorName/colorHex
+    // Find variants with no colorName/colorHex - these are default variants
     const variants: Variant[] = Array.isArray(product?.variants)
       ? (product.variants as Variant[])
       : [];
     const defaultVariants = variants.filter((v) => !v.colorName && !v.colorHex);
+
+    console.log("Default variants found:", defaultVariants);
+
     return {
       imageId: defaultVariants[0]?.imageId ?? uuid(),
       images: defaultVariants[0]?.images ?? [],
@@ -1502,6 +1512,135 @@ export default function EditProductForm({ productId }: { productId: string }) {
             >
               Add Color
             </Button>
+
+            {/* Default Group (variants without colors) */}
+            {(defaultGroup.sizes.length > 0 || colorGroups.length === 0) && (
+              <div className="mt-4 border-t pt-4">
+                <Label className="text-base">Default Variants (No Color)</Label>
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    onClick={() => handleShowImageGallery(defaultGroup.imageId)}
+                    className="mb-2 w-full"
+                  >
+                    Show Image Gallery for Default Variants
+                  </Button>
+                  {showImageGallery === defaultGroup.imageId && (
+                    <DndImageGallery
+                      imageId={defaultGroup.imageId}
+                      onClose={handleShowImageGallery}
+                    />
+                  )}
+                  {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
+                    <div key={sizeIdx} className="mb-2 flex items-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Size"
+                        value={sizeObj.size}
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? { ...s, size: e.target.value }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={sizeObj.price === 0 ? "" : sizeObj.price}
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? { ...s, price: Number(e.target.value) }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Discounted Price"
+                        value={
+                          sizeObj.discountedPrice === 0
+                            ? ""
+                            : sizeObj.discountedPrice
+                        }
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? {
+                                    ...s,
+                                    discountedPrice: Number(e.target.value),
+                                  }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-32"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Stock"
+                        value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? { ...s, stock: Number(e.target.value) }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-20"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.filter((_, si) => si !== sizeIdx),
+                          }))
+                        }
+                      >
+                        Remove Size
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      setDefaultGroup((prev) => ({
+                        ...prev,
+                        sizes: [
+                          ...prev.sizes,
+                          {
+                            size: "",
+                            price: 0,
+                            discountedPrice: 0,
+                            stock: 0,
+                          },
+                        ],
+                      }))
+                    }
+                    className="w-full"
+                  >
+                    Add Default Size
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

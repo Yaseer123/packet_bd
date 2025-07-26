@@ -1,7 +1,7 @@
 import BreadcrumbProduct from "@/components/store-components/Breadcrumb/BreadcrumbProduct";
 import ProductDetails from "@/components/store-components/Product/Details/ProductDetails";
 import { api } from "@/trpc/server";
-import type { ProductWithCategory, Variant } from "@/types/ProductType";
+import type { ProductWithCategory } from "@/types/ProductType";
 import Script from "next/script";
 
 export async function generateMetadata({
@@ -36,22 +36,6 @@ export async function generateMetadata({
   };
 }
 
-function isVariantArray(val: unknown): val is Variant[] {
-  return (
-    Array.isArray(val) &&
-    val.every(
-      (v) =>
-        typeof v === "object" &&
-        v !== null &&
-        ("price" in v || "color" in v || "size" in v),
-    )
-  );
-}
-
-function isString(val: unknown): val is string {
-  return typeof val === "string";
-}
-
 const ProductPage = async ({
   params,
 }: {
@@ -64,21 +48,12 @@ const ProductPage = async ({
     return <div>Product not found</div>;
   }
 
-  let variants: Variant[] | string | null = null;
-  if (isVariantArray(productData.variants)) {
-    variants = productData.variants.map((v) => ({ ...v }));
-  } else if (isString(productData.variants)) {
-    variants = productData.variants;
-  } else {
-    variants = null;
-  }
-  const productDataTyped = productData as ProductWithCategory;
+  // productData is now already processed by toProductWithCategory
   const fixedProductData: ProductWithCategory = {
-    ...productDataTyped,
-    variants: variants as unknown as ProductWithCategory["variants"],
-    maxQuantity: productDataTyped.maxQuantity ?? null,
-    minQuantity: productDataTyped.minQuantity,
-    quantityStep: productDataTyped.quantityStep,
+    ...productData,
+    maxQuantity: productData.maxQuantity ?? null,
+    minQuantity: productData.minQuantity,
+    quantityStep: productData.quantityStep,
   };
 
   // Prepare JSON-LD data for Meta Catalogue compatibility
