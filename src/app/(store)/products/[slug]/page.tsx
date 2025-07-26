@@ -81,11 +81,15 @@ const ProductPage = async ({
     quantityStep: productDataTyped.quantityStep,
   };
 
-  // Prepare JSON-LD data
+  // Prepare JSON-LD data for Meta Catalogue compatibility
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
-    name: fixedProductData.title,
+    // Required Meta fields
+    id: fixedProductData.id?.toString() ?? slug, // Unique product ID
+    name: fixedProductData.title, // Product title
+    description:
+      fixedProductData.description ?? fixedProductData.shortDescription ?? "",
     image:
       Array.isArray(fixedProductData.images) &&
       fixedProductData.images.length > 0
@@ -93,8 +97,6 @@ const ProductPage = async ({
             img.startsWith("http") ? img : `${process.env.NEXTAUTH_URL}${img}`,
           )
         : undefined,
-    description:
-      fixedProductData.description ?? fixedProductData.shortDescription ?? "",
     sku: fixedProductData.sku ?? slug,
     brand: {
       "@type": "Brand",
@@ -102,11 +104,13 @@ const ProductPage = async ({
     },
     offers: {
       "@type": "Offer",
-      url: `${process.env.NEXTAUTH_URL}/products/${slug}`,
+      // Required Meta fields
+      url: `${process.env.NEXTAUTH_URL}/products/${slug}`, // Product link
       priceCurrency: "BDT",
       price: fixedProductData.discountedPrice ?? fixedProductData.price ?? 0,
       priceValidUntil: "2025-12-31",
       itemCondition: "https://schema.org/NewCondition",
+      // Required Meta availability field
       availability:
         fixedProductData.stockStatus === "IN_STOCK" ||
         (typeof fixedProductData.stock === "number" &&
@@ -114,6 +118,10 @@ const ProductPage = async ({
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
     },
+    // Additional Meta-recommended fields
+    category: fixedProductData.category?.name,
+    mpn: fixedProductData.sku ?? slug, // Manufacturer Part Number
+    gtin: fixedProductData.sku ?? slug, // Global Trade Item Number
   };
 
   return (
