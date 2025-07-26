@@ -180,7 +180,7 @@ export default function AddProductForm(_unused?: unknown) {
   // Add state for default product color and size
   const [defaultColorName, setDefaultColorName] = useState<string>("");
   const [defaultColorHex, setDefaultColorHex] = useColor("#ffffff");
-  const [defaultSize, setDefaultSize] = useState<string>(""); // <-- Add this line
+  const [defaultSize, setDefaultSize] = useState<string>("");
 
   // [1] --- VARIANT STATE REFACTOR ---
   // Replace old variants state with grouped structure
@@ -753,6 +753,7 @@ export default function AddProductForm(_unused?: unknown) {
       discountedPrice,
       stock,
       brand,
+      defaultColor: defaultColorName,
       defaultColorHex: defaultColorHex.hex,
       slug,
       categoryId: categoryId,
@@ -898,6 +899,135 @@ export default function AddProductForm(_unused?: unknown) {
             >
               Add Color
             </Button>
+
+            {/* Default Group (variants without colors) */}
+            {(defaultGroup.sizes.length > 0 || colorGroups.length === 0) && (
+              <div className="mt-4 border-t pt-4">
+                <Label className="text-base">Default Variants (No Color)</Label>
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    onClick={() => setShowImageGallery(defaultGroup.imageId)}
+                    className="mb-2 w-full"
+                  >
+                    Show Image Gallery for Default Variants
+                  </Button>
+                  {showImageGallery === defaultGroup.imageId && (
+                    <DndImageGallery
+                      imageId={defaultGroup.imageId}
+                      onClose={setShowImageGallery}
+                    />
+                  )}
+                  {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
+                    <div key={sizeIdx} className="mb-2 flex items-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Size"
+                        value={sizeObj.size}
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? { ...s, size: e.target.value }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={sizeObj.price === 0 ? "" : sizeObj.price}
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? { ...s, price: Number(e.target.value) }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Discounted Price"
+                        value={
+                          sizeObj.discountedPrice === 0
+                            ? ""
+                            : sizeObj.discountedPrice
+                        }
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? {
+                                    ...s,
+                                    discountedPrice: Number(e.target.value),
+                                  }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-32"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Stock"
+                        value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+                        onChange={(e) =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.map((s, si) =>
+                              si === sizeIdx
+                                ? { ...s, stock: Number(e.target.value) }
+                                : s,
+                            ),
+                          }))
+                        }
+                        className="w-20"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() =>
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.filter((_, si) => si !== sizeIdx),
+                          }))
+                        }
+                      >
+                        Remove Size
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      setDefaultGroup((prev) => ({
+                        ...prev,
+                        sizes: [
+                          ...prev.sizes,
+                          {
+                            size: "",
+                            price: 0,
+                            discountedPrice: 0,
+                            stock: 0,
+                          },
+                        ],
+                      }))
+                    }
+                    className="w-full"
+                  >
+                    Add Default Size
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
         {/* Variant Image Gallery Modal */}
