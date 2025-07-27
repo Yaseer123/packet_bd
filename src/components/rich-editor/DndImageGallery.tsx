@@ -16,7 +16,7 @@ import { CSS } from "@dnd-kit/utilities";
 import Image from "next/image";
 import { useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
-import { BiSolidTrash } from "react-icons/bi";
+import { BiCheck, BiSolidTrash } from "react-icons/bi";
 import { IoMdClose } from "react-icons/io";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { Button } from "../ui/button";
@@ -24,9 +24,17 @@ import { Button } from "../ui/button";
 export default function DndImageGallery({
   imageId,
   onClose,
+  variantMode = false,
+  selectedImages = [],
+  onImageSelect,
+  colorName = "",
 }: {
   imageId: string;
   onClose: (state: string) => void;
+  variantMode?: boolean;
+  selectedImages?: string[];
+  onImageSelect?: (imageSrc: string, selected: boolean) => void;
+  colorName?: string;
 }) {
   const { images, setImages, updateImages, removeOldImage } =
     useProductImageStore();
@@ -53,6 +61,13 @@ export default function DndImageGallery({
     }
   };
 
+  const handleImageToggle = (imageSrc: string) => {
+    if (onImageSelect) {
+      const isSelected = selectedImages.includes(imageSrc);
+      onImageSelect(imageSrc, !isSelected);
+    }
+  };
+
   return (
     <div
       tabIndex={-1}
@@ -67,6 +82,22 @@ export default function DndImageGallery({
             <IoMdClose size={24} />
           </button>
         </div>
+
+        {/* Header for variant mode */}
+        {variantMode && colorName && (
+          <div className="mb-4 rounded-md bg-blue-50 p-3">
+            <h3 className="text-lg font-semibold text-blue-900">
+              Select Images for {colorName}
+            </h3>
+            <p className="text-sm text-blue-700">
+              Click on images to select/deselect them for this color variant
+            </p>
+            <p className="text-sm text-blue-600">
+              Selected: {selectedImages.length} images
+            </p>
+          </div>
+        )}
+
         <FileUploader
           multiple={true}
           handleChange={async (files: File[]) => {
@@ -130,6 +161,9 @@ export default function DndImageGallery({
                 <SortableImage
                   key={image.id}
                   image={image}
+                  variantMode={variantMode}
+                  isSelected={selectedImages.includes(image.src)}
+                  onToggle={handleImageToggle}
                   onDeleteClick={async () => {
                     console.log("test");
                     if (confirm("Are you sure?")) {
@@ -149,6 +183,37 @@ export default function DndImageGallery({
             </SortableContext>
           </DndContext>
         </div>
+
+        {/* Action buttons for variant mode */}
+        {variantMode && (
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Select all images
+                images.forEach((img) => {
+                  if (!selectedImages.includes(img.src)) {
+                    onImageSelect?.(img.src, true);
+                  }
+                });
+              }}
+            >
+              Select All
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Deselect all images
+                selectedImages.forEach((imgSrc) => {
+                  onImageSelect?.(imgSrc, false);
+                });
+              }}
+            >
+              Deselect All
+            </Button>
+            <Button onClick={handleClose}>Done</Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -156,9 +221,15 @@ export default function DndImageGallery({
 
 function SortableImage({
   image,
+  variantMode = false,
+  isSelected = false,
+  onToggle,
   onDeleteClick,
 }: {
   image: ProductImage;
+  variantMode?: boolean;
+  isSelected?: boolean;
+  onToggle?: (imageSrc: string) => void;
   onDeleteClick: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -171,6 +242,30 @@ function SortableImage({
 
   return (
     <div className="group relative active:z-50">
+      {/* Selection overlay for variant mode */}
+      {variantMode && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle?.(image.src);
+            }}
+            className={`flex h-full w-full items-center justify-center transition-all ${
+              isSelected
+                ? "bg-blue-500 bg-opacity-30"
+                : "bg-black bg-opacity-0 hover:bg-opacity-10"
+            }`}
+          >
+            {isSelected && (
+              <div className="rounded-full bg-blue-500 p-1 text-white">
+                <BiCheck size={20} />
+              </div>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Delete button */}
       <Button
         onClick={(e) => {
           e.stopPropagation();
@@ -180,12 +275,15 @@ function SortableImage({
       >
         <BiSolidTrash />
       </Button>
+
       <div
         ref={setNodeRef}
         style={style}
         {...attributes}
         {...listeners}
-        className="group relative overflow-hidden rounded-lg bg-white shadow-md"
+        className={`group relative overflow-hidden rounded-lg bg-white shadow-md ${
+          variantMode && isSelected ? "ring-2 ring-blue-500" : ""
+        }`}
       >
         <Image
           src={image.src}

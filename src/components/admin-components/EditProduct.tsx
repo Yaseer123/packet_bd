@@ -3,7 +3,6 @@
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 
-import { uploadFile } from "@/app/actions/file";
 import {
   Select,
   SelectContent,
@@ -39,8 +38,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
 import "react-color-palette/css";
-import { IoMdClose } from "react-icons/io";
-import { IoCloudUploadOutline } from "react-icons/io5";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 import RichEditor from "../rich-editor";
@@ -204,15 +201,57 @@ function ColorGroup({
         </Button>
       </div>
       {/* Images for color group */}
-      <Button
-        type="button"
-        onClick={() => onShowImageGallery(group.imageId)}
-        className="mt-2 w-full"
-      >
-        Show Image Gallery
-      </Button>
+      <div className="mt-2 space-y-2">
+        <Button
+          type="button"
+          onClick={() => onShowImageGallery(group.imageId)}
+          className="w-full"
+        >
+          Select Images for {group.colorName || "Color"}
+        </Button>
+        {group.images.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm text-gray-600">
+              Selected images: {group.images.length}
+            </span>
+            {group.images.slice(0, 3).map((img, idx) => (
+              <div key={idx} className="relative">
+                <Image
+                  src={img}
+                  alt={`${group.colorName} variant`}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded object-cover"
+                />
+              </div>
+            ))}
+            {group.images.length > 3 && (
+              <span className="text-sm text-gray-500">
+                +{group.images.length - 3} more
+              </span>
+            )}
+          </div>
+        )}
+      </div>
       {showImageGallery === group.imageId && (
-        <DndImageGallery imageId={group.imageId} onClose={onShowImageGallery} />
+        <DndImageGallery
+          imageId={group.imageId}
+          onClose={onShowImageGallery}
+          variantMode={true}
+          selectedImages={group.images}
+          onImageSelect={(imageSrc, selected) => {
+            if (selected) {
+              onUpdate(groupIdx, {
+                images: [...group.images, imageSrc],
+              });
+            } else {
+              onUpdate(groupIdx, {
+                images: group.images.filter((img) => img !== imageSrc),
+              });
+            }
+          }}
+          colorName={group.colorName || "Color"}
+        />
       )}
       {/* Sizes for this color */}
       <div className="mt-2">
@@ -849,10 +888,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       ),
     );
   };
-  const handleVariantImageGallery = (index: number) => {
-    const group = colorGroups[index];
-    if (group) setShowImageGallery(group.imageId);
-  };
+
   const handleAddVariant = () => {
     setColorGroups((prev) => [
       ...prev,
@@ -867,11 +903,6 @@ export default function EditProductForm({ productId }: { productId: string }) {
   };
   const handleRemoveVariant = (index: number) => {
     setColorGroups((prev) => prev.filter((_, i) => i !== index));
-  };
-  const handleVariantImagesUpdate = (index: number, newImages: string[]) => {
-    setColorGroups((prev) =>
-      prev.map((g, gi) => (gi === index ? { ...g, images: newImages } : g)),
-    );
   };
 
   // Handler for updating color groups
@@ -1535,17 +1566,62 @@ export default function EditProductForm({ productId }: { productId: string }) {
               <div className="mt-4 border-t pt-4">
                 <Label className="text-base">Default Variants (No Color)</Label>
                 <div className="mt-2">
-                  <Button
-                    type="button"
-                    onClick={() => handleShowImageGallery(defaultGroup.imageId)}
-                    className="mb-2 w-full"
-                  >
-                    Show Image Gallery for Default Variants
-                  </Button>
+                  <div className="mb-2 space-y-2">
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        handleShowImageGallery(defaultGroup.imageId)
+                      }
+                      className="w-full"
+                    >
+                      Select Images for Default Variants
+                    </Button>
+                    {defaultGroup.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-sm text-gray-600">
+                          Selected images: {defaultGroup.images.length}
+                        </span>
+                        {defaultGroup.images.slice(0, 3).map((img, idx) => (
+                          <div key={idx} className="relative">
+                            <Image
+                              src={img}
+                              alt="Default variant"
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 rounded object-cover"
+                            />
+                          </div>
+                        ))}
+                        {defaultGroup.images.length > 3 && (
+                          <span className="text-sm text-gray-500">
+                            +{defaultGroup.images.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {showImageGallery === defaultGroup.imageId && (
                     <DndImageGallery
                       imageId={defaultGroup.imageId}
                       onClose={handleShowImageGallery}
+                      variantMode={true}
+                      selectedImages={defaultGroup.images}
+                      onImageSelect={(imageSrc, selected) => {
+                        if (selected) {
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            images: [...prev.images, imageSrc],
+                          }));
+                        } else {
+                          setDefaultGroup((prev) => ({
+                            ...prev,
+                            images: prev.images.filter(
+                              (img) => img !== imageSrc,
+                            ),
+                          }));
+                        }
+                      }}
+                      colorName="Default Variants"
                     />
                   )}
                   {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
@@ -1668,115 +1744,11 @@ export default function EditProductForm({ productId }: { productId: string }) {
   );
 }
 
-// VariantImageGalleryModal for uploading images to a specific variant
-function VariantImageGalleryModal({
-  variantIndex,
-  images,
-  onClose,
-  onImagesChange,
-}: {
-  variantIndex: number;
-  images: string[];
-  onClose: () => void;
-  onImagesChange: (imgs: string[]) => void;
-}) {
-  const [isUploading, setIsUploading] = useState(false);
-  const handleUpload = async (files: FileList | File[]) => {
-    setIsUploading(true);
-    try {
-      const newImages: string[] = [];
-      for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", file);
-        // Use a folder for variant images for clarity
-        const res = await uploadFile(formData, `variant-${variantIndex}`);
-        if (res?.secure_url) {
-          newImages.push(res.secure_url);
-        }
-      }
-      onImagesChange([...newImages, ...images]);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-    setIsUploading(false);
-  };
-  const handleRemove = (img: string) => {
-    onImagesChange(images.filter((i) => i !== img));
-  };
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-md bg-white p-6">
-        <button className="absolute right-4 top-4" onClick={onClose}>
-          <IoMdClose size={24} />
-        </button>
-        <h2 className="mb-4 text-lg font-semibold">
-          Upload Images for Variant
-        </h2>
-        {/* Styled upload area */}
-        <label
-          htmlFor="variant-image-upload"
-          className="mb-4 flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50"
-        >
-          <IoCloudUploadOutline size={30} className="text-gray-500" />
-          <p className="mb-2 text-sm text-gray-500">
-            <span className="font-semibold">Click to upload</span> or drag and
-            drop
-          </p>
-          <p className="text-xs text-gray-500">Image file</p>
-          <div className="mt-1 text-xs text-gray-400">
-            Recommended size: 1000x1000px or larger, square image
-          </div>
-          <input
-            id="variant-image-upload"
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={async (e) => {
-              if (e.target.files) await handleUpload(e.target.files);
-            }}
-            disabled={isUploading}
-          />
-        </label>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {images.map((img, i) => (
-            <div key={i} className="relative">
-              <Image
-                src={img}
-                alt="variant-img"
-                width={48}
-                height={48}
-                className="h-12 w-12 rounded object-cover"
-              />
-              <button
-                className="absolute -right-2 -top-2 rounded-full bg-white p-1 shadow"
-                onClick={() => handleRemove(img)}
-                type="button"
-              >
-                <IoMdClose size={16} />
-              </button>
-            </div>
-          ))}
-        </div>
-        {isUploading && (
-          <div className="mb-2 text-sm text-gray-500">Uploading...</div>
-        )}
-        <Button onClick={onClose} className="mt-2 w-full">
-          Done
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 function VariantRow({
   variant,
   idx,
   handleVariantChange,
-  handleVariantImageGallery,
   handleRemoveVariant,
-  handleVariantImagesUpdate: _handleVariantImagesUpdate,
 }: {
   variant: VariantType;
   idx: number;
@@ -1785,9 +1757,7 @@ function VariantRow({
     field: string,
     value: string | number | undefined,
   ) => void;
-  handleVariantImageGallery: (idx: number) => void;
   handleRemoveVariant: (idx: number) => void;
-  handleVariantImagesUpdate: (idx: number, imgs: string[]) => void;
 }) {
   const [variantColor, setVariantColor] = useColor(
     variant.colorHex ?? "#ffffff",
@@ -1872,13 +1842,6 @@ function VariantRow({
         className="w-32"
       />
       <div className="mt-2 flex gap-2 md:ml-auto md:mt-0">
-        <Button
-          type="button"
-          onClick={() => handleVariantImageGallery(idx)}
-          className="w-40"
-        >
-          Add Images
-        </Button>
         <Button
           type="button"
           variant="destructive"
