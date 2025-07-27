@@ -50,6 +50,7 @@ export interface ProductType {
   defaultColorHex?: string | null;
   defaultSize?: string;
   variantLabel?: string;
+  perUnitText?: string;
   sold: number;
   quantity: number;
   quantityPurchase: number;
@@ -91,6 +92,7 @@ export type ProductWithCategory = Product & {
   maxQuantity: number | null;
   quantityStep: number;
   variantLabel?: string;
+  perUnitText?: string;
   quantityDiscounts?: Array<{
     minQty: number;
     maxQty: number;
