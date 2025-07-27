@@ -960,6 +960,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       maxQuantity,
       quantityStep,
       variantLabel, // <--- Pass variantLabel
+      perUnitText, // <--- Pass perUnitText
       quantityDiscounts, // <--- Add this line
     });
   };
@@ -982,6 +983,9 @@ export default function EditProductForm({ productId }: { productId: string }) {
   const [variantLabel, setVariantLabel] = useState<string>(
     product?.variantLabel ?? "Size",
   ); // <--- Fix: add this line
+  const [perUnitText, setPerUnitText] = useState<string>(
+    product?.perUnitText ?? "",
+  ); // <--- Add this line
 
   if (!product) return null;
 
@@ -1004,6 +1008,19 @@ export default function EditProductForm({ productId }: { productId: string }) {
             placeholder="Variant Label (e.g. Size, Material, Length)"
             value={variantLabel}
             onChange={(e) => setVariantLabel(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </div>
+        {/* Per Unit Text Input */}
+        <div className="col-span-2 flex w-full flex-col space-y-2">
+          <Label className="text-base">
+            Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)
+          </Label>
+          <Input
+            type="text"
+            placeholder="Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)"
+            value={perUnitText}
+            onChange={(e) => setPerUnitText(e.target.value)}
             style={{ width: "100%" }}
           />
         </div>

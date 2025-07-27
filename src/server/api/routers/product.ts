@@ -119,11 +119,12 @@ function toProductWithCategory(product: unknown): ProductWithCategory {
     }
   }
 
-  const { variantLabel, ...rest } = prod;
+  const { variantLabel, perUnitText, ...rest } = prod;
   return {
     ...rest,
     variants,
     variantLabel: variantLabel ?? "",
+    perUnitText: perUnitText ?? "",
     quantityDiscounts,
   };
 }
@@ -609,6 +610,7 @@ export const productRouter = createTRPCRouter({
         maxQuantity: input.maxQuantity,
         quantityStep: input.quantityStep ?? 1,
         variantLabel: input.variantLabel, // <-- Added this line
+        perUnitText: input.perUnitText, // <-- Added this line
         ...(quantityDiscountsToSave !== undefined
           ? { quantityDiscounts: quantityDiscountsToSave }
           : {}),
@@ -819,6 +821,7 @@ export const productRouter = createTRPCRouter({
           maxQuantity: input.maxQuantity,
           quantityStep: input.quantityStep ?? 1,
           variantLabel: input.variantLabel, // <-- Added this line
+          perUnitText: input.perUnitText, // <-- Added this line
           ...(quantityDiscountsToSave !== undefined
             ? { quantityDiscounts: quantityDiscountsToSave }
             : {}),

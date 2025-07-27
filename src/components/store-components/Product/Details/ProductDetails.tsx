@@ -1172,6 +1172,11 @@ export default function ProductDetails({
                   <>
                     <div className="product-price heading5 discounted-price">
                       {formatPrice(displayDiscountedPrice)}
+                      {productMain.perUnitText && (
+                        <span className="ml-2 text-sm font-normal text-gray-600">
+                          {productMain.perUnitText}
+                        </span>
+                      )}
                     </div>
                     <div className="bg-line h-4 w-px"></div>
                     <div className="product-origin-price text-secondary2 font-normal">
@@ -1181,6 +1186,11 @@ export default function ProductDetails({
                 ) : (
                   <div className="product-price heading5">
                     {formatPrice(displayPrice)}
+                    {productMain.perUnitText && (
+                      <span className="ml-2 text-sm font-normal text-gray-600">
+                        {productMain.perUnitText}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

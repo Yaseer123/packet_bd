@@ -166,6 +166,7 @@ export default function AddProductForm(_unused?: unknown) {
   // Add state for the specification rich editor
   const [specTextContent, setSpecTextContent] = useState("");
   const [variantLabel, setVariantLabel] = useState<string>("Size"); // <--- Add this line
+  const [perUnitText, setPerUnitText] = useState<string>(""); // <--- Add this line
 
   // Configure sensors for drag-and-drop
   const sensors = useSensors(
@@ -766,6 +767,7 @@ export default function AddProductForm(_unused?: unknown) {
       maxQuantity,
       quantityStep,
       variantLabel, // <--- Pass variantLabel
+      perUnitText, // <--- Pass perUnitText
       defaultSize, // <--- Pass defaultSize
       quantityDiscounts, // <--- Add this line
     });
@@ -801,6 +803,19 @@ export default function AddProductForm(_unused?: unknown) {
           placeholder="Variant Label (e.g. Size, Material, Length)"
           value={variantLabel}
           onChange={(e) => setVariantLabel(e.target.value)}
+          style={{ width: "100%" }}
+        />
+      </div>
+      {/* Per Unit Text Input */}
+      <div className="flex w-full flex-col space-y-2">
+        <Label className="text-base">
+          Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)
+        </Label>
+        <Input
+          type="text"
+          placeholder="Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)"
+          value={perUnitText}
+          onChange={(e) => setPerUnitText(e.target.value)}
           style={{ width: "100%" }}
         />
       </div>
