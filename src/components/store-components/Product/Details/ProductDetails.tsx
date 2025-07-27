@@ -986,7 +986,8 @@ export default function ProductDetails({
                 slidesPerView={1}
                 spaceBetween={0}
                 thumbs={{ swiper: thumbsSwiper }}
-                modules={[Thumbs]}
+                modules={[Thumbs, Navigation]}
+                navigation={true}
                 className="mySwiper2 overflow-hidden rounded-2xl"
               >
                 {displayImages.map((item, index) => (
@@ -1015,6 +1016,7 @@ export default function ProductDetails({
                 freeMode={true}
                 watchSlidesProgress={true}
                 modules={[Navigation, Thumbs]}
+                // navigation={true}
                 className="mySwiper style-rectangle"
               >
                 {displayImages.map((item, index) => (
@@ -1172,6 +1174,11 @@ export default function ProductDetails({
                   <>
                     <div className="product-price heading5 discounted-price">
                       {formatPrice(displayDiscountedPrice)}
+                      {productMain.perUnitText && (
+                        <span className="ml-2 text-sm font-normal text-gray-600">
+                          {productMain.perUnitText}
+                        </span>
+                      )}
                     </div>
                     <div className="bg-line h-4 w-px"></div>
                     <div className="product-origin-price text-secondary2 font-normal">
@@ -1181,6 +1188,11 @@ export default function ProductDetails({
                 ) : (
                   <div className="product-price heading5">
                     {formatPrice(displayPrice)}
+                    {productMain.perUnitText && (
+                      <span className="ml-2 text-sm font-normal text-gray-600">
+                        {productMain.perUnitText}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

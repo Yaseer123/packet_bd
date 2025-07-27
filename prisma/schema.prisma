@@ -89,6 +89,7 @@ model Product {
     defaultColorHex       String?
     defaultSize           String?
     variantLabel          String?     // <--- Add this line
+    perUnitText           String?     // Text to display next to price (e.g. "PER PIECE", "PER KG")
     sold                  Int         @default(0)
     estimatedDeliveryTime Int? // Changed to Int to represent days
     categoryId            String? // Foreign key to Category
