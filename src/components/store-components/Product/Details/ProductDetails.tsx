@@ -857,7 +857,9 @@ export default function ProductDetails({
   // Add this inside the ProductDetails component
   const [currentUrl, setCurrentUrl] = useState("");
   useEffect(() => {
-    setCurrentUrl(window.location.href);
+    if (typeof window !== "undefined") {
+      setCurrentUrl(window.location.href);
+    }
   }, []);
 
   // Helper to get the correct unit price based on quantity and discount ranges

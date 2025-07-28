@@ -170,6 +170,7 @@ export default function AdminFAQsPage() {
   // Function to handle category deletion
   const handleDeleteCategory = (id: string, title: string) => {
     if (
+      typeof window !== "undefined" &&
       window.confirm(
         `Are you sure you want to delete "${title}" category and all its FAQs?`,
       )
@@ -273,7 +274,10 @@ export default function AdminFAQsPage() {
 
   // Function to handle FAQ item deletion
   const handleDeleteFaqItem = (id: string, question: string) => {
-    if (window.confirm(`Are you sure you want to delete "${question}"?`)) {
+    if (
+      typeof window !== "undefined" &&
+      window.confirm(`Are you sure you want to delete "${question}"?`)
+    ) {
       deleteFaqItem.mutate(
         { id },
         {
