@@ -1,5 +1,6 @@
 "use client";
 
+import { trackAddToCart } from "@/components/MetaPixelProvider";
 import { useCartStore } from "@/context/store-context/CartContext";
 import { useModalCartStore } from "@/context/store-context/ModalCartContext";
 import { useModalQuickViewStore } from "@/context/store-context/ModalQuickViewContext";
@@ -386,6 +387,10 @@ export default function Product({ data }: ProductProps) {
       quantityStep: data.quantityStep ?? 1,
     };
     addToCart(cartItem);
+
+    // Track add to cart event
+    trackAddToCart(data);
+
     openModalCart();
   };
 

@@ -1,6 +1,7 @@
 "use client";
 
 // QuickView.tsx
+import { trackAddToCart } from "@/components/MetaPixelProvider";
 import { useCartStore } from "@/context/store-context/CartContext";
 import { useModalCartStore } from "@/context/store-context/ModalCartContext";
 import { useModalQuickViewStore } from "@/context/store-context/ModalQuickViewContext";
@@ -145,6 +146,10 @@ const ModalQuickView = () => {
       }
       // Always update the quantity whether it's a new item or existing one
       updateCart(selectedProduct.id, quantity);
+
+      // Track add to cart event
+      trackAddToCart(selectedProduct);
+
       openModalCart();
       closeQuickView();
     }

@@ -1,4 +1,5 @@
 "use client";
+import { trackInitiateCheckout } from "@/components/MetaPixelProvider";
 import Breadcrumb from "@/components/store-components/Breadcrumb/Breadcrumb";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCartStore } from "@/context/store-context/CartContext";
@@ -210,6 +211,25 @@ const Checkout = () => {
     () => (buyNowProduct ? [buyNowProduct] : cartArray),
     [buyNowProduct, cartArray],
   );
+
+  // Track initiate checkout when component mounts
+  useEffect(() => {
+    if (checkoutItems.length > 0) {
+      const total = checkoutItems.reduce(
+        (sum, item) =>
+          sum + (item.discountedPrice ?? item.price) * item.quantity,
+        0,
+      );
+      // Map CartItem to ProductData format for tracking
+      const productData = checkoutItems.map((item) => ({
+        id: item.id,
+        title: item.name, // Map 'name' to 'title'
+        discountedPrice: item.discountedPrice,
+        price: item.price,
+      }));
+      trackInitiateCheckout(productData, total);
+    }
+  }, [checkoutItems]);
 
   const utils = api.useUtils();
   // --- Fetch product data for all cart items ---

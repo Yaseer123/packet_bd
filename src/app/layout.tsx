@@ -1,3 +1,4 @@
+import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/styles.scss";
 import { TRPCReactProvider } from "@/trpc/react";
@@ -47,7 +48,9 @@ export default function RootLayout({
         </noscript>
         {/* End Google Tag Manager (noscript) */}
         <SessionProvider>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <MetaPixelProvider>{children}</MetaPixelProvider>
+          </TRPCReactProvider>
         </SessionProvider>
         <Toaster />
       </body>
