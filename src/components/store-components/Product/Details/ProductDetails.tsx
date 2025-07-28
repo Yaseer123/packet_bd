@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  trackAddToCart,
+  trackViewContent,
+} from "@/components/MetaPixelProvider";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/context/store-context/CartContext";
 import { useModalCartStore } from "@/context/store-context/ModalCartContext";
@@ -225,6 +229,11 @@ export default function ProductDetails({
       enabled: !!session,
     });
 
+  // Track view content when component mounts
+  useEffect(() => {
+    trackViewContent(productMain);
+  }, [productMain]);
+
   const sortedReviews = [...reviews].sort((a, b) => {
     if (reviewSortOrder === "newest") {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -422,6 +431,10 @@ export default function ProductDetails({
     } else {
       updateCart(cartItem.id, productQuantity);
     }
+
+    // Track add to cart event
+    trackAddToCart(productMain);
+
     openModalCart();
   };
 
