@@ -274,7 +274,9 @@ const ModalCart = () => {
                       }
                       if (pathname === "/checkout") {
                         e.preventDefault();
-                        window.location.reload();
+                        if (typeof window !== "undefined") {
+                          window.location.reload();
+                        }
                         return;
                       }
                       closeModalCart();

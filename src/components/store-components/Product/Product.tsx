@@ -233,6 +233,7 @@ function useIsMobile(breakpoint = 640) {
   );
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     function handleResize() {
       setIsMobile(window.innerWidth < breakpoint);
     }
