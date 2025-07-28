@@ -48,6 +48,8 @@ export default function Menu({
   const [isSticky, setIsSticky] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const handleScroll = () => {
       // Make category navbar sticky when scrolled past the main header
       // We're using a smaller threshold (50px) for just the navbar
@@ -105,6 +107,8 @@ export default function Menu({
   const [lastScrollPosition, setLastScrollPosition] = useState(0);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setLastScrollPosition(scrollPosition);

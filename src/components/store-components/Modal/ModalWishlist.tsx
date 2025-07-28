@@ -58,7 +58,12 @@ const ModalWishlist = () => {
                   variant="default"
                   className="w-full max-w-xs bg-black text-white hover:bg-black/75"
                   onClick={() =>
-                    signIn(undefined, { callbackUrl: window.location.href })
+                    signIn(undefined, {
+                      callbackUrl:
+                        typeof window !== "undefined"
+                          ? window.location.href
+                          : "/",
+                    })
                   }
                 >
                   Login

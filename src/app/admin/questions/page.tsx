@@ -42,7 +42,10 @@ export default function AdminQuestionsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this question?"))
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("Are you sure you want to delete this question?")
+    )
       return;
     try {
       await deleteMutation.mutateAsync({ questionId: id });

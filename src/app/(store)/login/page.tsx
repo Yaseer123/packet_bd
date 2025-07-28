@@ -33,7 +33,9 @@ const Login = () => {
     if (res?.error) {
       setError("Invalid email or password");
     } else if (res?.ok) {
-      window.location.href = redirect;
+      if (typeof window !== "undefined") {
+        window.location.href = redirect;
+      }
     }
     setLoading(false);
   };

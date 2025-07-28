@@ -189,7 +189,7 @@ export default function ProductsPage() {
       }
 
       // Build the new URL
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      const newUrl = `${typeof window !== "undefined" ? window.location.pathname : ""}?${params.toString()}`;
       // Use replace instead of push to prevent scroll to top, and add scroll: false option
       router.replace(newUrl, { scroll: false });
     };
@@ -323,6 +323,8 @@ export default function ProductsPage() {
 
   // Close mobile filter on resize if screen becomes larger
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const handleResize = () => {
       if (window.innerWidth >= 768 && showMobileFilter) {
         setShowMobileFilter(false);
