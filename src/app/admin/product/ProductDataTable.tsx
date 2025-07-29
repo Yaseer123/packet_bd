@@ -4,21 +4,41 @@ import { DataTable } from "@/components/admin-components/DataTable";
 import { api } from "@/trpc/react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import React from "react";
+import React, { useCallback } from "react";
 import { columns, type ProductColumns } from "./Columns";
 
 export default function ProductDataTable() {
   const [page, setPage] = React.useState(1);
   const [limit, setLimit] = React.useState(50);
+  const [search, setSearch] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
 
-  const [productsWithCategory] = api.product.getAll.useSuspenseQuery({
-    page,
-    limit,
-  });
-  const [items, setItems] = React.useState(productsWithCategory.products);
+  // Debounce search input with a longer delay to prevent interruptions
   React.useEffect(() => {
-    setItems(productsWithCategory.products);
-  }, [productsWithCategory.products]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 800); // Increased to 800ms for better UX
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: productsWithCategory, isLoading } = api.product.getAll.useQuery(
+    {
+      page,
+      limit,
+      search: debouncedSearch.trim() ?? undefined,
+    },
+  );
+
+  const [items, setItems] = React.useState(
+    productsWithCategory?.products ?? [],
+  );
+
+  React.useEffect(() => {
+    if (productsWithCategory?.products) {
+      setItems(productsWithCategory.products);
+    }
+  }, [productsWithCategory?.products]);
 
   const utils = api.useUtils();
   const updatePositions = api.product.updateProductPositions.useMutation({
@@ -51,6 +71,11 @@ export default function ProductDataTable() {
     setPage(1);
   };
 
+  const handleSearch = useCallback((searchTerm: string) => {
+    setSearch(searchTerm);
+    setPage(1); // Reset to first page when searching
+  }, []);
+
   return (
     <DataTable<ProductColumns>
       columns={columns}
@@ -63,9 +88,12 @@ export default function ProductDataTable() {
       onDragEnd={handleDragEnd}
       page={page}
       limit={limit}
-      total={productsWithCategory.total}
+      total={productsWithCategory?.total ?? 0}
       onPageChange={handlePageChange}
       onLimitChange={handleLimitChange}
+      onSearch={handleSearch}
+      searchValue={search}
+      isSearching={isLoading && search !== debouncedSearch}
     />
   );
 }
