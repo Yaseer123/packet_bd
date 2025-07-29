@@ -1479,8 +1479,61 @@ export default function ProductDetails({
                     Details
                   </h3>
                   {productMain.attributes &&
-                    Object.entries(productMain.attributes).map(
-                      ([key, value], index) => (
+                    (() => {
+                      // Handle both array and object formats for attributes
+                      let attributesArray: Array<{
+                        key: string;
+                        value: string;
+                      }> = [];
+
+                      if (Array.isArray(productMain.attributes)) {
+                        // If it's an array, use it directly
+                        attributesArray = productMain.attributes
+                          .map((item) => {
+                            if (
+                              typeof item === "object" &&
+                              item !== null &&
+                              "key" in item &&
+                              "value" in item
+                            ) {
+                              const key = item.key;
+                              const value = item.value;
+                              // Ensure proper string conversion to avoid Object's default stringification
+                              const keyStr =
+                                typeof key === "string"
+                                  ? key
+                                  : typeof key === "number"
+                                    ? key.toString()
+                                    : typeof key === "boolean"
+                                      ? key.toString()
+                                      : JSON.stringify(key);
+                              const valueStr =
+                                typeof value === "string"
+                                  ? value
+                                  : typeof value === "number"
+                                    ? value.toString()
+                                    : typeof value === "boolean"
+                                      ? value.toString()
+                                      : JSON.stringify(value);
+                              return {
+                                key: keyStr,
+                                value: valueStr,
+                              };
+                            }
+                            return { key: "", value: "" };
+                          })
+                          .filter((item) => item.key.trim() !== "");
+                      } else if (
+                        typeof productMain.attributes === "object" &&
+                        productMain.attributes !== null
+                      ) {
+                        // If it's an object, convert to array (backward compatibility)
+                        attributesArray = Object.entries(
+                          productMain.attributes as Record<string, string>,
+                        ).map(([key, value]) => ({ key, value }));
+                      }
+
+                      return attributesArray.map(({ key, value }, index) => (
                         <div
                           key={index}
                           className={`border-b border-t border-gray-200 px-3 py-3 transition-colors duration-200 hover:bg-gray-100 sm:px-5 ${
@@ -1494,8 +1547,8 @@ export default function ProductDetails({
                             {value}
                           </div>
                         </div>
-                      ),
-                    )}
+                      ));
+                    })()}
                 </div>
               </div>
               <div

@@ -59,7 +59,7 @@ export interface ProductType {
   description: string | null;
   action: string;
   slug: string;
-  attributes: Record<string, string>;
+  attributes: Record<string, string> | Array<{ key: string; value: string }>;
   variants?: Variant[] | null;
   sku?: string;
   imageId?: string;
