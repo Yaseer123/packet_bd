@@ -1001,15 +1001,17 @@ export default function EditProductForm({ productId }: { productId: string }) {
 
   const { data: brands = [], isLoading: brandsLoading } =
     api.product.getBrandsByCategory.useQuery({});
+
   useEffect(() => {
-    if (brand && brands.length > 0 && !brands.includes(brand)) {
+    if (
+      brands.length > 0 &&
+      product?.brand &&
+      !brands.includes(product.brand)
+    ) {
       setIsCustomBrand(true);
-      setCustomBrand(brand);
-    } else {
-      setIsCustomBrand(false);
-      setCustomBrand("");
+      setCustomBrand(product.brand);
     }
-  }, [brand, brands]);
+  }, [brands, product?.brand]); // Only run when brands or product.brand changes
 
   const [variantLabel, setVariantLabel] = useState<string>(
     product?.variantLabel ?? "Size",
