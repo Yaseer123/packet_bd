@@ -7,6 +7,12 @@ export const categoryAttributeValueSchema = z.record(
   z.union([z.string(), z.number(), z.boolean()]), // Possible values
 );
 
+// Schema for specification items to preserve order
+export const specificationItemSchema = z.object({
+  key: z.string(),
+  value: z.string(),
+});
+
 // Variant schema for color/size/image variations
 export const variantSchema = z.object({
   colorName: z.string().optional(),
@@ -44,7 +50,10 @@ export const productSchema = z.object({
   images: z.array(z.string()),
   categoryId: z.string(),
   descriptionImageId: z.string().optional(),
-  attributes: z.record(z.string(), z.string()).default({}),
+  // Accept both array format (for order preservation) and record format (for backward compatibility)
+  attributes: z
+    .union([z.array(specificationItemSchema), z.record(z.string(), z.string())])
+    .default([]),
   estimatedDeliveryTime: z.number().int().positive().optional(),
   categoryAttributes: categoryAttributeValueSchema.default({}), // Add categoryAttributes field
   variants: z.array(variantSchema).optional(), // Add variants field
@@ -72,7 +81,10 @@ export const updateProductSchema = z.object({
   images: z.array(z.string()).optional(),
   categoryId: z.string().optional(),
   descriptionImageId: z.string().optional(),
-  attributes: z.record(z.string(), z.string()).optional(),
+  // Accept both array format (for order preservation) and record format (for backward compatibility)
+  attributes: z
+    .union([z.array(specificationItemSchema), z.record(z.string(), z.string())])
+    .optional(),
   estimatedDeliveryTime: z.number().int().positive().optional(),
   categoryAttributes: categoryAttributeValueSchema.optional(), // Add categoryAttributes field
   variants: z.array(variantSchema).optional(), // Add variants field
@@ -83,4 +95,4 @@ export const updateProductSchema = z.object({
 });
 
 export type Product = z.infer<typeof productSchema>;
-export type UpdateProduct = z.infer<typeof updateProductSchema>;
+export type SpecificationItem = z.infer<typeof specificationItemSchema>;
