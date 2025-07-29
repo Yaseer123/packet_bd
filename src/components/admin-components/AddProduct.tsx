@@ -308,13 +308,7 @@ export default function AddProductForm(_unused?: unknown) {
         images: images.map((image) => image.src),
         categoryId,
         descriptionImageId,
-        attributes: specifications.reduce(
-          (acc, { key, value }) => {
-            if (key) acc[key] = value;
-            return acc;
-          },
-          {} as Record<string, string>,
-        ),
+        attributes: specifications.filter((spec) => spec.key.trim() !== ""), // Send as array to preserve order
         estimatedDeliveryTime,
         categoryAttributes: attributeValues,
         description: "", // RichEditor content, validated separately if needed
@@ -686,16 +680,8 @@ export default function AddProductForm(_unused?: unknown) {
       toast.error(errorMessages.join(" | "));
       return;
     }
-    // Convert specifications array back to object for submission
-    const specsObject = specifications.reduce(
-      (acc, { key, value }) => {
-        if (key) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    // Send specifications as array to preserve order
+    const specsArray = specifications.filter((spec) => spec.key.trim() !== "");
     // Log the image order being submitted to database
     console.log(
       "Submitting images in order:",
@@ -744,7 +730,7 @@ export default function AddProductForm(_unused?: unknown) {
       slug,
       categoryId: categoryId,
       description: content,
-      attributes: specsObject, // Only include specifications here
+      attributes: specsArray, // Send as array to preserve order
       categoryAttributes: attributeValues, // Pass category attributes separately
       estimatedDeliveryTime: estimatedDeliveryTime,
       variants: enableVariants ? flatVariants : undefined,

@@ -41,8 +41,7 @@ type Variant = {
 };
 
 // Helper for stockStatus
-const validStockStatuses = ["IN_STOCK", "OUT_OF_STOCK", "PRE_ORDER"] as const;
-type StockStatus = (typeof validStockStatuses)[number];
+type StockStatus = "IN_STOCK" | "OUT_OF_STOCK" | "PRE_ORDER";
 
 // Helper type guard for Variant
 function isVariant(v: unknown): v is Variant {
@@ -156,12 +155,49 @@ function toProductType(product: ProductWithCategory): ProductType {
     description: product.description ?? null,
     action: "",
     slug: product.slug ?? "",
-    attributes:
-      typeof product.attributes === "object" &&
-      product.attributes !== null &&
-      !Array.isArray(product.attributes)
-        ? (product.attributes as Record<string, string>)
-        : {},
+    attributes: (() => {
+      // Handle both array and object formats for attributes
+      if (Array.isArray(product.attributes)) {
+        // If it's an array, convert to object for backward compatibility with ProductType
+        const attributesObj: Record<string, string> = {};
+        product.attributes.forEach((item) => {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            "key" in item &&
+            "value" in item
+          ) {
+            const key = item.key;
+            const value = item.value;
+            // Ensure proper string conversion to avoid Object's default stringification
+            const keyStr =
+              typeof key === "string"
+                ? key
+                : typeof key === "number"
+                  ? key.toString()
+                  : typeof key === "boolean"
+                    ? key.toString()
+                    : JSON.stringify(key);
+            const valueStr =
+              typeof value === "string"
+                ? value
+                : typeof value === "number"
+                  ? value.toString()
+                  : typeof value === "boolean"
+                    ? value.toString()
+                    : JSON.stringify(value);
+            attributesObj[keyStr] = valueStr;
+          }
+        });
+        return attributesObj;
+      } else if (
+        typeof product.attributes === "object" &&
+        product.attributes !== null
+      ) {
+        return product.attributes as Record<string, string>;
+      }
+      return {};
+    })(),
     variants: normalizedVariants,
     sku: product.sku ?? undefined,
     imageId: product.imageId ?? undefined,

@@ -38,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -60,6 +61,9 @@ interface DataTableProps<TData> {
   total?: number;
   onPageChange?: (page: number) => void;
   onLimitChange?: (limit: number) => void;
+  onSearch?: (searchTerm: string) => void;
+  searchValue?: string;
+  isSearching?: boolean;
 }
 
 type DraggableTableRowProps<TData> = {
@@ -118,6 +122,9 @@ export function DataTable<TData>({
   total = 0,
   onPageChange,
   onLimitChange,
+  onSearch,
+  searchValue,
+  isSearching,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -155,14 +162,22 @@ export function DataTable<TData>({
   return (
     <div className="space-y-3">
       <div className="flex items-center py-4">
-        <Input
-          placeholder={searchPlaceHolder}
-          value={(table.getColumn(filterBy)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(filterBy)?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm">
+          <Input
+            placeholder={searchPlaceHolder}
+            value={searchValue ?? ""}
+            onChange={(event) => {
+              const searchTerm = event.target.value;
+              onSearch?.(searchTerm);
+            }}
+            className="pr-8"
+          />
+          {isSearching && searchValue && searchValue !== "" && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
         <DataTableViewOptions table={table} />
         {addButton && (
           <Button asChild variant="default" className="ml-5">

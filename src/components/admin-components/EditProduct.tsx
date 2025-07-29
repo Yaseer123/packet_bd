@@ -391,14 +391,52 @@ export default function EditProductForm({ productId }: { productId: string }) {
     Record<string, string | number | boolean>
   >({});
 
-  // Convert specifications object to array format for drag and drop
+  // Convert specifications to array format for drag and drop (handle both array and object formats)
   const [specifications, setSpecifications] = useState<
     Array<{ key: string; value: string }>
   >(() => {
-    const attrs = product?.attributes as Record<string, string> | undefined;
-    return attrs
-      ? Object.entries(attrs).map(([key, value]) => ({ key, value }))
-      : [];
+    const attrs = product?.attributes;
+    if (Array.isArray(attrs)) {
+      // If it's already an array, use it directly
+      return attrs
+        .map((item) => {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            "key" in item &&
+            "value" in item
+          ) {
+            const key = item.key;
+            const value = item.value;
+            // Ensure proper string conversion to avoid Object's default stringification
+            const keyStr =
+              typeof key === "string"
+                ? key
+                : typeof key === "number"
+                  ? key.toString()
+                  : typeof key === "boolean"
+                    ? key.toString()
+                    : JSON.stringify(key);
+            const valueStr =
+              typeof value === "string"
+                ? value
+                : typeof value === "number"
+                  ? value.toString()
+                  : typeof value === "boolean"
+                    ? value.toString()
+                    : JSON.stringify(value);
+            return { key: keyStr, value: valueStr };
+          }
+          return { key: "", value: "" };
+        })
+        .filter((item) => item.key.trim() !== "");
+    } else if (typeof attrs === "object" && attrs !== null) {
+      // If it's an object, convert to array (backward compatibility)
+      return Object.entries(attrs as Record<string, string>).map(
+        ([key, value]) => ({ key, value }),
+      );
+    }
+    return [];
   });
 
   const { loadImages, images } = useProductImageStore();
@@ -671,13 +709,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
         images: images.map((image) => image.src),
         categoryId,
         descriptionImageId,
-        attributes: specifications.reduce(
-          (acc, { key, value }) => {
-            if (key) acc[key] = value;
-            return acc;
-          },
-          {} as Record<string, string>,
-        ),
+        attributes: specifications.filter((spec) => spec.key.trim() !== ""), // Send as array to preserve order
         estimatedDeliveryTime,
         categoryAttributes: attributeValues,
         description: "", // RichEditor content, validated separately if needed
@@ -952,16 +984,8 @@ export default function EditProductForm({ productId }: { productId: string }) {
       toast.error(errorMessages.join(" | "));
       return;
     }
-    // Convert specifications array back to object for submission
-    const specsObject = specifications.reduce(
-      (acc, { key, value }) => {
-        if (key) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    // Send specifications as array to preserve order
+    const specsArray = specifications.filter((spec) => spec.key.trim() !== "");
     // Log the image order being submitted to database
     console.log(
       "Updating product with images in order:",
@@ -978,7 +1002,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       slug,
       categoryId: categoryId,
       description: content,
-      attributes: specsObject, // Only include specifications here
+      attributes: specsArray, // Send as array to preserve order
       categoryAttributes: attributeValues, // Pass category attributes separately
       stock,
       brand,
