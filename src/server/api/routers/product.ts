@@ -1,4 +1,4 @@
-import { generateSKU } from "@/lib/utils";
+import { generateProductCode, generateSKU } from "@/lib/utils";
 import { type CategoryAttribute } from "@/schemas/categorySchema";
 import { productSchema, updateProductSchema } from "@/schemas/productSchema";
 import {
@@ -584,6 +584,9 @@ export const productRouter = createTRPCRouter({
       quantityDiscountsToSave = input.quantityDiscounts;
     }
 
+    // Generate a unique product code for Meta catalog
+    const productCode = generateProductCode();
+
     // Create product without SKU first to get the ID
     const createdProduct = await ctx.db.product.create({
       data: {
@@ -611,28 +614,31 @@ export const productRouter = createTRPCRouter({
         quantityStep: input.quantityStep ?? 1,
         variantLabel: input.variantLabel, // <-- Added this line
         perUnitText: input.perUnitText, // <-- Added this line
+        productCode, // Add the product code
         ...(quantityDiscountsToSave !== undefined
           ? { quantityDiscounts: quantityDiscountsToSave }
           : {}),
       },
     });
 
-    // Update variants with SKUs
+    // Update variants with SKUs using product code
     const updatedVariants = normalizeVariants(createdProduct.variants).map(
       (v) => ({
         ...v,
         sku: generateSKU({
           categoryName,
           productId: createdProduct.id,
+          productCode,
           color: typeof v.colorName === "string" ? v.colorName : "UNNAMED",
           size: typeof v.size === "string" ? v.size : undefined,
         }),
       }),
     );
-    // Now update with the real SKU (using the new product ID) and updated variants
+    // Now update with the real SKU (using the product code) and updated variants
     const realSKU = generateSKU({
       categoryName,
       productId: createdProduct.id,
+      productCode,
       color:
         typeof input.defaultColor === "string" ? input.defaultColor : "UNNAMED",
       size:
@@ -744,10 +750,14 @@ export const productRouter = createTRPCRouter({
       );
       const newCategoryName = rootCategoryName;
 
-      // Always regenerate SKU for main product
+      // Ensure product has a product code, generate if missing
+      const productCode = existingProduct?.productCode ?? generateProductCode();
+
+      // Always regenerate SKU for main product using product code
       const newSKU = generateSKU({
         categoryName: newCategoryName,
         productId: id,
+        productCode,
         color:
           typeof input.defaultColor === "string"
             ? input.defaultColor
@@ -773,6 +783,7 @@ export const productRouter = createTRPCRouter({
             sku: generateSKU({
               categoryName: newCategoryName,
               productId: id,
+              productCode,
               color: typeof v.colorName === "string" ? v.colorName : "UNNAMED",
               size: typeof v.size === "string" ? v.size : undefined,
             }),
@@ -816,6 +827,7 @@ export const productRouter = createTRPCRouter({
           ...(stockStatus ? { stockStatus } : {}),
           variants: updatedVariantsFromInput ?? undefined, // Update variants with SKUs
           sku: newSKU ?? undefined, // Always set the correct SKU, ensure type safety
+          productCode, // Ensure product code is set
           allSkus,
           minQuantity: input.minQuantity ?? 1,
           maxQuantity: input.maxQuantity,
