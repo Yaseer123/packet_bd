@@ -20,20 +20,28 @@ export function getCategoryPrefix(categoryName?: string) {
     .slice(0, 3);
 }
 
+// Generate a unique product code for Meta catalog (e.g., 40612)
+export function generateProductCode(): string {
+  // Generate a 5-digit number (10000-99999)
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
 export function generateSKU({
   categoryName,
   productId,
+  productCode,
   color,
   size,
 }: {
   categoryName?: string;
   productId: string;
+  productCode?: string;
   color?: string;
   size?: string;
 }) {
   const prefix = getCategoryPrefix(categoryName);
-  // Use last 6 chars of productId for brevity
-  const idPart = productId.slice(-6).toUpperCase();
+  // Use productCode if available, otherwise use last 6 chars of productId
+  const idPart = productCode ?? productId.slice(-6).toUpperCase();
   let sku = `${prefix}-${idPart}`;
   if (color) sku += `-${color.replace(/\s+/g, "").toUpperCase()}`;
   if (size) sku += `-${size.replace(/\s+/g, "").toUpperCase()}`;
