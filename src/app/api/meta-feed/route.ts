@@ -109,7 +109,7 @@ export async function GET() {
       const categoryName = getCategoryName(product);
 
       return [
-        product.sku ?? product.id, // id
+        product.productCode ?? product.sku ?? product.id, // id - Use product code as primary identifier
         cleanText(product.title), // title
         cleanText(product.shortDescription ?? product.description), // description
         availability, // availability
@@ -123,7 +123,7 @@ export async function GET() {
         product.stock?.toString() ?? "1", // quantity_to_sell_on_facebook
         product.discountedPrice ? `${product.discountedPrice} BDT` : "", // sale_price
         "", // sale_price_effective_date
-        "", // item_group_id
+        product.productCode ?? product.sku ?? product.id, // item_group_id - Same as product ID to group variants
         "", // gender
         product.defaultColor ?? "", // color
         product.defaultSize ?? "", // size
