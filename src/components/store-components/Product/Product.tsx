@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
+import { pushProductClickToDataLayer } from "../../../utils/gtm";
 
 interface ProductProps {
   data: ProductType | ProductWithCategory;
@@ -553,7 +554,13 @@ export default function Product({ data }: ProductProps) {
           </div>
         )}
 
-        <Link href={`/products/${data.slug}`}>
+        <Link
+          href={`/products/${data.slug}`}
+          onClick={() => {
+            // Push product data to GTM before navigation
+            pushProductClickToDataLayer(data, "product_list");
+          }}
+        >
           <div className="relative overflow-hidden rounded-lg">
             <Image
               className="aspect-square w-full cursor-pointer object-cover transition-transform duration-300 hover:scale-105"
@@ -631,7 +638,14 @@ export default function Product({ data }: ProductProps) {
         </div>
       </div>
       <div className="product-info mt-4 flex flex-col">
-        <Link href={`/products/${data.slug}`} className="flex-grow">
+        <Link
+          href={`/products/${data.slug}`}
+          className="flex-grow"
+          onClick={() => {
+            // Push product data to GTM before navigation
+            pushProductClickToDataLayer(data, "product_list");
+          }}
+        >
           <h3 className="text-title line-clamp-3 min-h-[4.5rem] cursor-pointer text-base font-medium hover:underline">
             {"title" in data && typeof data.title === "string"
               ? data.title

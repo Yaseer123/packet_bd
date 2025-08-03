@@ -35,6 +35,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { v4 as uuid } from "uuid";
 import { useJsonLd } from "../../../../hooks/useJsonLd";
 import { formatPrice } from "../../../../utils/format";
+import { pushProductToDataLayer } from "../../../../utils/gtm";
 import ParseContent from "../../Blog/ParseContent";
 import Rate from "../../Rate";
 import RelatedProductsSidebar from "../RelatedProductsSidebar";
@@ -202,6 +203,11 @@ export default function ProductDetails({
 
   // Use the custom hook to manage JSON-LD
   useJsonLd(jsonLdData, productMain.slug);
+
+  // Push product data to GTM data layer for direct navigation
+  useEffect(() => {
+    pushProductToDataLayer(productMain);
+  }, [productMain]);
 
   console.log("Product :", productMain);
   SwiperCore.use([Navigation, Thumbs]);
