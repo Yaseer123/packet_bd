@@ -33,6 +33,7 @@ import "swiper/css/bundle";
 import { Navigation, Thumbs } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { v4 as uuid } from "uuid";
+import { useJsonLd } from "../../../../hooks/useJsonLd";
 import { formatPrice } from "../../../../utils/format";
 import ParseContent from "../../Blog/ParseContent";
 import Rate from "../../Rate";
@@ -161,6 +162,47 @@ export default function ProductDetails({
 }: {
   productMain: ProductWithCategory;
 }) {
+  // Generate JSON-LD data for the current product
+  const jsonLdData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    id:
+      productMain.productCode ?? productMain.id?.toString() ?? productMain.slug,
+    name: productMain.title,
+    description: productMain.description ?? productMain.shortDescription ?? "",
+    image:
+      Array.isArray(productMain.images) && productMain.images.length > 0
+        ? productMain.images.map((img) =>
+            img.startsWith("http") ? img : `${window.location.origin}${img}`,
+          )
+        : undefined,
+    sku: productMain.sku ?? productMain.slug,
+    productCode: productMain.productCode ?? undefined,
+    brand: {
+      "@type": "Brand",
+      name: productMain.brand ?? "Brand",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${window.location.origin}/products/${productMain.slug}`,
+      priceCurrency: "BDT",
+      price: productMain.discountedPrice ?? productMain.price ?? 0,
+      priceValidUntil: "2025-12-31",
+      itemCondition: "https://schema.org/NewCondition",
+      availability:
+        productMain.stockStatus === "IN_STOCK" ||
+        (typeof productMain.stock === "number" && productMain.stock > 0)
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+    },
+    category: productMain.category?.name,
+    mpn: productMain.productCode ?? productMain.sku ?? productMain.slug,
+    gtin: productMain.productCode ?? productMain.sku ?? productMain.slug,
+  };
+
+  // Use the custom hook to manage JSON-LD
+  useJsonLd(jsonLdData, productMain.slug);
+
   console.log("Product :", productMain);
   SwiperCore.use([Navigation, Thumbs]);
   const swiperRef = useRef<SwiperCore | null>(null);
@@ -809,22 +851,26 @@ export default function ProductDetails({
   const displayImages = activeVariant?.images?.length
     ? activeVariant.images
     : productMain.images;
-  
+
   console.log("Display Images:", displayImages);
   console.log("Display Images Length:", displayImages?.length);
-  
+
   // Reset Swiper to first slide when displayImages changes (e.g., when variant changes)
   useEffect(() => {
     if (mainSwiperRef.current && displayImages.length > 0) {
-      console.log("Resetting main Swiper to first slide due to displayImages change");
+      console.log(
+        "Resetting main Swiper to first slide due to displayImages change",
+      );
       mainSwiperRef.current.slideTo(0);
     }
     if (thumbsSwiper && displayImages.length > 0) {
-      console.log("Resetting thumbnail Swiper to first slide due to displayImages change");
+      console.log(
+        "Resetting thumbnail Swiper to first slide due to displayImages change",
+      );
       thumbsSwiper.slideTo(0);
     }
   }, [displayImages, thumbsSwiper]);
-  
+
   const displayPrice =
     typeof activeVariant?.price === "number"
       ? activeVariant.price
@@ -1016,7 +1062,10 @@ export default function ProductDetails({
                   console.log("Main Swiper initialized:", swiper);
                 }}
                 onSlideChange={(swiper) => {
-                  console.log("Main Swiper slide changed to:", swiper.realIndex);
+                  console.log(
+                    "Main Swiper slide changed to:",
+                    swiper.realIndex,
+                  );
                 }}
               >
                 {displayImages.map((item, index) => (
@@ -1050,7 +1099,10 @@ export default function ProductDetails({
                 // navigation={true}
                 className="mySwiper style-rectangle"
                 onSlideChange={(swiper) => {
-                  console.log("Thumbnail Swiper slide changed to:", swiper.realIndex);
+                  console.log(
+                    "Thumbnail Swiper slide changed to:",
+                    swiper.realIndex,
+                  );
                 }}
               >
                 {displayImages.map((item, index) => (
