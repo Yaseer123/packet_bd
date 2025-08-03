@@ -164,6 +164,7 @@ export default function ProductDetails({
   console.log("Product :", productMain);
   SwiperCore.use([Navigation, Thumbs]);
   const swiperRef = useRef<SwiperCore | null>(null);
+  const mainSwiperRef = useRef<SwiperCore | null>(null);
 
   const { data: session } = useSession();
 
@@ -286,6 +287,7 @@ export default function ProductDetails({
 
   const handleSwiper = (swiper: SwiperCore) => {
     setThumbsSwiper(swiper);
+    console.log("Thumbnail Swiper initialized:", swiper);
   };
 
   const handleIncreaseQuantity = () => {
@@ -807,6 +809,22 @@ export default function ProductDetails({
   const displayImages = activeVariant?.images?.length
     ? activeVariant.images
     : productMain.images;
+  
+  console.log("Display Images:", displayImages);
+  console.log("Display Images Length:", displayImages?.length);
+  
+  // Reset Swiper to first slide when displayImages changes (e.g., when variant changes)
+  useEffect(() => {
+    if (mainSwiperRef.current && displayImages.length > 0) {
+      console.log("Resetting main Swiper to first slide due to displayImages change");
+      mainSwiperRef.current.slideTo(0);
+    }
+    if (thumbsSwiper && displayImages.length > 0) {
+      console.log("Resetting thumbnail Swiper to first slide due to displayImages change");
+      thumbsSwiper.slideTo(0);
+    }
+  }, [displayImages, thumbsSwiper]);
+  
   const displayPrice =
     typeof activeVariant?.price === "number"
       ? activeVariant.price
@@ -988,12 +1006,24 @@ export default function ProductDetails({
                 thumbs={{ swiper: thumbsSwiper }}
                 modules={[Thumbs, Navigation]}
                 navigation={true}
+                loop={displayImages.length > 1}
+                allowTouchMove={true}
+                speed={300}
+                watchSlidesProgress={true}
                 className="mySwiper2 overflow-hidden rounded-2xl"
+                onSwiper={(swiper) => {
+                  mainSwiperRef.current = swiper;
+                  console.log("Main Swiper initialized:", swiper);
+                }}
+                onSlideChange={(swiper) => {
+                  console.log("Main Swiper slide changed to:", swiper.realIndex);
+                }}
               >
                 {displayImages.map((item, index) => (
                   <SwiperSlide
                     key={index}
                     onClick={() => {
+                      console.log("Image clicked, index:", index);
                       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                       swiperRef.current?.slideTo(index);
                       setOpenPopupImg(true);
@@ -1012,12 +1042,16 @@ export default function ProductDetails({
               <Swiper
                 onSwiper={handleSwiper}
                 spaceBetween={0}
-                slidesPerView={4}
+                slidesPerView={Math.min(4, displayImages.length)}
                 freeMode={true}
                 watchSlidesProgress={true}
                 modules={[Navigation, Thumbs]}
+                loop={displayImages.length > 4}
                 // navigation={true}
                 className="mySwiper style-rectangle"
+                onSlideChange={(swiper) => {
+                  console.log("Thumbnail Swiper slide changed to:", swiper.realIndex);
+                }}
               >
                 {displayImages.map((item, index) => (
                   <SwiperSlide key={index}>
@@ -1045,7 +1079,7 @@ export default function ProductDetails({
                   slidesPerView={1}
                   modules={[Navigation, Thumbs]}
                   navigation={true}
-                  loop={true}
+                  loop={displayImages.length > 1}
                   className="popupSwiper"
                   onSwiper={(swiper) => {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
