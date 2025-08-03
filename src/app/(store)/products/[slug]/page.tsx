@@ -60,8 +60,8 @@ const ProductPage = async ({
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
-    // Required Meta fields
-    id: fixedProductData.id?.toString() ?? slug, // Unique product ID
+    // Required Meta fields - Use product code as primary identifier
+    id: fixedProductData.productCode ?? fixedProductData.id?.toString() ?? slug, // Product code as primary ID
     name: fixedProductData.title, // Product title
     description:
       fixedProductData.description ?? fixedProductData.shortDescription ?? "",
@@ -73,6 +73,8 @@ const ProductPage = async ({
           )
         : undefined,
     sku: fixedProductData.sku ?? slug,
+    // Add product code as a separate field for easy access
+    productCode: fixedProductData.productCode,
     brand: {
       "@type": "Brand",
       name: fixedProductData.brand ?? "Brand",
@@ -95,8 +97,8 @@ const ProductPage = async ({
     },
     // Additional Meta-recommended fields
     category: fixedProductData.category?.name,
-    mpn: fixedProductData.sku ?? slug, // Manufacturer Part Number
-    gtin: fixedProductData.sku ?? slug, // Global Trade Item Number
+    mpn: fixedProductData.productCode ?? fixedProductData.sku ?? slug, // Use product code as MPN
+    gtin: fixedProductData.productCode ?? fixedProductData.sku ?? slug, // Use product code as GTIN
   };
 
   return (
