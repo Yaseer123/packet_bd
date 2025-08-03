@@ -177,7 +177,7 @@ export default function ProductDetails({
           )
         : undefined,
     sku: productMain.sku ?? productMain.slug,
-    productCode: productMain.productCode,
+    productCode: productMain.productCode ?? undefined,
     brand: {
       "@type": "Brand",
       name: productMain.brand ?? "Brand",
