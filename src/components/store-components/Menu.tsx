@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type Key, useEffect, useRef, useState } from "react";
 import { formatPrice } from "../../utils/format";
+import { pushProductClickToDataLayer } from "../../utils/gtm";
 import CategoryDropdown from "./Category/CategoryDropdown";
 import MobileMenu from "./MobileMenu";
 import TopNav from "./TopNav";
@@ -242,6 +243,11 @@ export default function Menu({
                                     key={product.id}
                                     className="search-result-item cursor-pointer border-b border-gray-100 px-4 py-2 hover:bg-gray-50"
                                     onClick={() => {
+                                      // Push product data to GTM before navigation
+                                      pushProductClickToDataLayer(
+                                        product,
+                                        "search_results",
+                                      );
                                       router.push(`/products/${product.slug}`);
                                       setShowSearchResults(false);
                                       setSearchKeyword("");
@@ -590,6 +596,11 @@ export default function Menu({
                             key={product.id}
                             className="search-result-item cursor-pointer border-b border-gray-100 px-4 py-2 hover:bg-gray-50"
                             onClick={() => {
+                              // Push product data to GTM before navigation
+                              pushProductClickToDataLayer(
+                                product,
+                                "search_results",
+                              );
                               router.push(`/products/${product.slug}`);
                               setShowSearchResults(false);
                               setSearchKeyword("");

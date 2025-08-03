@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../../utils/format";
+import { pushProductClickToDataLayer } from "../../utils/gtm";
 
 function isProductWithCategory(val: unknown): val is ProductWithCategory {
   if (!val || typeof val !== "object") return false;
@@ -106,6 +107,11 @@ export default function MobileSearch() {
                             key={product.id}
                             className="search-result-item cursor-pointer border-b border-gray-100 px-4 py-2 hover:bg-gray-50"
                             onClick={() => {
+                              // Push product data to GTM before navigation
+                              pushProductClickToDataLayer(
+                                product,
+                                "mobile_search_results",
+                              );
                               router.push(`/product/${product.slug}`);
                               setShowSearchResults(false);
                               setSearchKeyword("");
