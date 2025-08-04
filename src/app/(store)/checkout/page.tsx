@@ -65,6 +65,7 @@ type CartItem = {
   color?: string;
   colorName?: string;
   size?: string;
+  productCode?: string; // Add this line
   minQuantity: number;
   maxQuantity?: number;
   quantityStep: number;
