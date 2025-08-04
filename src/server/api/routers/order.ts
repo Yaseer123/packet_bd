@@ -915,16 +915,31 @@ export const orderRouter = createTRPCRouter({
         });
       }
 
-      // Link order to user if a user exists with the same email as the address
+      // Link order and address to user if a user exists with the same email as the address
       if (address?.email) {
-        const user = await ctx.db.user.findUnique({
-          where: { email: address.email },
-        });
-        if (user) {
-          await ctx.db.order.update({
-            where: { id: order.id },
-            data: { userId: user.id },
+        try {
+          const user = await ctx.db.user.findUnique({
+            where: { email: address.email },
           });
+          if (user) {
+            // Update both order and address to link to user in a transaction
+            await ctx.db.$transaction([
+              ctx.db.order.update({
+                where: { id: order.id },
+                data: { userId: user.id },
+              }),
+              ctx.db.address.update({
+                where: { id: address.id },
+                data: { userId: user.id },
+              }),
+            ]);
+            console.log(
+              `Linked order ${order.id} and address ${address.id} to user ${user.id}`,
+            );
+          }
+        } catch (linkError) {
+          console.error("Failed to link order/address to user:", linkError);
+          // Don't fail the order if linking fails
         }
       }
       return order;
