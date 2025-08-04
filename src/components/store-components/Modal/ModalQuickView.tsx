@@ -138,6 +138,7 @@ const ModalQuickView = () => {
           color,
           size,
           productId: selectedProduct.id,
+          productCode: selectedProduct.productCode ?? undefined, // Add this line
           minQuantity: minQuantity,
           maxQuantity: maxQuantity,
           quantityStep: quantityStep,
@@ -180,6 +181,7 @@ const ModalQuickView = () => {
           color,
           size,
           productId: selectedProduct.id,
+          productCode: selectedProduct.productCode ?? undefined, // Add this line
           minQuantity: minQuantity,
           maxQuantity: maxQuantity,
           quantityStep: quantityStep,

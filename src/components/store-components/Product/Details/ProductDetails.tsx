@@ -449,6 +449,7 @@ export default function ProductDetails({
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      productCode: productMain.productCode ?? undefined, // Add this line
       minQuantity: productMain.minQuantity ?? 1,
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,

@@ -418,6 +418,12 @@ export default function Product({ data }: ProductProps) {
       sku: typeof data.sku === "string" ? data.sku : "",
       color: undefined,
       size: undefined,
+      productCode:
+        "productCode" in data &&
+        data.productCode &&
+        typeof data.productCode === "string"
+          ? data.productCode
+          : undefined, // Add this line
       minQuantity: data.minQuantity ?? 1,
       maxQuantity: data.maxQuantity ?? undefined,
       quantityStep: data.quantityStep ?? 1,

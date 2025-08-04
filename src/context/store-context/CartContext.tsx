@@ -13,6 +13,7 @@ interface CartItem {
   color?: string;
   size?: string;
   productId: string;
+  productCode?: string; // Add this line
   minQuantity: number;
   maxQuantity?: number;
   quantityStep: number;
