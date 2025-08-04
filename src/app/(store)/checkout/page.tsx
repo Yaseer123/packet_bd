@@ -122,7 +122,9 @@ function getDiscountedUnitPrice(
     .pop(); // Get the highest tier that applies
 
   if (applicableDiscount) {
-    return basePrice - (basePrice * applicableDiscount.discountPercent) / 100;
+    return (
+      basePrice - (basePrice * (applicableDiscount?.discountPercent ?? 0)) / 100
+    );
   }
   return basePrice;
 }
@@ -248,27 +250,12 @@ const Checkout = () => {
       const product = productMap[item.productId];
       // Use discountedPrice if available, else price
       const unit =
-        product && typeof product.discountedPrice === "number"
+        product?.discountedPrice && typeof product.discountedPrice === "number"
           ? product.discountedPrice
           : typeof product?.discountedPrice === "undefined" &&
               typeof item.discountedPrice === "number"
             ? item.discountedPrice
             : item.price;
-      const discountsArr = normalizeQuantityDiscounts(
-        product?.quantityDiscounts,
-      );
-      const discountPercent = (() => {
-        if (!discountsArr.length) return 0;
-        // Sort discounts by minQty to ensure we find the highest applicable tier
-        const sortedDiscounts = [...discountsArr].sort(
-          (a, b) => a.minQty - b.minQty,
-        );
-        // Find the highest tier where quantity >= minQty
-        const applicableDiscount = sortedDiscounts
-          .filter((d) => item.quantity >= d.minQty)
-          .pop(); // Get the highest tier that applies
-        return applicableDiscount ? applicableDiscount.discountPercent : 0;
-      })();
       sum +=
         getDiscountedUnitPrice(
           item.quantity,
@@ -731,7 +718,8 @@ const Checkout = () => {
     }
     let addressId = undefined;
     try {
-      if (session) {
+      if (session?.user?.id) {
+        // For authenticated users with valid session
         const created = await createAddressMutation.mutateAsync({
           name: newAddress.name,
           email: newAddress.email,
@@ -743,6 +731,7 @@ const Checkout = () => {
         });
         addressId = created.id;
       } else {
+        // For guest users or invalid session
         const created = await createGuestAddressMutation.mutateAsync({
           name: newAddress.name,
           email: newAddress.email,
@@ -766,11 +755,11 @@ const Checkout = () => {
           if (
             Array.isArray(parsedErrors) &&
             parsedErrors.length > 0 &&
-            parsedErrors[0]?.path &&
+            parsedErrors[0]?.path?.[0] &&
             parsedErrors[0]?.message
           ) {
-            const field = parsedErrors[0].path[0];
-            const message = parsedErrors[0].message;
+            const field = parsedErrors[0]?.path?.[0];
+            const message = parsedErrors[0]?.message;
 
             let clientField: keyof typeof addressErrors = "name";
             if (field === "name") clientField = "name";
@@ -790,7 +779,7 @@ const Checkout = () => {
           } else {
             setOrderError(error.message);
           }
-        } catch (e) {
+        } catch {
           setOrderError(error.message);
         }
       } else {
@@ -802,7 +791,8 @@ const Checkout = () => {
       setOrderError("No address found. Please enter your address.");
       return;
     }
-    if (session) {
+    if (session?.user?.id) {
+      // For authenticated users with valid session
       placeOrder.mutate({
         cartItems: checkoutItems.map((item) => ({
           productId: item.productId,
@@ -816,22 +806,13 @@ const Checkout = () => {
             // Use the same logic as the displayed price
             const product = productMap[item.productId];
             const unit =
-              product && typeof product.discountedPrice === "number"
+              product?.discountedPrice &&
+              typeof product.discountedPrice === "number"
                 ? product.discountedPrice
                 : typeof product?.discountedPrice === "undefined" &&
                     typeof item.discountedPrice === "number"
                   ? item.discountedPrice
                   : item.price;
-            const discountsArr = normalizeQuantityDiscounts(
-              product?.quantityDiscounts,
-            );
-            const discountPercent = (() => {
-              if (!discountsArr.length) return 0;
-              const match = discountsArr.find(
-                (d) => item.quantity >= d.minQty && item.quantity <= d.maxQty,
-              );
-              return match ? match.discountPercent : 0;
-            })();
             return getDiscountedUnitPrice(
               item.quantity,
               unit,
@@ -857,29 +838,13 @@ const Checkout = () => {
             // Use the same logic as the displayed price
             const product = productMap[item.productId];
             const unit =
-              product && typeof product.discountedPrice === "number"
+              product?.discountedPrice &&
+              typeof product.discountedPrice === "number"
                 ? product.discountedPrice
                 : typeof product?.discountedPrice === "undefined" &&
                     typeof item.discountedPrice === "number"
                   ? item.discountedPrice
                   : item.price;
-            const discountsArr = normalizeQuantityDiscounts(
-              product?.quantityDiscounts,
-            );
-            const discountPercent = (() => {
-              if (!discountsArr.length) return 0;
-              // Sort discounts by minQty to ensure we find the highest applicable tier
-              const sortedDiscounts = [...discountsArr].sort(
-                (a, b) => a.minQty - b.minQty,
-              );
-              // Find the highest tier where quantity >= minQty
-              const applicableDiscount = sortedDiscounts
-                .filter((d) => item.quantity >= d.minQty)
-                .pop(); // Get the highest tier that applies
-              return applicableDiscount
-                ? applicableDiscount.discountPercent
-                : 0;
-            })();
             return getDiscountedUnitPrice(
               item.quantity,
               unit,
@@ -892,14 +857,29 @@ const Checkout = () => {
         shippingCost,
       });
       // Auto-register guest user after order
-      await fetch("/api/auth/auto-register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: newAddress.email,
-          name: newAddress.name,
-        }),
-      });
+      try {
+        const autoRegisterResponse = await fetch("/api/auth/auto-register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: newAddress.email,
+            name: newAddress.name,
+          }),
+        });
+
+        if (autoRegisterResponse.ok) {
+          const result = (await autoRegisterResponse.json()) as {
+            success: boolean;
+            message?: string;
+          };
+          console.log("Auto-register successful:", result);
+        } else {
+          console.error("Auto-register failed:", autoRegisterResponse.status);
+        }
+      } catch (autoRegisterError) {
+        console.error("Auto-register error:", autoRegisterError);
+        // Don't fail the order if auto-register fails
+      }
     }
   };
 
@@ -1002,18 +982,11 @@ const Checkout = () => {
                       };
                       const productData = productMap[product.productId];
                       // Use discountedPrice if available, else price
-                      const baseUnitPrice =
+                      const unit =
                         typeof product.discountedPrice === "number"
                           ? product.discountedPrice
                           : typeof productData?.discountedPrice === "number"
                             ? productData.discountedPrice
-                            : product.price;
-                      const unit =
-                        typeof product.discountedPrice === "number"
-                          ? product.discountedPrice
-                          : typeof product.discountedPrice === "undefined" &&
-                              typeof product.discountedPrice === "number"
-                            ? product.discountedPrice
                             : product.price;
                       const discountsArr = normalizeQuantityDiscounts(
                         productData?.quantityDiscounts,
@@ -1028,9 +1001,7 @@ const Checkout = () => {
                         const applicableDiscount = sortedDiscounts
                           .filter((d) => product.quantity >= d.minQty)
                           .pop(); // Get the highest tier that applies
-                        return applicableDiscount
-                          ? applicableDiscount.discountPercent
-                          : 0;
+                        return applicableDiscount?.discountPercent ?? 0;
                       })();
                       return (
                         <div

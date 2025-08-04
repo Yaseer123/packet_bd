@@ -27,6 +27,40 @@ export interface ProductData {
   description?: string | null;
 }
 
+export interface PurchaseProductData {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  productCode?: string | null;
+  sku?: string | null;
+  brand?: string | null;
+  category?: string | null;
+}
+
+export interface PurchaseData {
+  orderId: string;
+  total: number;
+  products: PurchaseProductData[];
+}
+
+export interface CartItemData {
+  id: string;
+  name: string;
+  price: number;
+  discountedPrice?: number | null;
+  quantity: number;
+  productCode?: string | null;
+  sku?: string | null;
+  brand?: string | null;
+  category?: string | null;
+}
+
+export interface CartData {
+  total: number;
+  items: CartItemData[];
+}
+
 /**
  * Push product data to GTM data layer before navigation
  * This ensures the data is available when the view content event fires
@@ -134,6 +168,114 @@ export const pushProductClickToDataLayer = (
       id: product.id,
       name: product.title,
       listName,
+    });
+  }
+};
+
+/**
+ * Push cart view event to GTM data layer
+ * Use this when users view their cart
+ */
+export const pushCartViewToDataLayer = (cartData: CartData) => {
+  if (typeof window !== "undefined" && window.dataLayer) {
+    // Clear previous ecommerce data
+    window.dataLayer.push({ ecommerce: null });
+
+    // Push cart data to data layer
+    window.dataLayer.push({
+      event: "cart_view",
+      ecommerce: {
+        currencyCode: "BDT",
+        cart: {
+          items: cartData.items.map((item) => ({
+            name: item.name,
+            id: item.id,
+            price: item.discountedPrice ?? item.price,
+            quantity: item.quantity,
+            brand: item.brand ?? "Brand",
+            category: item.category,
+            sku: item.sku,
+            productCode: item.productCode,
+          })),
+        },
+      },
+      // Additional custom dimensions for easy access
+      cart_total: cartData.total,
+      cart_currency: "BDT",
+      cart_item_count: cartData.items.length,
+      product_codes: cartData.items
+        .map((item) => item.productCode)
+        .filter(Boolean) as string[],
+      product_skus: cartData.items
+        .map((item) => item.sku)
+        .filter(Boolean) as string[],
+      product_names: cartData.items.map((item) => item.name),
+      product_quantities: cartData.items.map((item) => item.quantity),
+      product_prices: cartData.items.map(
+        (item) => item.discountedPrice ?? item.price,
+      ),
+    });
+
+    console.log("GTM: Cart data pushed to data layer:", {
+      total: cartData.total,
+      itemCount: cartData.items.length,
+      productCodes: cartData.items
+        .map((item) => item.productCode)
+        .filter(Boolean),
+    });
+  }
+};
+
+/**
+ * Push purchase event to GTM data layer
+ * Use this on the confirmation page after successful purchase
+ */
+export const pushPurchaseToDataLayer = (purchaseData: PurchaseData) => {
+  if (typeof window !== "undefined" && window.dataLayer) {
+    // Clear previous ecommerce data
+    window.dataLayer.push({ ecommerce: null });
+
+    // Push purchase data to data layer
+    window.dataLayer.push({
+      event: "purchase",
+      ecommerce: {
+        currencyCode: "BDT",
+        purchase: {
+          transaction_id: purchaseData.orderId,
+          value: purchaseData.total,
+          products: purchaseData.products.map((product) => ({
+            name: product.name,
+            id: product.id,
+            price: product.price,
+            quantity: product.quantity,
+            brand: product.brand ?? "Brand",
+            category: product.category,
+            sku: product.sku,
+            productCode: product.productCode,
+          })),
+        },
+      },
+      // Additional custom dimensions for easy access
+      transaction_id: purchaseData.orderId,
+      transaction_total: purchaseData.total,
+      transaction_currency: "BDT",
+      product_codes: purchaseData.products
+        .map((p) => p.productCode)
+        .filter(Boolean) as string[],
+      product_skus: purchaseData.products
+        .map((p) => p.sku)
+        .filter(Boolean) as string[],
+      product_names: purchaseData.products.map((p) => p.name),
+      product_quantities: purchaseData.products.map((p) => p.quantity),
+    });
+
+    console.log("GTM: Purchase data pushed to data layer:", {
+      orderId: purchaseData.orderId,
+      total: purchaseData.total,
+      productCount: purchaseData.products.length,
+      productCodes: purchaseData.products
+        .map((p) => p.productCode)
+        .filter(Boolean),
     });
   }
 };
