@@ -80,9 +80,9 @@ export default function AddCategoryForm() {
     addCategory.mutate({
       name: data.name,
       parentId: data.parentId,
-      imageId: formData.get("imageId") as string | undefined,
-      imageUrl: formData.get("imageUrl") as string | undefined,
-      description: data.description ?? undefined,
+      imageId: (formData.get("imageId") as string | null) ?? null,
+      imageUrl: (formData.get("imageUrl") as string | null) ?? null,
+      description: data.description ?? null,
     });
   };
 
@@ -102,9 +102,11 @@ export default function AddCategoryForm() {
         )}
       </div>
 
-      {/* Select Image */}
+      {/* Select Image (Optional) */}
       <div>
-        <label className="text-sm font-medium">Select Image</label>
+        <label className="text-sm font-medium">
+          Select Image <span className="text-gray-500">(Optional)</span>
+        </label>
         <Input
           type="file"
           accept="image/*"
@@ -119,22 +121,46 @@ export default function AddCategoryForm() {
                 }
               };
               reader.readAsDataURL(file);
+            } else {
+              setValue("image", undefined);
+              setImagePreview(null);
             }
           }}
-          placeholder="Select category image"
+          placeholder="Select category image (optional)"
         />
         <div className="mt-1 text-xs text-gray-400">
-          Recommended size: 220x220px or larger, square image
+          Recommended size: 220x220px or larger, square image. Leave empty if no
+          image is needed.
         </div>
         {imagePreview && (
           <div className="mt-2">
-            <Image
-              height={128}
-              width={128}
-              src={imagePreview}
-              alt="Preview"
-              className="h-full w-full rounded-md object-cover"
-            />
+            <div className="relative inline-block">
+              <Image
+                height={128}
+                width={128}
+                src={imagePreview}
+                alt="Preview"
+                className="h-full w-full rounded-md object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute -right-2 -top-2 h-6 w-6 rounded-full p-0"
+                onClick={() => {
+                  setImagePreview(null);
+                  setValue("image", undefined);
+                  // Reset the file input
+                  const fileInput =
+                    document.querySelector<HTMLInputElement>(
+                      'input[type="file"]',
+                    )!;
+                  if (fileInput) fileInput.value = "";
+                }}
+              >
+                ×
+              </Button>
+            </div>
           </div>
         )}
         {errors.image && (
@@ -164,7 +190,9 @@ export default function AddCategoryForm() {
 
       {/* Description (optional) */}
       <div>
-        <label className="text-sm font-medium">Description Here (optional)</label>
+        <label className="text-sm font-medium">
+          Description Here (optional)
+        </label>
         <textarea
           {...register("description")}
           placeholder="Enter category description (for SEO, shown at bottom of category page)"

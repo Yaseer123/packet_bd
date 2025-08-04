@@ -10,11 +10,6 @@ export default function CategoryAccordionManager() {
   // Track reordering state to prevent duplicate toasts
   const [isReordering, setIsReordering] = useState(false);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!categories || categories.length === 0)
-    return <div>No categories found</div>;
-
   const utils = api.useUtils();
   const deleteCategory = api.category.delete.useMutation({
     onSuccess: async () => {
@@ -40,6 +35,11 @@ export default function CategoryAccordionManager() {
       setIsReordering(false);
     },
   });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!categories || categories.length === 0)
+    return <div>No categories found</div>;
 
   const handleDelete = (id: string) => {
     deleteCategory.mutate({ id });
