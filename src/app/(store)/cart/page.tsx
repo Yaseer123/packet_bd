@@ -44,7 +44,7 @@ const Cart = () => {
           price: item.price,
           discountedPrice: item.discountedPrice,
           quantity: item.quantity,
-          productCode: null, // CartItem doesn't have productCode
+          productCode: item.productCode ?? null, // Use stored productCode instead of null
           sku: item.sku ?? null,
           brand: "Brand", // CartItem doesn't have brand
           category: null, // CartItem doesn't have category

@@ -62,6 +62,7 @@ export interface ProductType {
   attributes: Record<string, string> | Array<{ key: string; value: string }>;
   variants?: Variant[] | null;
   sku?: string;
+  productCode?: string;
   imageId?: string;
   createdAt?: Date;
   updatedAt?: Date;
