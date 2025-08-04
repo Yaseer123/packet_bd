@@ -1,4 +1,4 @@
-import { generateProductCode, generateSKU } from "@/lib/utils";
+import { generateSequentialProductCode, generateSKU } from "@/lib/utils";
 import { type CategoryAttribute } from "@/schemas/categorySchema";
 import { productSchema, updateProductSchema } from "@/schemas/productSchema";
 import {
@@ -585,7 +585,7 @@ export const productRouter = createTRPCRouter({
     }
 
     // Generate a unique product code for Meta catalog
-    const productCode = generateProductCode();
+    const productCode = await generateSequentialProductCode(ctx.db);
 
     // Create product without SKU first to get the ID
     const createdProduct = await ctx.db.product.create({
@@ -751,7 +751,9 @@ export const productRouter = createTRPCRouter({
       const newCategoryName = rootCategoryName;
 
       // Ensure product has a product code, generate if missing
-      const productCode = existingProduct?.productCode ?? generateProductCode();
+      const productCode =
+        existingProduct?.productCode ??
+        (await generateSequentialProductCode(ctx.db));
 
       // Always regenerate SKU for main product using product code
       const newSKU = generateSKU({

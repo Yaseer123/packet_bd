@@ -47,3 +47,64 @@ export function generateSKU({
   if (size) sku += `-${size.replace(/\s+/g, "").toUpperCase()}`;
   return sku;
 }
+
+// Define a type for the database client
+interface DatabaseClient {
+  product: {
+    findFirst: (params: {
+      where: {
+        productCode: {
+          not: null;
+        };
+        slug: {
+          not: {
+            endsWith: string;
+          };
+        };
+      };
+      orderBy: {
+        productCode: "desc";
+      };
+      select: {
+        productCode: boolean;
+      };
+    }) => Promise<{ productCode: string | null } | null>;
+  };
+}
+
+// Generate a sequential unique product code for Meta catalog (e.g., 50000, 50001, ...)
+export async function generateSequentialProductCode(
+  db: DatabaseClient,
+): Promise<string> {
+  // Find the highest existing product code (as a number) from ACTIVE products only
+  const highestProduct = await db.product.findFirst({
+    where: {
+      productCode: {
+        not: null,
+      },
+      slug: {
+        not: {
+          endsWith: "-deleted",
+        },
+      },
+    },
+    orderBy: {
+      productCode: "desc",
+    },
+    select: {
+      productCode: true,
+    },
+  });
+
+  let nextCode: number;
+  if (
+    highestProduct?.productCode &&
+    !isNaN(Number(highestProduct.productCode))
+  ) {
+    nextCode = parseInt(highestProduct.productCode, 10) + 1;
+  } else {
+    nextCode = 50000; // Start from 50000 for privacy
+  }
+
+  return nextCode.toString();
+}

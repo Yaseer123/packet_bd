@@ -131,9 +131,9 @@ export const categoryRouter = createTRPCRouter({
       z.object({
         parentId: z.string().nullable(),
         name: z.string(),
-        imageId: z.string().optional(),
-        imageUrl: z.string().optional(),
-        description: z.string().optional(),
+        imageId: z.string().nullable(),
+        imageUrl: z.string().nullable(),
+        description: z.string().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
