@@ -1,0 +1,123 @@
+{
+  "exportDate": "2025-08-04",
+  "timestamp": "2025-08-04T11:37:06.879Z",
+  "results": [
+    {
+      "table": "Product",
+      "sheetName": "Products",
+      "recordCount": 48,
+      "success": true,
+      "filePath": "daily-csv-exports/2025-08-04/Products.csv"
+    },
+    {
+      "table": "Category",
+      "sheetName": "Categories",
+      "recordCount": 1,
+      "success": true,
+      "filePath": "daily-csv-exports/2025-08-04/Categories.csv"
+    },
+    {
+      "table": "User",
+      "sheetName": "Users",
+      "recordCount": 3,
+      "success": true,
+      "filePath": "daily-csv-exports/2025-08-04/Users.csv"
+    },
+    {
+      "table": "Order",
+      "sheetName": "Orders",
+      "recordCount": 1,
+      "success": true,
+      "filePath": "daily-csv-exports/2025-08-04/Orders.csv"
+    },
+    {
+      "table": "OrderItem",
+      "sheetName": "OrderItems",
+      "recordCount": 1,
+      "success": true,
+      "filePath": "daily-csv-exports/2025-08-04/OrderItems.csv"
+    },
+    {
+      "table": "Review",
+      "sheetName": "Reviews",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "Question",
+      "sheetName": "Questions",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "Address",
+      "sheetName": "Addresses",
+      "recordCount": 1,
+      "success": true,
+      "filePath": "daily-csv-exports/2025-08-04/Addresses.csv"
+    },
+    {
+      "table": "Post",
+      "sheetName": "BlogPosts",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "Tag",
+      "sheetName": "Tags",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "Slider",
+      "sheetName": "Sliders",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "SaleBanner",
+      "sheetName": "SaleBanners",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "Contact",
+      "sheetName": "Contacts",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "FaqCategory",
+      "sheetName": "FaqCategories",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "FaqItem",
+      "sheetName": "FaqItems",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "NewsletterSubscriber",
+      "sheetName": "NewsletterSubscribers",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "WishList",
+      "sheetName": "WishLists",
+      "recordCount": 0,
+      "success": true
+    },
+    {
+      "table": "ShippingUpdate",
+      "sheetName": "ShippingUpdates",
+      "recordCount": 0,
+      "success": true
+    }
+  ],
+  "totalRecords": 55,
+  "successfulTables": 6,
+  "exportDirectory": "daily-csv-exports/2025-08-04"
+}
