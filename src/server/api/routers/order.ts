@@ -165,6 +165,44 @@ export const orderRouter = createTRPCRouter({
       });
     }),
 
+  getOrderByIdPublic: publicProcedure
+    .input(z.string()) // Order ID
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.order.findUnique({
+        where: { id: input },
+        include: {
+          items: {
+            select: {
+              id: true,
+              productId: true,
+              quantity: true,
+              price: true,
+              color: true,
+              size: true,
+              sku: true,
+              deliveryMethod: true,
+              product: {
+                select: {
+                  id: true,
+                  title: true,
+                  productCode: true,
+                  sku: true,
+                  brand: true,
+                  category: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              variantLabel: true,
+            },
+          },
+          address: true,
+        },
+      });
+    }),
+
   placeOrder: protectedProcedure
     .input(
       z.object({
