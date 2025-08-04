@@ -19,19 +19,38 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    // Always create a new user, allow duplicate emails
-    // Generate password and hash
+
+    // Check if user already exists
+    const existingUser = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      // User already exists, just return success without creating duplicate
+      console.log("User already exists:", existingUser.id);
+      return NextResponse.json({
+        success: true,
+        userId: existingUser.id,
+        message: "User already exists",
+      });
+    }
+
+    // Generate password and hash for new user
     const password = generateRandomPassword();
     const hashedPassword = await hash(password, 10);
-    // Create user
-    await db.user.create({
+
+    // Create new user
+    const newUser = await db.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
       },
     });
-    // Send welcome email
+
+    console.log("New user created:", newUser.id);
+
+    // Send welcome email only for new users
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
         <div style="background: #007b55; color: #fff; padding: 24px 32px;">
@@ -51,14 +70,26 @@ export async function POST(req: Request) {
         </div>
       </div>
     `;
-    await resend.emails.send({
-      from: "no-reply@packetbd.com",
-      to: email,
-      subject: "Your new account at Packet BD",
-      html,
+
+    try {
+      await resend.emails.send({
+        from: "no-reply@packetbd.com",
+        to: email,
+        subject: "Your new account at Packet BD",
+        html,
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+      // Don't fail the auto-register if email fails
+    }
+
+    return NextResponse.json({
+      success: true,
+      userId: newUser.id,
+      message: "New user created",
     });
-    return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("Auto-register error:", error);
     return NextResponse.json(
       { error: "Failed to auto-register user." },
       { status: 500 },
