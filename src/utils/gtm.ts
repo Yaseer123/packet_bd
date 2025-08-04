@@ -60,7 +60,7 @@ export const pushProductToDataLayer = (product: ProductData) => {
       },
       // Additional custom dimensions for easy access
       product_id: product.id,
-      product_code: product.productCode,
+      product_code: product.productCode ? [product.productCode] : [],
       product_sku: product.sku,
       product_name: product.title,
       product_price: product.discountedPrice ?? product.price,
@@ -115,7 +115,7 @@ export const pushProductClickToDataLayer = (
       },
       // Additional custom dimensions
       product_id: product.id,
-      product_code: product.productCode,
+      product_code: product.productCode ? [product.productCode] : [],
       product_sku: product.sku,
       product_name: product.title,
       product_price: product.discountedPrice ?? product.price,
