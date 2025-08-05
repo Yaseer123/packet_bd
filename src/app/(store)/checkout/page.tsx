@@ -3,6 +3,7 @@ import Breadcrumb from "@/components/store-components/Breadcrumb/Breadcrumb";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCartStore } from "@/context/store-context/CartContext";
 import { api } from "@/trpc/react";
+import { pushPurchaseToDataLayer, type PurchaseData } from "@/utils/gtm";
 import { Minus, Plus } from "@phosphor-icons/react/dist/ssr";
 import type { Order } from "@prisma/client";
 import { HomeIcon } from "lucide-react";
@@ -11,11 +12,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  type SetStateAction,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type SetStateAction,
 } from "react";
 import { formatPrice } from "../../../utils/format";
 
@@ -23,6 +24,17 @@ import { formatPrice } from "../../../utils/format";
 import type { ProductWithCategory } from "@/types/ProductType";
 import { useQueries } from "@tanstack/react-query";
 // Remove: import { useTRPCContext } from "@trpc/react-query";
+
+// DataLayer interface for GTM
+interface DataLayerItem {
+  event?: string;
+  ecommerce?: {
+    purchase?: {
+      transaction_id?: string;
+    };
+  };
+  transaction_id?: string;
+}
 
 type OrderWithRelations = Order & {
   address?: {
@@ -66,6 +78,7 @@ type CartItem = {
   colorName?: string;
   size?: string;
   productCode?: string; // Add this line
+  brand?: string; // Add brand property
   minQuantity: number;
   maxQuantity?: number;
   quantityStep: number;
@@ -346,6 +359,33 @@ const Checkout = () => {
 
   const placeGuestOrder = api.order.placeGuestOrder.useMutation({
     onSuccess: (data: SetStateAction<OrderSuccessType>) => {
+      // Update the transaction ID in the data layer with the actual order ID
+      if (
+        typeof window !== "undefined" &&
+        window.dataLayer &&
+        data &&
+        typeof data === "object" &&
+        "id" in data
+      ) {
+        // Find the last purchase event and update the transaction_id
+        const dataLayer = window.dataLayer as DataLayerItem[];
+        for (let i = dataLayer.length - 1; i >= 0; i--) {
+          const dataLayerItem = dataLayer[i]!;
+          if (
+            dataLayerItem.event === "purchase" &&
+            dataLayerItem.ecommerce?.purchase?.transaction_id?.startsWith(
+              "temp-",
+            )
+          ) {
+            if (dataLayerItem.ecommerce?.purchase) {
+              dataLayerItem.ecommerce.purchase.transaction_id = data.id;
+              dataLayerItem.transaction_id = data.id;
+            }
+            break;
+          }
+        }
+      }
+
       setOrderSuccess(data);
       setOrderError("");
       useCartStore.getState().clearCart();
@@ -700,6 +740,33 @@ const Checkout = () => {
 
   const placeOrder = api.order.placeOrder.useMutation({
     onSuccess: (data: OrderSuccessType) => {
+      // Update the transaction ID in the data layer with the actual order ID
+      if (
+        typeof window !== "undefined" &&
+        window.dataLayer &&
+        data &&
+        typeof data === "object" &&
+        "id" in data
+      ) {
+        // Find the last purchase event and update the transaction_id
+        const dataLayer = window.dataLayer as DataLayerItem[];
+        for (let i = dataLayer.length - 1; i >= 0; i--) {
+          const dataLayerItem2 = dataLayer[i]!;
+          if (
+            dataLayerItem2.event === "purchase" &&
+            dataLayerItem2.ecommerce?.purchase?.transaction_id?.startsWith(
+              "temp-",
+            )
+          ) {
+            if (dataLayerItem2.ecommerce?.purchase) {
+              dataLayerItem2.ecommerce.purchase.transaction_id = data.id;
+              dataLayerItem2.transaction_id = data.id;
+            }
+            break;
+          }
+        }
+      }
+
       setOrderSuccess(data);
       setOrderError("");
       useCartStore.getState().clearCart();
@@ -717,6 +784,46 @@ const Checkout = () => {
       setOrderError("Your cart is empty.");
       return;
     }
+
+    // Push purchase data to GTM data layer BEFORE placing the order
+    // This ensures the data is available when the confirmation page loads
+    const purchaseData: PurchaseData = {
+      orderId: `temp-${Date.now()}`, // Temporary ID, will be updated after order creation
+      total: totalCart - discountValue + shippingCost,
+      products: checkoutItems.map((item) => {
+        const productData = productMap[item.productId];
+        const unit =
+          productData?.discountedPrice &&
+          typeof productData.discountedPrice === "number"
+            ? productData.discountedPrice
+            : typeof productData?.discountedPrice === "undefined" &&
+                typeof item.discountedPrice === "number"
+              ? item.discountedPrice
+              : item.price;
+
+        return {
+          id: item.productId,
+          name: item.name,
+          price: getDiscountedUnitPrice(
+            item.quantity,
+            unit,
+            productData?.quantityDiscounts,
+          ),
+          quantity: item.quantity,
+          productCode: item.productCode ?? productData?.productCode ?? null,
+          sku: item.sku ?? productData?.sku ?? null,
+          brand: item.brand ?? productData?.brand ?? "Brand",
+          category:
+            typeof productData?.category === "string"
+              ? productData.category
+              : (productData?.category?.name ?? null),
+        };
+      }),
+    };
+
+    // Push to data layer immediately
+    pushPurchaseToDataLayer(purchaseData);
+
     let addressId = undefined;
     try {
       if (session?.user?.id) {

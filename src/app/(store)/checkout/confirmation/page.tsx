@@ -1,14 +1,11 @@
 "use client";
 import { api } from "@/trpc/react";
-import { pushPurchaseToDataLayer, type PurchaseData } from "@/utils/gtm";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function ConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams?.get("orderId");
-  const [purchaseDataPushed, setPurchaseDataPushed] = useState(false);
 
   // Fetch order data if orderId is available (public query for both authenticated and guest users)
   const {
@@ -20,29 +17,9 @@ export default function ConfirmationPage() {
     retry: false,
   });
 
-  // Push purchase data to GTM when order data is available
-  useEffect(() => {
-    if (orderData && !purchaseDataPushed) {
-      const purchaseData: PurchaseData = {
-        orderId: orderData.id,
-        total: orderData.total,
-        products:
-          orderData.items?.map((item) => ({
-            id: item.productId,
-            name: item.product?.title ?? "Unknown Product",
-            price: item.price,
-            quantity: item.quantity,
-            productCode: item.product?.productCode ?? null,
-            sku: item.sku ?? item.product?.sku ?? null,
-            brand: item.product?.brand ?? "Brand",
-            category: item.product?.category?.name ?? null,
-          })) ?? [],
-      };
-
-      pushPurchaseToDataLayer(purchaseData);
-      setPurchaseDataPushed(true);
-    }
-  }, [orderData, purchaseDataPushed]);
+  // Note: Purchase data is already pushed to GTM data layer from the checkout page
+  // before navigation, so we don't need to push it again here
+  // The Facebook Pixel tag will fire with the existing data layer values
 
   // Handle error state
   if (error) {
