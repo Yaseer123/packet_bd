@@ -35,7 +35,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { v4 as uuid } from "uuid";
 import { useJsonLd } from "../../../../hooks/useJsonLd";
 import { formatPrice } from "../../../../utils/format";
-import { pushProductToDataLayer } from "../../../../utils/gtm";
+import {
+  pushAddToCartToDataLayer,
+  pushProductToDataLayer,
+} from "../../../../utils/gtm";
 import ParseContent from "../../Blog/ParseContent";
 import Rate from "../../Rate";
 import RelatedProductsSidebar from "../RelatedProductsSidebar";
@@ -473,6 +476,20 @@ export default function ProductDetails({
     } else {
       updateCart(cartItem.id, productQuantity);
     }
+
+    // Push add to cart event to GTM data layer for Facebook Pixel
+    pushAddToCartToDataLayer({
+      id: cartItem.id,
+      name: cartItem.name,
+      price: cartItem.price,
+      discountedPrice: cartItem.discountedPrice,
+      quantity: cartItem.quantity,
+      productCode: cartItem.productCode,
+      sku: cartItem.sku,
+      brand: undefined, // Add brand if available
+      category: undefined, // Add category if available
+    });
+
     openModalCart();
   };
 
