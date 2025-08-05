@@ -12,7 +12,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
-import { pushProductClickToDataLayer } from "../../../utils/gtm";
+import {
+  pushAddToCartToDataLayer,
+  pushProductClickToDataLayer,
+} from "../../../utils/gtm";
 
 interface ProductProps {
   data: ProductType | ProductWithCategory;
@@ -429,6 +432,20 @@ export default function Product({ data }: ProductProps) {
       quantityStep: data.quantityStep ?? 1,
     };
     addToCart(cartItem);
+
+    // Push add to cart event to GTM data layer for Facebook Pixel
+    pushAddToCartToDataLayer({
+      id: cartItem.id,
+      name: cartItem.name,
+      price: cartItem.price,
+      discountedPrice: cartItem.discountedPrice,
+      quantity: cartItem.quantity,
+      productCode: cartItem.productCode,
+      sku: cartItem.sku,
+      brand: undefined, // Add brand if available
+      category: undefined, // Add category if available
+    });
+
     openModalCart();
   };
 

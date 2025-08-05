@@ -25,6 +25,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
+import { pushAddToCartToDataLayer } from "../../../utils/gtm";
 import Rate from "../Rate";
 
 const ModalQuickView = () => {
@@ -146,6 +147,20 @@ const ModalQuickView = () => {
       }
       // Always update the quantity whether it's a new item or existing one
       updateCart(selectedProduct.id, quantity);
+
+      // Push add to cart event to GTM data layer for Facebook Pixel
+      pushAddToCartToDataLayer({
+        id: selectedProduct.id,
+        name: selectedProduct.title,
+        price: selectedProduct.price,
+        discountedPrice: selectedProduct.discountedPrice ?? undefined,
+        quantity: quantity,
+        productCode: selectedProduct.productCode ?? undefined,
+        sku: sku,
+        brand: undefined, // Add brand if available
+        category: undefined, // Add category if available
+      });
+
       openModalCart();
       closeQuickView();
     }
@@ -188,6 +203,20 @@ const ModalQuickView = () => {
         });
       }
       updateCart(selectedProduct.id, quantity);
+
+      // Push add to cart event to GTM data layer for Facebook Pixel
+      pushAddToCartToDataLayer({
+        id: selectedProduct.id,
+        name: selectedProduct.title,
+        price: selectedProduct.price,
+        discountedPrice: selectedProduct.discountedPrice ?? undefined,
+        quantity: quantity,
+        productCode: selectedProduct.productCode ?? undefined,
+        sku: sku,
+        brand: undefined, // Add brand if available
+        category: undefined, // Add category if available
+      });
+
       closeQuickView();
       router.push("/checkout");
     }

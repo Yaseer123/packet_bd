@@ -227,6 +227,57 @@ export const pushCartViewToDataLayer = (cartData: CartData) => {
 };
 
 /**
+ * Push add to cart event to GTM data layer
+ * Use this when users add products to cart
+ */
+export const pushAddToCartToDataLayer = (cartItem: CartItemData) => {
+  if (typeof window !== "undefined" && window.dataLayer) {
+    // Clear previous ecommerce data
+    window.dataLayer.push({ ecommerce: null });
+
+    // Push add to cart data to data layer
+    window.dataLayer.push({
+      event: "add_to_cart",
+      ecommerce: {
+        currencyCode: "BDT",
+        add: {
+          products: [
+            {
+              name: cartItem.name,
+              id: cartItem.id,
+              price: cartItem.discountedPrice ?? cartItem.price,
+              quantity: cartItem.quantity,
+              brand: cartItem.brand ?? "Brand",
+              category: cartItem.category,
+              sku: cartItem.sku,
+              productCode: cartItem.productCode,
+            },
+          ],
+        },
+      },
+      // Additional custom dimensions for easy access
+      product_id: cartItem.id,
+      product_code: cartItem.productCode ? [cartItem.productCode] : [],
+      product_sku: cartItem.sku,
+      product_name: cartItem.name,
+      product_price: cartItem.discountedPrice ?? cartItem.price,
+      product_quantity: cartItem.quantity,
+      product_currency: "BDT",
+      product_brand: cartItem.brand,
+      product_category: cartItem.category,
+    });
+
+    console.log("GTM: Add to cart data pushed to data layer:", {
+      productCode: cartItem.productCode,
+      id: cartItem.id,
+      name: cartItem.name,
+      quantity: cartItem.quantity,
+      price: cartItem.discountedPrice ?? cartItem.price,
+    });
+  }
+};
+
+/**
  * Push purchase event to GTM data layer
  * Use this on the confirmation page after successful purchase
  */
