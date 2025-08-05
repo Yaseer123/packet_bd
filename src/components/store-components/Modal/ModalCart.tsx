@@ -2,6 +2,7 @@
 
 import { useCartStore } from "@/context/store-context/CartContext";
 import { useModalCartStore } from "@/context/store-context/ModalCartContext";
+import { pushCartViewToDataLayer, type CartData } from "@/utils/gtm";
 import { Minus, Plus, Trash, X } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,6 +39,63 @@ const ModalCart = () => {
   );
 
   const pathname = usePathname();
+
+  // Function to push cart data to GTM before navigation
+  const handleViewCartClick = () => {
+    if (cartState.length > 0) {
+      const cartData: CartData = {
+        total: totalCart,
+        items: cartState.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          discountedPrice: item.discountedPrice,
+          quantity: item.quantity,
+          productCode: item.productCode ?? null,
+          sku: item.sku ?? null,
+          brand: "Brand", // CartItem doesn't have brand
+          category: null, // CartItem doesn't have category
+        })),
+      };
+
+      // Push cart data to GTM data layer before navigation
+      pushCartViewToDataLayer(cartData);
+    }
+    closeModalCart();
+  };
+
+  // Function to push cart data to GTM before checkout navigation
+  const handleCheckoutClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (cartState.length > 0) {
+      const cartData: CartData = {
+        total: totalCart,
+        items: cartState.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          discountedPrice: item.discountedPrice,
+          quantity: item.quantity,
+          productCode: item.productCode ?? null,
+          sku: item.sku ?? null,
+          brand: "Brand", // CartItem doesn't have brand
+          category: null, // CartItem doesn't have category
+        })),
+      };
+
+      // Push cart data to GTM data layer before navigation
+      pushCartViewToDataLayer(cartData);
+    }
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("buyNowProduct");
+    }
+    if (pathname === "/checkout") {
+      e.preventDefault();
+      window.location.reload();
+      return;
+    }
+    closeModalCart();
+  };
 
   // Validation function
   const validateQuantity = (val: string, min: number, max?: number): string => {
@@ -261,24 +319,14 @@ const ModalCart = () => {
                   <Link
                     href={"/cart"}
                     className="duration-400 md:text-md inline-block basis-1/2 cursor-pointer rounded-[.25rem] border border-black bg-white px-10 py-4 text-center text-sm font-semibold uppercase leading-5 text-black transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4"
-                    onClick={closeModalCart}
+                    onClick={handleViewCartClick}
                   >
                     View cart
                   </Link>
                   <Link
                     href={"/checkout"}
                     className="duration-400 md:text-md hover:bg-black/75/75 hover:bg-green inline-block basis-1/2 cursor-pointer rounded-[.25rem] bg-black px-10 py-4 text-center text-sm font-semibold uppercase leading-5 text-white transition-all ease-in-out hover:bg-black hover:bg-black/75 hover:text-white md:rounded-[8px] md:px-4 md:py-2.5 md:leading-4 lg:rounded-[10px] lg:px-7 lg:py-4"
-                    onClick={(e) => {
-                      if (typeof window !== "undefined") {
-                        window.sessionStorage.removeItem("buyNowProduct");
-                      }
-                      if (pathname === "/checkout") {
-                        e.preventDefault();
-                        window.location.reload();
-                        return;
-                      }
-                      closeModalCart();
-                    }}
+                    onClick={handleCheckoutClick}
                   >
                     Check Out
                   </Link>

@@ -1,6 +1,5 @@
 "use client";
 import { useCartStore } from "@/context/store-context/CartContext";
-import { pushCartViewToDataLayer, type CartData } from "@/utils/gtm";
 import { Minus, Plus, XCircle } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +22,6 @@ const Cart = () => {
 
   const [totalCart, setTotalCart] = useState<number>(0);
   const [discountCart] = useState<number>(0);
-  const [cartDataPushed, setCartDataPushed] = useState(false);
 
   useEffect(() => {
     const total = cartArray.reduce(
@@ -33,28 +31,9 @@ const Cart = () => {
     setTotalCart(total);
   }, [cartArray]);
 
-  // Push cart data to GTM when cart page loads
-  useEffect(() => {
-    if (cartArray.length > 0 && !cartDataPushed) {
-      const cartData: CartData = {
-        total: totalCart,
-        items: cartArray.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          discountedPrice: item.discountedPrice,
-          quantity: item.quantity,
-          productCode: item.productCode ?? null, // Use stored productCode instead of null
-          sku: item.sku ?? null,
-          brand: "Brand", // CartItem doesn't have brand
-          category: null, // CartItem doesn't have category
-        })),
-      };
-
-      pushCartViewToDataLayer(cartData);
-      setCartDataPushed(true);
-    }
-  }, [cartArray, totalCart, cartDataPushed]);
+  // Note: Cart data is already pushed to GTM data layer from the modal cart
+  // before navigation, so we don't need to push it again here
+  // The cart view event will fire with the existing data layer values
 
   const redirectToCheckout = () => {
     router.push(`/checkout?discount=${discountCart}`);
