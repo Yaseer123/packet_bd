@@ -38,6 +38,7 @@ import { formatPrice } from "../../../../utils/format";
 import {
   pushAddToCartToDataLayer,
   pushProductToDataLayer,
+  pushWishlistToDataLayer,
 } from "../../../../utils/gtm";
 import ParseContent from "../../Blog/ParseContent";
 import Rate from "../../Rate";
@@ -498,7 +499,29 @@ export default function ProductDetails({
   };
 
   const handleAddToWishlist = () => {
-    if (isInWishlist(productMain.id)) {
+    const isCurrentlyInWishlist = isInWishlist(productMain.id);
+    const action = isCurrentlyInWishlist ? "remove" : "add";
+
+    // Push wishlist event to GTM data layer
+    pushWishlistToDataLayer(
+      {
+        id: productMain.id,
+        title: productMain.title,
+        slug: productMain.slug,
+        productCode: productMain.productCode,
+        sku: productMain.sku,
+        price: productMain.price,
+        discountedPrice: productMain.discountedPrice,
+        brand: productMain.brand,
+        category: productMain.category,
+        images: productMain.images,
+        shortDescription: productMain.shortDescription,
+        description: productMain.description,
+      },
+      action,
+    );
+
+    if (isCurrentlyInWishlist) {
       // **Optimistic UI Update: Remove item immediately**
       utils.wishList.getWishList.setData(undefined, ((
         old: WishlistItem[] | undefined,

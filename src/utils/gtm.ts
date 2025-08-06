@@ -330,3 +330,65 @@ export const pushPurchaseToDataLayer = (purchaseData: PurchaseData) => {
     });
   }
 };
+
+/**
+ * Push wishlist event to GTM data layer
+ * Use this when users add/remove products from wishlist
+ */
+export const pushWishlistToDataLayer = (
+  product: ProductData,
+  action: "add" | "remove",
+) => {
+  if (typeof window !== "undefined" && window.dataLayer) {
+    // Clear previous ecommerce data
+    window.dataLayer.push({ ecommerce: null });
+
+    // Push wishlist data to data layer
+    window.dataLayer.push({
+      event: action === "add" ? "add_to_wishlist" : "remove_from_wishlist",
+      ecommerce: {
+        currencyCode: "BDT",
+        [action === "add" ? "add" : "remove"]: {
+          products: [
+            {
+              name: product.title,
+              id: product.id,
+              price: product.discountedPrice ?? product.price,
+              brand: product.brand ?? "Brand",
+              category:
+                typeof product.category === "string"
+                  ? product.category
+                  : product.category?.name,
+              sku: product.sku,
+              productCode: product.productCode,
+            },
+          ],
+        },
+      },
+      // Additional custom dimensions for easy access
+      product_id: product.id,
+      product_code: product.productCode ? [product.productCode] : [],
+      product_sku: product.sku,
+      product_name: product.title,
+      product_price: product.discountedPrice ?? product.price,
+      product_currency: "BDT",
+      product_brand: product.brand,
+      product_category:
+        typeof product.category === "string"
+          ? product.category
+          : product.category?.name,
+      product_slug: product.slug,
+      wishlist_action: action,
+    });
+
+    console.log(
+      `GTM: ${action === "add" ? "Add to" : "Remove from"} wishlist data pushed to data layer:`,
+      {
+        productCode: product.productCode,
+        id: product.id,
+        name: product.title,
+        action,
+      },
+    );
+  }
+};

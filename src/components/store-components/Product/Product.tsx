@@ -15,6 +15,7 @@ import { formatPrice } from "../../../utils/format";
 import {
   pushAddToCartToDataLayer,
   pushProductClickToDataLayer,
+  pushWishlistToDataLayer,
 } from "../../../utils/gtm";
 
 interface ProductProps {
@@ -459,7 +460,29 @@ export default function Product({ data }: ProductProps) {
       return;
     }
 
-    if (isInWishlist(data.id)) {
+    const isCurrentlyInWishlist = isInWishlist(data.id);
+    const action = isCurrentlyInWishlist ? "remove" : "add";
+
+    // Push wishlist event to GTM data layer
+    pushWishlistToDataLayer(
+      {
+        id: data.id,
+        title: data.title,
+        slug: data.slug,
+        productCode: data.productCode,
+        sku: data.sku,
+        price: data.price,
+        discountedPrice: data.discountedPrice,
+        brand: data.brand,
+        category: data.category,
+        images: data.images,
+        shortDescription: data.shortDescription,
+        description: data.description,
+      },
+      action,
+    );
+
+    if (isCurrentlyInWishlist) {
       removeFromWishlistMutation.mutate({ productId: data.id });
     } else {
       // Check for duplicates before adding
