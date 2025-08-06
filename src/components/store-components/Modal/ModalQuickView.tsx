@@ -25,7 +25,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatPrice } from "../../../utils/format";
-import { pushAddToCartToDataLayer } from "../../../utils/gtm";
+import {
+  pushAddToCartToDataLayer,
+  pushWishlistToDataLayer,
+} from "../../../utils/gtm";
 import Rate from "../Rate";
 
 const ModalQuickView = () => {
@@ -167,12 +170,34 @@ const ModalQuickView = () => {
   };
 
   const handleAddToWishlist = () => {
-    // if product existed in wishlist, remove from wishlist and set state to false
     if (selectedProduct) {
-      if (wishlistArray.some((item) => item.id === selectedProduct.id)) {
+      const isCurrentlyInWishlist = wishlistArray.some(
+        (item) => item.id === selectedProduct.id,
+      );
+      const action = isCurrentlyInWishlist ? "remove" : "add";
+
+      // Push wishlist event to GTM data layer
+      pushWishlistToDataLayer(
+        {
+          id: selectedProduct.id,
+          title: selectedProduct.title,
+          slug: selectedProduct.slug,
+          productCode: selectedProduct.productCode,
+          sku: selectedProduct.sku,
+          price: selectedProduct.price,
+          discountedPrice: selectedProduct.discountedPrice,
+          brand: selectedProduct.brand,
+          category: categoryHierarchy?.[0]?.name ?? undefined,
+          images: selectedProduct.images,
+          shortDescription: selectedProduct.shortDescription,
+          description: selectedProduct.description,
+        },
+        action,
+      );
+
+      if (isCurrentlyInWishlist) {
         removeFromWishlist(selectedProduct.id);
       } else {
-        // else, add to wishlist and set state to true
         addToWishlist(selectedProduct);
       }
     }
