@@ -27,8 +27,11 @@ export default function AdminOrdersPage() {
     data: orders = [],
     isLoading,
     isError,
+    error,
     refetch,
-  } = api.order.getAllOrders.useQuery();
+  } = api.order.getAllOrders.useQuery(undefined, {
+    retry: false,
+  });
   const updateStatus = api.order.updateOrderStatus.useMutation({
     onSuccess: () => refetch(),
   });
@@ -76,7 +79,17 @@ export default function AdminOrdersPage() {
       {isLoading ? (
         <div>Loading...</div>
       ) : isError ? (
-        <div className="text-red-500">Failed to load orders.</div>
+        <div className="text-red-500">
+          <p>Failed to load orders.</p>
+          {error && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-sm">Error details</summary>
+              <pre className="mt-1 text-xs bg-gray-100 p-2 rounded overflow-auto">
+                {error.message}
+              </pre>
+            </details>
+          )}
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full border text-sm">
@@ -119,7 +132,14 @@ export default function AdminOrdersPage() {
                 })
                 .map((order: OrderType) => (
                   <tr key={order.id} className="border-b">
-                    <td className="border p-2 font-mono">{order.id}</td>
+                    <td className="border p-2 font-mono">
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
+                      >
+                        {order.id}
+                      </Link>
+                    </td>
                     <td className="border p-2">
                       {order.user ? (
                         <Link

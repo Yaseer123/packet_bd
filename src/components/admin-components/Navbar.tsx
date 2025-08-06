@@ -42,6 +42,7 @@ export default function Navbar() {
     { href: "/admin/category", label: "Categories" },
     { href: "/admin/product", label: "Products" },
     { href: "/admin/orders", label: "Orders" },
+    { href: "/admin/invoice", label: "Invoice" },
     { href: "/admin/reviews", label: "Reviews" },
     { href: "/admin/blog", label: "Blogs" },
     { href: "/admin/slider", label: "Slider" },

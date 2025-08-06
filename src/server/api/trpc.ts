@@ -15,6 +15,43 @@ import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 
 /**
+ * Helper function to resolve the correct user ID from session
+ * Handles cases where OAuth users might have mismatched session and database user IDs
+ */
+export async function resolveUserId(session: { user?: { id: string; email?: string | null } }) {
+  if (!session?.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  // First try to find user by session ID
+  let user = await db.user.findUnique({
+    where: { id: session.user.id },
+  });
+  
+  // If not found, try to find by email (fallback for OAuth users)
+  if (!user && session.user.email) {
+    user = await db.user.findUnique({
+      where: { email: session.user.email },
+    });
+    
+    if (user) {
+      console.log("Found user by email, updating session user ID");
+      // Update the session user ID to match the database
+      session.user.id = user.id;
+    }
+  }
+  
+  if (!user) {
+    throw new TRPCError({ 
+      code: "UNAUTHORIZED", 
+      message: `User not found in database. Session ID: ${session.user.id}, Email: ${session.user.email}` 
+    });
+  }
+  
+  return user.id;
+}
+
+/**
  * 1. CONTEXT
  *
  * This section defines the "contexts" that are available in the backend API.
@@ -133,11 +170,20 @@ export const protectedProcedure = t.procedure
   });
 
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.session.user.role !== "ADMIN") {
+  // Resolve the correct user ID first
+  const userId = await resolveUserId(ctx.session);
+  
+  // Get the user with the resolved ID to check role
+  const user = await db.user.findUnique({
+    where: { id: userId },
+  });
+  
+  if (!user || user.role !== "ADMIN") {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Admin access required",
     });
   }
+  
   return next();
 });

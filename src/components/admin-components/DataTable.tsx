@@ -186,52 +186,85 @@ export function DataTable<TData>({
         )}
       </div>
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} className="border-r">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              dragEnabled && rowIdKey ? (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={(event) => {
-                    if (onDragEnd) {
-                      onDragEnd(event, data);
-                    }
-                  }}
-                >
-                  <SortableContext
-                    items={data.map((item) => String(item[rowIdKey]))}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {table.getRowModel().rows.map((row) => (
+        {dragEnabled && rowIdKey ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(event) => {
+              if (onDragEnd) {
+                onDragEnd(event, data);
+              }
+            }}
+          >
+            <SortableContext
+              items={data.map((item) => String(item[rowIdKey]))}
+              strategy={verticalListSortingStrategy}
+            >
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id} className="border-r">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
                       <DraggableTableRow<TData>
                         key={row.id}
                         row={row}
                         rowId={String(row.original[rowIdKey])}
                         dragHandleCellIndex={dragHandleCellIndex}
                       />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              ) : (
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id} className="border-r">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -247,19 +280,19 @@ export function DataTable<TData>({
                     ))}
                   </TableRow>
                 ))
-              )
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
       <BackendPagination
         page={page}

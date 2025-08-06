@@ -1,8 +1,8 @@
 "use client";
 import Breadcrumb from "@/components/store-components/Breadcrumb/Breadcrumb";
 import AddressTab from "@/components/store-components/UserDashboard/Address";
-import Dashboard from "@/components/store-components/UserDashboard/Dashboard";
-import OrderHistory from "@/components/store-components/UserDashboard/OrderHistory";
+import AdminDashboard from "@/components/store-components/UserDashboard/AdminDashboard";
+import AdminOrderHistory from "@/components/store-components/UserDashboard/AdminOrderHistory";
 import { HouseLine, Package, Tag } from "@phosphor-icons/react/dist/ssr";
 import { HomeIcon } from "lucide-react";
 import Image from "next/image";
@@ -76,9 +76,9 @@ export default function MyAccountView({ user }: { user: UserAccount }) {
               </div>
             </div>
             <div className="right w-full pl-2.5 md:w-2/3">
-              {/* TODO: Update Dashboard, OrderHistory, and AddressTab to accept userId prop and fetch data for that user */}
-              <Dashboard activeTab={activeTab} />
-              <OrderHistory activeTab={activeTab} />
+              {/* Admin components that fetch data for the specific user */}
+              <AdminDashboard activeTab={activeTab} userId={user.id} />
+              <AdminOrderHistory activeTab={activeTab} userId={user.id} />
               <AddressTab activeTab={activeTab} />
             </div>
           </div>
