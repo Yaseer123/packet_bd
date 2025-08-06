@@ -1,0 +1,114 @@
+{
+  "timestamp": "2025-08-04T11:11:07.566Z",
+  "tables": [
+    {
+      "name": "Product",
+      "description": "Products",
+      "records": 48,
+      "file": "Product.csv"
+    },
+    {
+      "name": "Category",
+      "description": "Categories",
+      "records": 1,
+      "file": "Category.csv"
+    },
+    {
+      "name": "User",
+      "description": "Users",
+      "records": 3,
+      "file": "User.csv"
+    },
+    {
+      "name": "Order",
+      "description": "Orders",
+      "records": 1,
+      "file": "Order.csv"
+    },
+    {
+      "name": "OrderItem",
+      "description": "Order Items",
+      "records": 1,
+      "file": "OrderItem.csv"
+    },
+    {
+      "name": "Review",
+      "description": "Reviews",
+      "records": 0,
+      "file": "Review.csv"
+    },
+    {
+      "name": "Question",
+      "description": "Questions",
+      "records": 0,
+      "file": "Question.csv"
+    },
+    {
+      "name": "Address",
+      "description": "Addresses",
+      "records": 1,
+      "file": "Address.csv"
+    },
+    {
+      "name": "Post",
+      "description": "Posts",
+      "records": 0,
+      "file": "Post.csv"
+    },
+    {
+      "name": "Tag",
+      "description": "Tags",
+      "records": 0,
+      "file": "Tag.csv"
+    },
+    {
+      "name": "Slider",
+      "description": "Sliders",
+      "records": 0,
+      "file": "Slider.csv"
+    },
+    {
+      "name": "SaleBanner",
+      "description": "Sale Banners",
+      "records": 0,
+      "file": "SaleBanner.csv"
+    },
+    {
+      "name": "Contact",
+      "description": "Contacts",
+      "records": 0,
+      "file": "Contact.csv"
+    },
+    {
+      "name": "FaqCategory",
+      "description": "FAQ Categories",
+      "records": 0,
+      "file": "FaqCategory.csv"
+    },
+    {
+      "name": "FaqItem",
+      "description": "FAQ Items",
+      "records": 0,
+      "file": "FaqItem.csv"
+    },
+    {
+      "name": "NewsletterSubscriber",
+      "description": "Newsletter Subscribers",
+      "records": 0,
+      "file": "NewsletterSubscriber.csv"
+    },
+    {
+      "name": "WishList",
+      "description": "Wish Lists",
+      "records": 0,
+      "file": "WishList.csv"
+    },
+    {
+      "name": "ShippingUpdate",
+      "description": "Shipping Updates",
+      "records": 0,
+      "file": "ShippingUpdate.csv"
+    }
+  ],
+  "totalRecords": 55
+}

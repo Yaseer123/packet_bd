@@ -2,6 +2,8 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
+  adminProcedure,
+  resolveUserId,
 } from "@/server/api/trpc";
 import { Resend } from "resend";
 import { z } from "zod";
@@ -60,8 +62,9 @@ const emailFooter = `
 
 export const orderRouter = createTRPCRouter({
   getOrders: protectedProcedure.query(async ({ ctx }) => {
+    const userId = await resolveUserId(ctx.session);
     return await ctx.db.order.findMany({
-      where: { userId: ctx.session.user.id },
+      where: { userId: userId },
       include: {
         items: {
           select: {
@@ -90,9 +93,10 @@ export const orderRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
+      const userId = await resolveUserId(ctx.session);
       return await ctx.db.order.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: userId,
           ...(input && { status: input }),
         },
         include: {
@@ -117,8 +121,9 @@ export const orderRouter = createTRPCRouter({
     }),
 
   getLatestOrder: protectedProcedure.query(async ({ ctx }) => {
+    const userId = await resolveUserId(ctx.session);
     return await ctx.db.order.findFirst({
-      where: { userId: ctx.session.user.id },
+      where: { userId: userId },
       include: {
         items: {
           select: {
@@ -225,7 +230,7 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+      const userId = await resolveUserId(ctx.session);
       const user = await ctx.db.user.findUnique({ where: { id: userId } });
 
       // Get products for all cart items
@@ -649,7 +654,7 @@ export const orderRouter = createTRPCRouter({
       return updatedOrder;
     }),
 
-  getAllOrders: protectedProcedure.query(async ({ ctx }) => {
+  getAllOrders: adminProcedure.query(async ({ ctx }) => {
     return await ctx.db.order.findMany({
       include: {
         user: { select: { id: true, name: true, email: true } },
@@ -672,6 +677,84 @@ export const orderRouter = createTRPCRouter({
       orderBy: { createdAt: "desc" },
     });
   }),
+
+  getOrderByIdAdmin: adminProcedure
+    .input(z.string()) // Order ID
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.order.findUnique({
+        where: { id: input },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          items: {
+            select: {
+              id: true,
+              productId: true,
+              quantity: true,
+              price: true,
+              color: true,
+              size: true,
+              sku: true,
+              deliveryMethod: true,
+              product: true,
+              variantLabel: true,
+            },
+          },
+          address: true,
+        },
+      });
+    }),
+
+  getOrdersByUserId: adminProcedure
+    .input(z.string()) // User ID
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.order.findMany({
+        where: { userId: input },
+        include: {
+          items: {
+            select: {
+              id: true,
+              productId: true,
+              quantity: true,
+              price: true,
+              color: true,
+              size: true,
+              sku: true,
+              deliveryMethod: true,
+              product: true,
+              variantLabel: true,
+            },
+          },
+          address: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
+  getLatestOrderByUserId: adminProcedure
+    .input(z.string()) // User ID
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.order.findFirst({
+        where: { userId: input },
+        include: {
+          items: {
+            select: {
+              id: true,
+              productId: true,
+              quantity: true,
+              price: true,
+              color: true,
+              size: true,
+              sku: true,
+              deliveryMethod: true,
+              product: true,
+              variantLabel: true,
+            },
+          },
+          address: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
 
   placeGuestOrder: publicProcedure
     .input(
@@ -949,10 +1032,11 @@ export const orderRouter = createTRPCRouter({
   cancelOrder: protectedProcedure
     .input(z.string()) // Order ID
     .mutation(async ({ ctx, input }) => {
+      const userId = await resolveUserId(ctx.session);
       const order = await ctx.db.order.findFirst({
         where: {
           id: input,
-          userId: ctx.session.user.id,
+          userId: userId,
           status: {
             notIn: ["DELIVERED", "CANCELLED"],
           },

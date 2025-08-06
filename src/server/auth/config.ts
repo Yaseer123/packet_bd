@@ -168,10 +168,12 @@ export const authConfig = {
           where: { email: emailToCheck },
         });
         if (existingUser) {
+          // Update the user ID in the session to match the database
+          user.id = existingUser.id;
           return true;
         } else {
           // No user exists, create and mark as verified
-          await db.user.create({
+          const newUser = await db.user.create({
             data: {
               email: emailToCheck,
               name: user?.name,
@@ -179,6 +181,8 @@ export const authConfig = {
               emailVerified: new Date(),
             },
           });
+          // Update the user ID in the session to match the newly created user
+          user.id = newUser.id;
           return true;
         }
       }

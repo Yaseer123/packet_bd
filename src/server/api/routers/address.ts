@@ -2,15 +2,18 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
+  resolveUserId,
 } from "@/server/api/trpc";
 import { z } from "zod";
 
 export const addressRouter = createTRPCRouter({
   getAddress: protectedProcedure.query(async ({ ctx }) => {
+    const userId = await resolveUserId(ctx.session);
+    
     const address = await ctx.db.address.findFirst({
       where: {
         userId: {
-          equals: ctx.session.user.id,
+          equals: userId,
         },
       },
     });
@@ -32,16 +35,18 @@ export const addressRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const userId = await resolveUserId(ctx.session);
+      
       // Find the address for the user first
       const existingAddress = await ctx.db.address.findFirst({
-        where: { userId: ctx.session.user.id },
+        where: { userId: userId },
       });
       const updatedAddress = await ctx.db.address.upsert({
         where: { id: existingAddress?.id ?? "" }, // '' will fail if not found, so handle below
         update: { ...input },
         create: {
           ...input,
-          userId: ctx.session.user.id,
+          userId: userId,
           name: input.name,
         },
       });
@@ -61,13 +66,17 @@ export const addressRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const userId = await resolveUserId(ctx.session);
+      
+      console.log("Creating address for user:", userId);
+      
       const newAddress = await ctx.db.address.create({
         data: {
           ...input,
           city: input.city ?? "",
           state: input.state ?? "",
           zipCode: input.zipCode ?? "",
-          userId: ctx.session.user.id,
+          userId: userId,
           name: input.name,
         },
       });
