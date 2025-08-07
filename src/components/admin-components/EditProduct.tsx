@@ -356,33 +356,39 @@ function ColorGroup({
 }
 
 export default function EditProductForm({ productId }: { productId: string }) {
-  const [product] = api.product.getProductByIdAdmin.useSuspenseQuery({
-    id: productId,
-  });
+  const {
+    data: product,
+    isLoading,
+    refetch,
+  } = api.product.getProductByIdAdmin.useQuery(
+    {
+      id: productId,
+    },
+    {
+      // Refetch on mount to ensure we have the latest data
+      refetchOnMount: true,
+      // Refetch when window regains focus
+      refetchOnWindowFocus: true,
+    },
+  );
 
   const router = useRouter();
   const selectedCategoriesRef = useRef<(string | null)[]>([]);
 
-  const [title, setTitle] = useState(product?.title ?? "");
-  const [shortDescription, setShortDescription] = useState(
-    product?.shortDescription ?? "",
-  );
-  const [price, setPrice] = useState(product?.price ?? 0);
-  const [discountedPrice, setDiscountedPrice] = useState<number>(
-    Number(product?.discountedPrice ?? 0),
-  );
-  const [slug, setSlug] = useState(product?.slug ?? "");
+  const [title, setTitle] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [price, setPrice] = useState(0);
+  const [discountedPrice, setDiscountedPrice] = useState<number>(0);
+  const [slug, setSlug] = useState("");
   const [pending, setPending] = useState(false);
-  const [imageId] = useState(product?.imageId ?? uuid());
-  const [descriptionImageId] = useState(product?.descriptionImageId ?? uuid());
-  const [categoryId, setCategoryId] = useState<string>(
-    product?.categoryId ?? "",
-  );
-  const [stock, setStock] = useState(product?.stock ?? 0);
-  const [brand, setBrand] = useState(product?.brand ?? "");
+  const [imageId, setImageId] = useState(uuid());
+  const [descriptionImageId, setDescriptionImageId] = useState(uuid());
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [stock, setStock] = useState(0);
+  const [brand, setBrand] = useState("");
   const [estimatedDeliveryTime, setEstimatedDeliveryTime] = useState<
     number | undefined
-  >(product?.estimatedDeliveryTime ?? undefined);
+  >(undefined);
   // Remove the published state
 
   // Add states for category attributes
@@ -394,50 +400,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
   // Convert specifications to array format for drag and drop (handle both array and object formats)
   const [specifications, setSpecifications] = useState<
     Array<{ key: string; value: string }>
-  >(() => {
-    const attrs = product?.attributes;
-    if (Array.isArray(attrs)) {
-      // If it's already an array, use it directly
-      return attrs
-        .map((item) => {
-          if (
-            typeof item === "object" &&
-            item !== null &&
-            "key" in item &&
-            "value" in item
-          ) {
-            const key = item.key;
-            const value = item.value;
-            // Ensure proper string conversion to avoid Object's default stringification
-            const keyStr =
-              typeof key === "string"
-                ? key
-                : typeof key === "number"
-                  ? key.toString()
-                  : typeof key === "boolean"
-                    ? key.toString()
-                    : JSON.stringify(key);
-            const valueStr =
-              typeof value === "string"
-                ? value
-                : typeof value === "number"
-                  ? value.toString()
-                  : typeof value === "boolean"
-                    ? value.toString()
-                    : JSON.stringify(value);
-            return { key: keyStr, value: valueStr };
-          }
-          return { key: "", value: "" };
-        })
-        .filter((item) => item.key.trim() !== "");
-    } else if (typeof attrs === "object" && attrs !== null) {
-      // If it's an object, convert to array (backward compatibility)
-      return Object.entries(attrs as Record<string, string>).map(
-        ([key, value]) => ({ key, value }),
-      );
-    }
-    return [];
-  });
+  >([]);
 
   const { loadImages, images } = useProductImageStore();
   const [showImageGallery, setShowImageGallery] = useState("");
@@ -451,7 +414,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
   );
 
   // Load category attributes when component mounts or category changes
-  const [categories] = api.category.getAll.useSuspenseQuery();
+  const { data: categories = [] } = api.category.getAll.useQuery();
 
   const [isCustomBrand, setIsCustomBrand] = useState(false);
   const [customBrand, setCustomBrand] = useState("");
@@ -499,20 +462,6 @@ export default function EditProductForm({ productId }: { productId: string }) {
       }
     }
   }, [categoryId, categories]);
-
-  // Initialize attribute values from product data
-  useEffect(() => {
-    if (product?.attributes) {
-      // Check if there are any category attributes in the existing product
-      const productData = product.attributes as {
-        categoryAttributes?: Record<string, string | number | boolean>;
-      };
-
-      if (productData.categoryAttributes) {
-        setAttributeValues(productData.categoryAttributes);
-      }
-    }
-  }, [product]);
 
   // Initialize attributeValues when attributes change
   useEffect(() => {
@@ -590,10 +539,17 @@ export default function EditProductForm({ productId }: { productId: string }) {
     setSlug(name);
   }, [setSlug, title]);
 
+  const utils = api.useUtils();
   const updateProduct = api.product.update.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Product updated successfully");
       selectedCategoriesRef.current = [];
+      // Invalidate the specific product cache to ensure fresh data on next load
+      await utils.product.getProductByIdAdmin.invalidate({ id: productId });
+      // Also invalidate the product list cache
+      await utils.product.getAll.invalidate();
+      // Refetch the current product data to ensure we have the latest
+      await refetch();
       router.push("/admin/product");
     },
     onError: (error: { message: string }) => {
@@ -789,28 +745,17 @@ export default function EditProductForm({ productId }: { productId: string }) {
   }
 
   // Add state for default product color and size
-  const [defaultColorName, setDefaultColorName] = useState(
-    product?.defaultColor ?? "",
-  );
-  const [defaultColorHex, setDefaultColorHex] = useColor(
-    product?.defaultColorHex ?? "#ffffff",
-  );
-  const [defaultSize, setDefaultSize] = useState(product?.defaultSize ?? "");
-  const [minQuantity, setMinQuantity] = useState(product?.minQuantity ?? 1);
-  const [maxQuantity, setMaxQuantity] = useState<number | undefined>(
-    product?.maxQuantity ?? undefined,
-  );
-  const [quantityStep, setQuantityStep] = useState(product?.quantityStep ?? 1);
+  const [defaultColorName, setDefaultColorName] = useState("");
+  const [defaultColorHex, setDefaultColorHex] = useColor("#ffffff");
+  const [defaultSize, setDefaultSize] = useState("");
+  const [minQuantity, setMinQuantity] = useState(1);
+  const [maxQuantity, setMaxQuantity] = useState<number | undefined>(undefined);
+  const [quantityStep, setQuantityStep] = useState(1);
 
   // Add state for quantity discounts, pre-fill from product if available
   const [quantityDiscounts, setQuantityDiscounts] = useState<
     Array<{ minQty: number; maxQty: number; discountPercent: number }>
-  >(() => {
-    if (product && Array.isArray(product.quantityDiscounts)) {
-      return product.quantityDiscounts;
-    }
-    return [{ minQty: 1, maxQty: 1, discountPercent: 0 }];
-  });
+  >([{ minQty: 1, maxQty: 1, discountPercent: 0 }]);
 
   // Helper to add a new discount row
   const handleAddDiscountRow = () => {
@@ -839,44 +784,8 @@ export default function EditProductForm({ productId }: { productId: string }) {
   // [1] --- VARIANT STATE REFACTOR ---
   // Remove old variants state and enableVariants state
   // Add grouped state:
-  const [enableVariants, setEnableVariants] = useState(() => {
-    if (!Array.isArray(product?.variants)) return false;
-    return product.variants.length > 0;
-  });
-  const [colorGroups, setColorGroups] = useState<VariantGroup[]>(() => {
-    if (!Array.isArray(product?.variants)) return [];
-
-    console.log("Processing variants in EditProduct:", product.variants);
-
-    const groups: Record<string, VariantGroup> = {};
-    (product.variants as Variant[]).forEach((v) => {
-      console.log("Processing variant:", v);
-      // Only group variants that have color information
-      if (v.colorName || v.colorHex) {
-        const key = (v.colorName ?? "") + "|" + (v.colorHex ?? "");
-        if (!groups[key]) {
-          groups[key] = {
-            colorName: v.colorName ?? "",
-            colorHex: v.colorHex ?? "#ffffff",
-            imageId: v.imageId ?? uuid(),
-            images: v.images ?? [],
-            sizes: [],
-          };
-        }
-        if (v.size) {
-          groups[key].sizes.push({
-            size: v.size,
-            price: v.price ?? 0,
-            discountedPrice: v.discountedPrice ?? 0,
-            stock: v.stock ?? 0,
-          });
-        }
-      }
-    });
-
-    console.log("Color groups created:", Object.values(groups));
-    return Object.values(groups);
-  });
+  const [enableVariants, setEnableVariants] = useState(false);
+  const [colorGroups, setColorGroups] = useState<VariantGroup[]>([]);
   const [defaultGroup, setDefaultGroup] = useState<{
     imageId: string;
     images: string[];
@@ -886,25 +795,10 @@ export default function EditProductForm({ productId }: { productId: string }) {
       discountedPrice: number;
       stock: number;
     }>;
-  }>(() => {
-    // Find variants with no colorName/colorHex - these are default variants
-    const variants: Variant[] = Array.isArray(product?.variants)
-      ? (product.variants as Variant[])
-      : [];
-    const defaultVariants = variants.filter((v) => !v.colorName && !v.colorHex);
-
-    console.log("Default variants found:", defaultVariants);
-
-    return {
-      imageId: defaultVariants[0]?.imageId ?? uuid(),
-      images: defaultVariants[0]?.images ?? [],
-      sizes: defaultVariants.map((v) => ({
-        size: v.size,
-        price: v.price ?? 0,
-        discountedPrice: v.discountedPrice ?? 0,
-        stock: v.stock ?? 0,
-      })),
-    };
+  }>({
+    imageId: uuid(),
+    images: [],
+    sizes: [],
   });
 
   // [2] --- VARIANT UI REFACTOR ---
@@ -1026,6 +920,153 @@ export default function EditProductForm({ productId }: { productId: string }) {
   const { data: brands = [], isLoading: brandsLoading } =
     api.product.getBrandsByCategory.useQuery({});
 
+  // Update local state when product data changes (e.g., after refetch)
+  useEffect(() => {
+    if (product) {
+      setTitle(product.title ?? "");
+      setShortDescription(product.shortDescription ?? "");
+      setPrice(product.price ?? 0);
+      setDiscountedPrice(Number(product.discountedPrice ?? 0));
+      setSlug(product.slug ?? "");
+      setImageId(product.imageId ?? uuid());
+      setDescriptionImageId(product.descriptionImageId ?? uuid());
+      setCategoryId(product.categoryId ?? "");
+      setStock(product.stock ?? 0);
+      setBrand(product.brand ?? "");
+      setEstimatedDeliveryTime(product.estimatedDeliveryTime ?? undefined);
+      setDefaultColorName(product.defaultColor ?? "");
+      setDefaultColorHex({
+        hex: product.defaultColorHex ?? "#ffffff",
+        rgb: { r: 255, g: 255, b: 255, a: 1 },
+        hsv: { h: 0, s: 0, v: 1, a: 1 },
+      });
+      setDefaultSize(product.defaultSize ?? "");
+      setMinQuantity(product.minQuantity ?? 1);
+      setMaxQuantity(product.maxQuantity ?? undefined);
+      setQuantityStep(product.quantityStep ?? 1);
+      setVariantLabel(product.variantLabel ?? "Size");
+      setPerUnitText(product.perUnitText ?? "");
+
+      // Update quantity discounts
+      if (Array.isArray(product.quantityDiscounts)) {
+        setQuantityDiscounts(product.quantityDiscounts);
+      }
+
+      // Update specifications
+      const attrs = product.attributes;
+      if (Array.isArray(attrs)) {
+        // If it's already an array, use it directly
+        const specs = attrs
+          .map((item) => {
+            if (
+              typeof item === "object" &&
+              item !== null &&
+              "key" in item &&
+              "value" in item
+            ) {
+              const key = item.key;
+              const value = item.value;
+              // Ensure proper string conversion to avoid Object's default stringification
+              const keyStr =
+                typeof key === "string"
+                  ? key
+                  : typeof key === "number"
+                    ? key.toString()
+                    : typeof key === "boolean"
+                      ? key.toString()
+                      : JSON.stringify(key);
+              const valueStr =
+                typeof value === "string"
+                  ? value
+                  : typeof value === "number"
+                    ? value.toString()
+                    : typeof value === "boolean"
+                      ? value.toString()
+                      : JSON.stringify(value);
+              return { key: keyStr, value: valueStr };
+            }
+            return { key: "", value: "" };
+          })
+          .filter((item) => item.key.trim() !== "");
+        setSpecifications(specs);
+      } else if (typeof attrs === "object" && attrs !== null) {
+        // If it's an object, convert to array (backward compatibility)
+        const specs = Object.entries(attrs as Record<string, string>).map(
+          ([key, value]) => ({ key, value }),
+        );
+        setSpecifications(specs);
+      } else {
+        setSpecifications([]);
+      }
+
+      // Update category attributes
+      if (product.attributes) {
+        const productData = product.attributes as {
+          categoryAttributes?: Record<string, string | number | boolean>;
+        };
+
+        if (productData.categoryAttributes) {
+          setAttributeValues(productData.categoryAttributes);
+        }
+      }
+
+      // Update variant-related state
+      if (Array.isArray(product.variants)) {
+        setEnableVariants(product.variants.length > 0);
+
+        // Process color groups
+        const groups: Record<string, VariantGroup> = {};
+        (product.variants as Variant[]).forEach((v) => {
+          // Only group variants that have color information
+          if (v.colorName || v.colorHex) {
+            const key = (v.colorName ?? "") + "|" + (v.colorHex ?? "");
+            if (!groups[key]) {
+              groups[key] = {
+                colorName: v.colorName ?? "",
+                colorHex: v.colorHex ?? "#ffffff",
+                imageId: v.imageId ?? uuid(),
+                images: v.images ?? [],
+                sizes: [],
+              };
+            }
+            if (v.size) {
+              groups[key].sizes.push({
+                size: v.size,
+                price: v.price ?? 0,
+                discountedPrice: v.discountedPrice ?? 0,
+                stock: v.stock ?? 0,
+              });
+            }
+          }
+        });
+        setColorGroups(Object.values(groups));
+
+        // Process default group (variants without colors)
+        const defaultVariants = (product.variants as Variant[]).filter(
+          (v) => !v.colorName && !v.colorHex,
+        );
+        setDefaultGroup({
+          imageId: defaultVariants[0]?.imageId ?? uuid(),
+          images: defaultVariants[0]?.images ?? [],
+          sizes: defaultVariants.map((v) => ({
+            size: v.size,
+            price: v.price ?? 0,
+            discountedPrice: v.discountedPrice ?? 0,
+            stock: v.stock ?? 0,
+          })),
+        });
+      } else {
+        setEnableVariants(false);
+        setColorGroups([]);
+        setDefaultGroup({
+          imageId: uuid(),
+          images: [],
+          sizes: [],
+        });
+      }
+    }
+  }, [product]);
+
   useEffect(() => {
     if (
       brands.length > 0 &&
@@ -1037,14 +1078,24 @@ export default function EditProductForm({ productId }: { productId: string }) {
     }
   }, [brands, product?.brand]); // Only run when brands or product.brand changes
 
-  const [variantLabel, setVariantLabel] = useState<string>(
-    product?.variantLabel ?? "Size",
-  ); // <--- Fix: add this line
-  const [perUnitText, setPerUnitText] = useState<string>(
-    product?.perUnitText ?? "",
-  ); // <--- Add this line
+  const [variantLabel, setVariantLabel] = useState<string>("Size");
+  const [perUnitText, setPerUnitText] = useState<string>("");
 
-  if (!product) return null;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center p-4 sm:p-10">
+        <div className="text-lg">Loading product...</div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center p-4 sm:p-10">
+        <div className="text-lg text-red-500">Product not found.</div>
+      </div>
+    );
+  }
 
   return (
     <RichEditor
