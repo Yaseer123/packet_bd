@@ -57,6 +57,8 @@ export default function RichEditor({
   pending,
   submitButtonText,
   children,
+  hideSubmitButton = false, // Add new prop to hide submit button
+  onContentChange,
 }: {
   content: string;
   imageId: string;
@@ -64,6 +66,8 @@ export default function RichEditor({
   pending: boolean;
   submitButtonText: string;
   children: React.ReactNode;
+  hideSubmitButton?: boolean; // Add new prop type
+  onContentChange?: (content: string) => void; // Add new prop for content tracking
 }) {
   const [showImageGallery, setShowImageGallery] = useState("");
   const { loadImages } = useImageStore();
@@ -93,8 +97,13 @@ export default function RichEditor({
     content: content,
     onUpdate: ({ editor }) => {
       // Log content for debugging
-      console.log("Editor content updated:", editor.getHTML());
-      if (!sourceMode) setHtmlSource(editor.getHTML());
+      const htmlContent = editor.getHTML();
+      console.log("Editor content updated:", htmlContent);
+      if (!sourceMode) setHtmlSource(htmlContent);
+      // Call onContentChange if provided
+      if (onContentChange) {
+        onContentChange(htmlContent);
+      }
     },
   });
 
@@ -208,11 +217,13 @@ export default function RichEditor({
             )}
           </div>
         </div>
-        <div className="p-4 text-right">
-          <Button onClick={handleFormSubmit} disabled={pending}>
-            {pending ? "Submitting..." : submitButtonText}
-          </Button>
-        </div>
+        {!hideSubmitButton && (
+          <div className="p-4 text-right">
+            <Button onClick={handleFormSubmit} disabled={pending}>
+              {pending ? "Submitting..." : submitButtonText}
+            </Button>
+          </div>
+        )}
       </div>
       <ImageGallery
         onSelect={onImageSelect}
