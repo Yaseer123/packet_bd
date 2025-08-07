@@ -367,8 +367,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
     {
       // Refetch on mount to ensure we have the latest data
       refetchOnMount: true,
-      // Refetch when window regains focus
-      refetchOnWindowFocus: true,
+      // Removed refetchOnWindowFocus to prevent form state loss when switching tabs
     },
   );
 
