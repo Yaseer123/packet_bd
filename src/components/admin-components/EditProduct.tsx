@@ -367,8 +367,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
     {
       // Refetch on mount to ensure we have the latest data
       refetchOnMount: true,
-      // Refetch when window regains focus
-      refetchOnWindowFocus: true,
+      // Removed refetchOnWindowFocus to prevent form state loss when switching tabs
     },
   );
 
@@ -404,6 +403,9 @@ export default function EditProductForm({ productId }: { productId: string }) {
 
   const { loadImages, images } = useProductImageStore();
   const [showImageGallery, setShowImageGallery] = useState("");
+
+  // Add state for rich editor content
+  const [richEditorContent, setRichEditorContent] = useState("");
 
   // Configure sensors for drag-and-drop
   const sensors = useSensors(
@@ -803,30 +805,31 @@ export default function EditProductForm({ productId }: { productId: string }) {
 
   // [2] --- VARIANT UI REFACTOR ---
   // Replace the old variants UI with a grouped UI
-  const handleVariantChange = (
-    index: number,
-    field: string,
-    value: string | number | undefined,
-  ) => {
-    setColorGroups((prev) =>
-      prev.map((g, gi) =>
-        gi === index ? { ...g, colorName: value as string } : g,
-      ),
-    );
-  };
+  // Note: These functions are kept for potential future use but currently unused
+  // const handleVariantChange = (
+  //   index: number,
+  //   field: string,
+  //   value: string | number | undefined,
+  // ) => {
+  //   setColorGroups((prev) =>
+  //     prev.map((g, gi) =>
+  //       gi === index ? { ...g, colorName: value as string } : g,
+  //     ),
+  //   );
+  // };
 
-  const handleAddVariant = () => {
-    setColorGroups((prev) => [
-      ...prev,
-      {
-        colorName: "",
-        colorHex: "#ffffff",
-        imageId: uuid(),
-        images: [],
-        sizes: [],
-      },
-    ]);
-  };
+  // const handleAddVariant = () => {
+  //   setColorGroups((prev) => [
+  //     ...prev,
+  //     {
+  //       colorName: "",
+  //       colorHex: "#ffffff",
+  //       imageId: uuid(),
+  //       images: [],
+  //       sizes: [],
+  //     },
+  //   ]);
+  // };
   const handleRemoveVariant = (index: number) => {
     setColorGroups((prev) => prev.filter((_, i) => i !== index));
   };
@@ -868,7 +871,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
     })),
   ];
 
-  const handleSubmit = async (content: string) => {
+  const handleSubmit = async (content?: string) => {
     setPending(true);
     const newErrors = validateAllFields();
     setErrors(newErrors);
@@ -895,7 +898,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       discountedPrice,
       slug,
       categoryId: categoryId,
-      description: content,
+      description: content ?? richEditorContent, // Use passed content or stored content
       attributes: specsArray, // Send as array to preserve order
       categoryAttributes: attributeValues, // Pass category attributes separately
       stock,
@@ -946,6 +949,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       setQuantityStep(product.quantityStep ?? 1);
       setVariantLabel(product.variantLabel ?? "Size");
       setPerUnitText(product.perUnitText ?? "");
+      setRichEditorContent(product.description ?? "");
 
       // Update quantity discounts
       if (Array.isArray(product.quantityDiscounts)) {
@@ -1065,7 +1069,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
         });
       }
     }
-  }, [product]);
+  }, [product, setDefaultColorHex]);
 
   useEffect(() => {
     if (
@@ -1098,726 +1102,777 @@ export default function EditProductForm({ productId }: { productId: string }) {
   }
 
   return (
-    <RichEditor
-      content={product.description ?? ""}
-      handleSubmit={handleSubmit}
-      imageId={descriptionImageId}
-      pending={pending}
-      submitButtonText="Update Product"
-    >
-      <div className="grid grid-cols-2 gap-3">
-        {/* Variant Label Input */}
-        <div className="col-span-2 flex w-full flex-col space-y-2">
-          <Label className="text-base">
-            Variant Label (e.g. Size, Material, Length)
-          </Label>
-          <Input
-            type="text"
-            placeholder="Variant Label (e.g. Size, Material, Length)"
-            value={variantLabel}
-            onChange={(e) => setVariantLabel(e.target.value)}
-            style={{ width: "100%" }}
-          />
-        </div>
-        {/* Per Unit Text Input */}
-        <div className="col-span-2 flex w-full flex-col space-y-2">
-          <Label className="text-base">
-            Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)
-          </Label>
-          <Input
-            type="text"
-            placeholder="Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)"
-            value={perUnitText}
-            onChange={(e) => setPerUnitText(e.target.value)}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div>
-          <Label>Product Title</Label>
-          <Input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={handleTitleChange}
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-500">{errors.title}</p>
-          )}
-        </div>
-        <div>
-          <Label>Slug</Label>
-          <Input
-            type="text"
-            placeholder="Slug"
-            value={slug}
-            onChange={handleSlugChange}
-          />
-          {errors.slug && (
-            <p className="mt-1 text-sm text-red-500">{errors.slug}</p>
-          )}
-        </div>
-        <div>
-          <Label>Short Description</Label>
-          <Textarea
-            placeholder="Short Description"
-            value={shortDescription}
-            onChange={handleShortDescriptionChange}
-          />
-          {errors.shortDescription && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.shortDescription}
-            </p>
-          )}
-        </div>
-        <div>
-          <Label className="text-sm font-medium">Category</Label>
-          <PreSelectedCategory
-            targetCategory={categoryId}
-            setCategoryId={setCategoryId}
-          />
-          {errors.categoryId && (
-            <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
-          )}
-        </div>
-        <div>
-          <Label>Price</Label>
-          <Input
-            type="number"
-            placeholder="Price"
-            value={price === 0 ? "" : price}
-            onChange={handlePriceChange}
-          />
-          {errors.price && (
-            <p className="mt-1 text-sm text-red-500">{errors.price}</p>
-          )}
-        </div>
-        <div>
-          <Label>Discounted Price</Label>
-          <Input
-            type="number"
-            placeholder="Discounted Price"
-            value={discountedPrice === 0 ? "" : discountedPrice}
-            onChange={handleDiscountedPriceChange}
-          />
-        </div>
-        <div>
-          <Label>Stock</Label>
-          <Input
-            type="number"
-            placeholder="Stock"
-            value={stock === 0 ? "" : stock}
-            onChange={handleStockChange}
-          />
-          {errors.stock && (
-            <p className="mt-1 text-sm text-red-500">{errors.stock}</p>
-          )}
-        </div>
-        <div>
-          <Label>Min Quantity</Label>
-          <Input
-            type="number"
-            placeholder="Min Quantity"
-            value={minQuantity}
-            min={1}
-            onChange={(e) => setMinQuantity(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <Label>Max Quantity</Label>
-          <Input
-            type="number"
-            placeholder="Max Quantity (optional)"
-            value={maxQuantity ?? ""}
-            min={1}
-            onChange={(e) =>
-              setMaxQuantity(
-                e.target.value ? Number(e.target.value) : undefined,
-              )
-            }
-          />
-        </div>
-        <div>
-          <Label>Quantity Step</Label>
-          <Input
-            type="number"
-            placeholder="Quantity Step"
-            value={quantityStep}
-            min={1}
-            onChange={(e) => setQuantityStep(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <Label>Brand</Label>
-          {brandsLoading ? (
-            <div className="text-sm text-gray-500">Loading brands...</div>
+    <div className="relative pb-20">
+      {/* Floating Save Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          onClick={() => void handleSubmit()}
+          disabled={pending}
+          className="shadow-lg transition-all duration-200 hover:shadow-xl"
+          size="lg"
+        >
+          {pending ? (
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              Saving...
+            </div>
           ) : (
-            <>
-              <Select
-                value={isCustomBrand ? "__custom__" : brand}
-                onValueChange={(value) => {
-                  if (value === "__custom__") {
-                    setIsCustomBrand(true);
-                    setBrand("");
-                  } else {
-                    setIsCustomBrand(false);
-                    setBrand(value);
-                  }
-                }}
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <SelectTrigger className={errors.brand ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select a brand or add new" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.filter(Boolean).map((b: string) => (
-                    <SelectItem key={b} value={b} className="w-full">
-                      {b}
-                    </SelectItem>
-                  ))}
-                  <SelectItem
-                    value="__custom__"
-                    className="w-full text-blue-600"
-                  >
-                    Other / New Brand...
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              {isCustomBrand && (
-                <Input
-                  type="text"
-                  placeholder="Enter new brand name"
-                  value={customBrand}
-                  onChange={(e) => {
-                    setCustomBrand(e.target.value);
-                    setBrand(e.target.value);
-                    setErrors((prev) => ({
-                      ...prev,
-                      brand: validateField("brand", e.target.value),
-                    }));
-                  }}
-                  className={errors.brand ? "border-red-500" : ""}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
                 />
-              )}
-            </>
+              </svg>
+              Update Product
+            </div>
           )}
-          {errors.brand && (
-            <p className="mt-1 text-sm text-red-500">{errors.brand}</p>
-          )}
-        </div>
-        <div>
-          <Label>Estimated Delivery Time (Days)</Label>
-          <Input
-            type="number"
-            placeholder="Delivery Time in Days"
-            min="1"
-            value={estimatedDeliveryTime ?? ""}
-            onChange={handleEstimatedDeliveryTimeChange}
-          />
-        </div>
+        </Button>
+      </div>
 
-        <div className="mt-auto flex flex-col gap-y-1">
-          <Label>
-            Images
-            <span className="ml-2 text-xs text-gray-500">
-              (Recommended: 1000x1000px or larger, square)
-            </span>
-          </Label>
-          <div className="mb-4">
-            <Button onClick={() => handleShowImageGallery(imageId)}>
-              Show Image Gallery
-            </Button>
-            {showImageGallery && (
-              <DndImageGallery
-                imageId={imageId}
-                onClose={handleShowImageGallery}
-              />
+      <RichEditor
+        content={product.description ?? ""}
+        handleSubmit={async (content) => {
+          setRichEditorContent(content);
+          await handleSubmit(content);
+        }}
+        imageId={descriptionImageId}
+        pending={pending}
+        submitButtonText="Update Product"
+        hideSubmitButton={true}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          {/* Variant Label Input */}
+          <div className="col-span-2 flex w-full flex-col space-y-2">
+            <Label className="text-base">
+              Variant Label (e.g. Size, Material, Length)
+            </Label>
+            <Input
+              type="text"
+              placeholder="Variant Label (e.g. Size, Material, Length)"
+              value={variantLabel}
+              onChange={(e) => setVariantLabel(e.target.value)}
+              style={{ width: "100%" }}
+            />
+          </div>
+          {/* Per Unit Text Input */}
+          <div className="col-span-2 flex w-full flex-col space-y-2">
+            <Label className="text-base">
+              Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)
+            </Label>
+            <Input
+              type="text"
+              placeholder="Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)"
+              value={perUnitText}
+              onChange={(e) => setPerUnitText(e.target.value)}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <Label>Product Title</Label>
+            <Input
+              type="text"
+              placeholder="Title"
+              value={title}
+              onChange={handleTitleChange}
+            />
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-500">{errors.title}</p>
             )}
           </div>
-        </div>
-
-        {/* Category Attribute Fields */}
-        {attributes.length > 0 && (
-          <div className="col-span-2 mt-4">
-            <h3 className="mb-3 text-lg font-medium">Category Attributes</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {attributes.map((attr) => (
-                <div key={attr.name} className="flex flex-col gap-2">
-                  <Label htmlFor={attr.name}>
-                    {attr.name}{" "}
-                    {attr.required && <span className="text-red-500">*</span>}
-                  </Label>
-                  {attr.type === "select" &&
-                    attr.options &&
-                    attr.options.length > 0 && (
-                      <Select
-                        value={
-                          attributeValues[attr.name]?.toString() ?? "__none__"
-                        }
-                        onValueChange={(value) =>
-                          handleAttributeChange(
-                            attr.name,
-                            value === "__none__" ? "" : value,
-                          )
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Select ${attr.name}`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
-                          {attr.options.filter(Boolean).map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                </div>
-              ))}
-            </div>
+          <div>
+            <Label>Slug</Label>
+            <Input
+              type="text"
+              placeholder="Slug"
+              value={slug}
+              onChange={handleSlugChange}
+            />
+            {errors.slug && (
+              <p className="mt-1 text-sm text-red-500">{errors.slug}</p>
+            )}
           </div>
-        )}
-
-        {/* Specifications Section */}
-        <div className="col-span-2">
-          <Label>Specifications</Label>
-          <div className="space-y-2">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-              modifiers={[restrictToVerticalAxis]}
-            >
-              <SortableContext
-                items={specifications.map((_, index) => `spec-${index}`)}
-                strategy={verticalListSortingStrategy}
-              >
-                {specifications.map((spec, index) => (
-                  <SortableSpecificationItem
-                    key={`spec-${index}`}
-                    id={`spec-${index}`}
-                    spec={spec}
-                    index={index}
-                    onChange={handleSpecificationChange}
-                    onRemove={handleRemoveSpecification}
+          <div>
+            <Label>Short Description</Label>
+            <Textarea
+              placeholder="Short Description"
+              value={shortDescription}
+              onChange={handleShortDescriptionChange}
+            />
+            {errors.shortDescription && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.shortDescription}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Category</Label>
+            <PreSelectedCategory
+              targetCategory={categoryId}
+              setCategoryId={setCategoryId}
+            />
+            {errors.categoryId && (
+              <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
+            )}
+          </div>
+          <div>
+            <Label>Price</Label>
+            <Input
+              type="number"
+              placeholder="Price"
+              value={price === 0 ? "" : price}
+              onChange={handlePriceChange}
+            />
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-500">{errors.price}</p>
+            )}
+          </div>
+          <div>
+            <Label>Discounted Price</Label>
+            <Input
+              type="number"
+              placeholder="Discounted Price"
+              value={discountedPrice === 0 ? "" : discountedPrice}
+              onChange={handleDiscountedPriceChange}
+            />
+          </div>
+          <div>
+            <Label>Stock</Label>
+            <Input
+              type="number"
+              placeholder="Stock"
+              value={stock === 0 ? "" : stock}
+              onChange={handleStockChange}
+            />
+            {errors.stock && (
+              <p className="mt-1 text-sm text-red-500">{errors.stock}</p>
+            )}
+          </div>
+          <div>
+            <Label>Min Quantity</Label>
+            <Input
+              type="number"
+              placeholder="Min Quantity"
+              value={minQuantity}
+              min={1}
+              onChange={(e) => setMinQuantity(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label>Max Quantity</Label>
+            <Input
+              type="number"
+              placeholder="Max Quantity (optional)"
+              value={maxQuantity ?? ""}
+              min={1}
+              onChange={(e) =>
+                setMaxQuantity(
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+            />
+          </div>
+          <div>
+            <Label>Quantity Step</Label>
+            <Input
+              type="number"
+              placeholder="Quantity Step"
+              value={quantityStep}
+              min={1}
+              onChange={(e) => setQuantityStep(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label>Brand</Label>
+            {brandsLoading ? (
+              <div className="text-sm text-gray-500">Loading brands...</div>
+            ) : (
+              <>
+                <Select
+                  value={isCustomBrand ? "__custom__" : brand}
+                  onValueChange={(value) => {
+                    if (value === "__custom__") {
+                      setIsCustomBrand(true);
+                      setBrand("");
+                    } else {
+                      setIsCustomBrand(false);
+                      setBrand(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    className={errors.brand ? "border-red-500" : ""}
+                  >
+                    <SelectValue placeholder="Select a brand or add new" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brands.filter(Boolean).map((b: string) => (
+                      <SelectItem key={b} value={b} className="w-full">
+                        {b}
+                      </SelectItem>
+                    ))}
+                    <SelectItem
+                      value="__custom__"
+                      className="w-full text-blue-600"
+                    >
+                      Other / New Brand...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {isCustomBrand && (
+                  <Input
+                    type="text"
+                    placeholder="Enter new brand name"
+                    value={customBrand}
+                    onChange={(e) => {
+                      setCustomBrand(e.target.value);
+                      setBrand(e.target.value);
+                      setErrors((prev) => ({
+                        ...prev,
+                        brand: validateField("brand", e.target.value),
+                      }));
+                    }}
+                    className={errors.brand ? "border-red-500" : ""}
                   />
-                ))}
-              </SortableContext>
-            </DndContext>
-            <Button onClick={handleAddSpecification}>Add Specification</Button>
-            <div className="mt-4">
-              <Label className="mb-1 block">
-                Or paste/write specifications below (format: Key: Value per
-                line)
-              </Label>
-              <Textarea
-                placeholder={`Color: Red\nSize: Large\nMaterial: Cotton`}
-                value={specRichContent}
-                onChange={(e) => setSpecRichContent(e.target.value)}
-                className="min-h-[100px] w-full"
-              />
-              <Button
-                className="mt-2 w-full"
-                type="button"
-                onClick={() => {
-                  // Parse textarea content and add to specifications
-                  const htmlLines = specRichContent
-                    .split(/\n+/)
-                    .map((line) => line.trim())
-                    .filter((line) => line.length > 0);
-                  setSpecifications((prev) => {
-                    const existingKeys = new Set(
-                      prev.map((s) => s.key.trim().toLowerCase()),
-                    );
-                    const newSpecs = htmlLines
-                      .map((line) => {
-                        if (line.includes(":")) {
-                          const [key, ...rest] = line.split(":");
-                          if (typeof key === "string") {
-                            return {
-                              key: key.trim(),
-                              value: rest.join(":").trim(),
-                            };
-                          }
-                        } else {
-                          return { key: line, value: "" };
-                        }
-                        return null;
-                      })
-                      .filter(
-                        (spec): spec is { key: string; value: string } =>
-                          !!spec &&
-                          typeof spec.key === "string" &&
-                          spec.key.trim().length > 0 &&
-                          !existingKeys.has(spec.key.trim().toLowerCase()),
-                      );
-                    return [...prev, ...newSpecs];
-                  });
-                  setSpecRichContent("");
-                }}
-              >
-                Add from Textarea
+                )}
+              </>
+            )}
+            {errors.brand && (
+              <p className="mt-1 text-sm text-red-500">{errors.brand}</p>
+            )}
+          </div>
+          <div>
+            <Label>Estimated Delivery Time (Days)</Label>
+            <Input
+              type="number"
+              placeholder="Delivery Time in Days"
+              min="1"
+              value={estimatedDeliveryTime ?? ""}
+              onChange={handleEstimatedDeliveryTimeChange}
+            />
+          </div>
+
+          <div className="mt-auto flex flex-col gap-y-1">
+            <Label>
+              Images
+              <span className="ml-2 text-xs text-gray-500">
+                (Recommended: 1000x1000px or larger, square)
+              </span>
+            </Label>
+            <div className="mb-4">
+              <Button onClick={() => handleShowImageGallery(imageId)}>
+                Show Image Gallery
               </Button>
+              {showImageGallery && (
+                <DndImageGallery
+                  imageId={imageId}
+                  onClose={handleShowImageGallery}
+                />
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Default Product Color/Size */}
-        <div>
-          <Label>Default Product Color (optional)</Label>
-          <Input
-            type="text"
-            placeholder="Color Name (e.g. Red, Sky Blue)"
-            value={defaultColorName}
-            onChange={(e) => setDefaultColorName(e.target.value)}
-          />
-          <div className="mt-2 flex items-center gap-2">
-            <ColorPicker
-              color={defaultColorHex}
-              onChange={setDefaultColorHex}
-              hideInput={["rgb", "hsv"]}
-            />
-            <span
-              style={{
-                display: "inline-block",
-                width: 32,
-                height: 32,
-                backgroundColor: defaultColorHex.hex,
-                borderRadius: "50%",
-                border: "1px solid #ccc",
-              }}
-              aria-label={defaultColorName}
-              title={defaultColorName}
-            />
-            <span>
-              {defaultColorName} ({defaultColorHex.hex})
-            </span>
-          </div>
-        </div>
-        <div>
-          <Label>Default Product Size (optional)</Label>
-          <Input
-            type="text"
-            placeholder="Size"
-            value={defaultSize}
-            onChange={(e) => setDefaultSize(e.target.value)}
-          />
-        </div>
-
-        {/* Quantity Discount Table UI */}
-        <div className="col-span-2 my-4 flex flex-col space-y-2 rounded-md border border-gray-200 p-4">
-          <Label className="mb-2 text-base">Quantity Discounts</Label>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="px-2 py-1 text-left">Min QTY</th>
-                  <th className="px-2 py-1 text-left">Max QTY</th>
-                  <th className="px-2 py-1 text-left">Discount %</th>
-                  <th className="px-2 py-1"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {quantityDiscounts.map((row, idx) => (
-                  <tr key={idx}>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={1}
-                        value={row.minQty}
-                        onChange={(e) =>
-                          handleDiscountChange(
-                            idx,
-                            "minQty",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-20"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={row.minQty}
-                        value={row.maxQty}
-                        onChange={(e) =>
-                          handleDiscountChange(
-                            idx,
-                            "maxQty",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-20"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={row.discountPercent}
-                        onChange={(e) =>
-                          handleDiscountChange(
-                            idx,
-                            "discountPercent",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-20"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => handleRemoveDiscountRow(idx)}
-                        disabled={quantityDiscounts.length === 1}
-                      >
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
+          {/* Category Attribute Fields */}
+          {attributes.length > 0 && (
+            <div className="col-span-2 mt-4">
+              <h3 className="mb-3 text-lg font-medium">Category Attributes</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {attributes.map((attr) => (
+                  <div key={attr.name} className="flex flex-col gap-2">
+                    <Label htmlFor={attr.name}>
+                      {attr.name}{" "}
+                      {attr.required && <span className="text-red-500">*</span>}
+                    </Label>
+                    {attr.type === "select" &&
+                      attr.options &&
+                      attr.options.length > 0 && (
+                        <Select
+                          value={
+                            attributeValues[attr.name]?.toString() ?? "__none__"
+                          }
+                          onValueChange={(value) =>
+                            handleAttributeChange(
+                              attr.name,
+                              value === "__none__" ? "" : value,
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={`Select ${attr.name}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">None</SelectItem>
+                            {attr.options.filter(Boolean).map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+          )}
+
+          {/* Specifications Section */}
+          <div className="col-span-2">
+            <Label>Specifications</Label>
+            <div className="space-y-2">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <SortableContext
+                  items={specifications.map((_, index) => `spec-${index}`)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {specifications.map((spec, index) => (
+                    <SortableSpecificationItem
+                      key={`spec-${index}`}
+                      id={`spec-${index}`}
+                      spec={spec}
+                      index={index}
+                      onChange={handleSpecificationChange}
+                      onRemove={handleRemoveSpecification}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              <Button onClick={handleAddSpecification}>
+                Add Specification
+              </Button>
+              <div className="mt-4">
+                <Label className="mb-1 block">
+                  Or paste/write specifications below (format: Key: Value per
+                  line)
+                </Label>
+                <Textarea
+                  placeholder={`Color: Red\nSize: Large\nMaterial: Cotton`}
+                  value={specRichContent}
+                  onChange={(e) => setSpecRichContent(e.target.value)}
+                  className="min-h-[100px] w-full"
+                />
+                <Button
+                  className="mt-2 w-full"
+                  type="button"
+                  onClick={() => {
+                    // Parse textarea content and add to specifications
+                    const htmlLines = specRichContent
+                      .split(/\n+/)
+                      .map((line) => line.trim())
+                      .filter((line) => line.length > 0);
+                    setSpecifications((prev) => {
+                      const existingKeys = new Set(
+                        prev.map((s) => s.key.trim().toLowerCase()),
+                      );
+                      const newSpecs = htmlLines
+                        .map((line) => {
+                          if (line.includes(":")) {
+                            const [key, ...rest] = line.split(":");
+                            if (typeof key === "string") {
+                              return {
+                                key: key.trim(),
+                                value: rest.join(":").trim(),
+                              };
+                            }
+                          } else {
+                            return { key: line, value: "" };
+                          }
+                          return null;
+                        })
+                        .filter(
+                          (spec): spec is { key: string; value: string } =>
+                            !!spec &&
+                            typeof spec.key === "string" &&
+                            spec.key.trim().length > 0 &&
+                            !existingKeys.has(spec.key.trim().toLowerCase()),
+                        );
+                      return [...prev, ...newSpecs];
+                    });
+                    setSpecRichContent("");
+                  }}
+                >
+                  Add from Textarea
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button
-            type="button"
-            onClick={handleAddDiscountRow}
-            className="mt-2 w-fit"
-          >
-            Add Discount Row
-          </Button>
-        </div>
 
-        {/* Variants Toggle */}
-        <div className="col-span-2 mt-2 flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={enableVariants}
-            onChange={(e) => setEnableVariants(e.target.checked)}
-            id="enable-variants"
-          />
-          <Label htmlFor="enable-variants" className="text-base">
-            Enable color/size/image variants
-          </Label>
-        </div>
-
-        {/* Variants UI */}
-        {enableVariants && (
-          <div className="col-span-2 mt-2 flex flex-col gap-4 rounded-md border bg-gray-50 p-3">
-            <Label className="text-base">Product Variants</Label>
-            {/* Color Groups */}
-            {colorGroups.map((group, groupIdx) => (
-              <ColorGroup
-                key={group.imageId}
-                group={group}
-                groupIdx={groupIdx}
-                onUpdate={handleColorGroupUpdate}
-                onRemove={handleRemoveVariant}
-                onShowImageGallery={handleShowImageGallery}
-                showImageGallery={showImageGallery}
+          {/* Default Product Color/Size */}
+          <div>
+            <Label>Default Product Color (optional)</Label>
+            <Input
+              type="text"
+              placeholder="Color Name (e.g. Red, Sky Blue)"
+              value={defaultColorName}
+              onChange={(e) => setDefaultColorName(e.target.value)}
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <ColorPicker
+                color={defaultColorHex}
+                onChange={setDefaultColorHex}
+                hideInput={["rgb", "hsv"]}
               />
-            ))}
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 32,
+                  height: 32,
+                  backgroundColor: defaultColorHex.hex,
+                  borderRadius: "50%",
+                  border: "1px solid #ccc",
+                }}
+                aria-label={defaultColorName}
+                title={defaultColorName}
+              />
+              <span>
+                {defaultColorName} ({defaultColorHex.hex})
+              </span>
+            </div>
+          </div>
+          <div>
+            <Label>Default Product Size (optional)</Label>
+            <Input
+              type="text"
+              placeholder="Size"
+              value={defaultSize}
+              onChange={(e) => setDefaultSize(e.target.value)}
+            />
+          </div>
+
+          {/* Quantity Discount Table UI */}
+          <div className="col-span-2 my-4 flex flex-col space-y-2 rounded-md border border-gray-200 p-4">
+            <Label className="mb-2 text-base">Quantity Discounts</Label>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-2 py-1 text-left">Min QTY</th>
+                    <th className="px-2 py-1 text-left">Max QTY</th>
+                    <th className="px-2 py-1 text-left">Discount %</th>
+                    <th className="px-2 py-1"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quantityDiscounts.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={1}
+                          value={row.minQty}
+                          onChange={(e) =>
+                            handleDiscountChange(
+                              idx,
+                              "minQty",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-20"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={row.minQty}
+                          value={row.maxQty}
+                          onChange={(e) =>
+                            handleDiscountChange(
+                              idx,
+                              "maxQty",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-20"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={row.discountPercent}
+                          onChange={(e) =>
+                            handleDiscountChange(
+                              idx,
+                              "discountPercent",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-20"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => handleRemoveDiscountRow(idx)}
+                          disabled={quantityDiscounts.length === 1}
+                        >
+                          Remove
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Button
               type="button"
-              onClick={() =>
-                setColorGroups((prev) => [
-                  ...prev,
-                  {
-                    colorName: "",
-                    colorHex: "#ffffff",
-                    imageId: uuid(),
-                    images: [],
-                    sizes: [],
-                  },
-                ])
-              }
-              className="w-full"
+              onClick={handleAddDiscountRow}
+              className="mt-2 w-fit"
             >
-              Add Color
+              Add Discount Row
             </Button>
+          </div>
 
-            {/* Default Group (variants without colors) */}
-            {(defaultGroup.sizes.length > 0 || colorGroups.length === 0) && (
-              <div className="mt-4 border-t pt-4">
-                <Label className="text-base">Default Variants (No Color)</Label>
-                <div className="mt-2">
-                  <div className="mb-2 space-y-2">
+          {/* Variants Toggle */}
+          <div className="col-span-2 mt-2 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={enableVariants}
+              onChange={(e) => setEnableVariants(e.target.checked)}
+              id="enable-variants"
+            />
+            <Label htmlFor="enable-variants" className="text-base">
+              Enable color/size/image variants
+            </Label>
+          </div>
+
+          {/* Variants UI */}
+          {enableVariants && (
+            <div className="col-span-2 mt-2 flex flex-col gap-4 rounded-md border bg-gray-50 p-3">
+              <Label className="text-base">Product Variants</Label>
+              {/* Color Groups */}
+              {colorGroups.map((group, groupIdx) => (
+                <ColorGroup
+                  key={group.imageId}
+                  group={group}
+                  groupIdx={groupIdx}
+                  onUpdate={handleColorGroupUpdate}
+                  onRemove={handleRemoveVariant}
+                  onShowImageGallery={handleShowImageGallery}
+                  showImageGallery={showImageGallery}
+                />
+              ))}
+              <Button
+                type="button"
+                onClick={() =>
+                  setColorGroups((prev) => [
+                    ...prev,
+                    {
+                      colorName: "",
+                      colorHex: "#ffffff",
+                      imageId: uuid(),
+                      images: [],
+                      sizes: [],
+                    },
+                  ])
+                }
+                className="w-full"
+              >
+                Add Color
+              </Button>
+
+              {/* Default Group (variants without colors) */}
+              {(defaultGroup.sizes.length > 0 || colorGroups.length === 0) && (
+                <div className="mt-4 border-t pt-4">
+                  <Label className="text-base">
+                    Default Variants (No Color)
+                  </Label>
+                  <div className="mt-2">
+                    <div className="mb-2 space-y-2">
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          handleShowImageGallery(defaultGroup.imageId)
+                        }
+                        className="w-full"
+                      >
+                        Select Images for Default Variants
+                      </Button>
+                      {defaultGroup.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-sm text-gray-600">
+                            Selected images: {defaultGroup.images.length}
+                          </span>
+                          {defaultGroup.images.slice(0, 3).map((img, idx) => (
+                            <div key={idx} className="relative">
+                              <Image
+                                src={img}
+                                alt="Default variant"
+                                width={48}
+                                height={48}
+                                className="h-12 w-12 rounded object-cover"
+                              />
+                            </div>
+                          ))}
+                          {defaultGroup.images.length > 3 && (
+                            <span className="text-sm text-gray-500">
+                              +{defaultGroup.images.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {showImageGallery === defaultGroup.imageId && (
+                      <DndImageGallery
+                        imageId={defaultGroup.imageId}
+                        onClose={handleShowImageGallery}
+                        variantMode={true}
+                        selectedImages={defaultGroup.images}
+                        onImageSelect={(imageSrc, selected) => {
+                          if (selected) {
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              images: [...prev.images, imageSrc],
+                            }));
+                          } else {
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              images: prev.images.filter(
+                                (img) => img !== imageSrc,
+                              ),
+                            }));
+                          }
+                        }}
+                        colorName="Default Variants"
+                      />
+                    )}
+                    {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
+                      <div
+                        key={sizeIdx}
+                        className="mb-2 flex items-center gap-2"
+                      >
+                        <Input
+                          type="text"
+                          placeholder="Size"
+                          value={sizeObj.size}
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? { ...s, size: e.target.value }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-24"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Price"
+                          value={sizeObj.price === 0 ? "" : sizeObj.price}
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? { ...s, price: Number(e.target.value) }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-24"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Discounted Price"
+                          value={
+                            sizeObj.discountedPrice === 0
+                              ? ""
+                              : sizeObj.discountedPrice
+                          }
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? {
+                                      ...s,
+                                      discountedPrice: Number(e.target.value),
+                                    }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-32"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Stock"
+                          value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? { ...s, stock: Number(e.target.value) }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-20"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.filter(
+                                (_, si) => si !== sizeIdx,
+                              ),
+                            }))
+                          }
+                        >
+                          Remove Size
+                        </Button>
+                      </div>
+                    ))}
                     <Button
                       type="button"
                       onClick={() =>
-                        handleShowImageGallery(defaultGroup.imageId)
+                        setDefaultGroup((prev) => ({
+                          ...prev,
+                          sizes: [
+                            ...prev.sizes,
+                            {
+                              size: "",
+                              price: 0,
+                              discountedPrice: 0,
+                              stock: 0,
+                            },
+                          ],
+                        }))
                       }
                       className="w-full"
                     >
-                      Select Images for Default Variants
+                      Add Default Size
                     </Button>
-                    {defaultGroup.images.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-sm text-gray-600">
-                          Selected images: {defaultGroup.images.length}
-                        </span>
-                        {defaultGroup.images.slice(0, 3).map((img, idx) => (
-                          <div key={idx} className="relative">
-                            <Image
-                              src={img}
-                              alt="Default variant"
-                              width={48}
-                              height={48}
-                              className="h-12 w-12 rounded object-cover"
-                            />
-                          </div>
-                        ))}
-                        {defaultGroup.images.length > 3 && (
-                          <span className="text-sm text-gray-500">
-                            +{defaultGroup.images.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
-                  {showImageGallery === defaultGroup.imageId && (
-                    <DndImageGallery
-                      imageId={defaultGroup.imageId}
-                      onClose={handleShowImageGallery}
-                      variantMode={true}
-                      selectedImages={defaultGroup.images}
-                      onImageSelect={(imageSrc, selected) => {
-                        if (selected) {
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            images: [...prev.images, imageSrc],
-                          }));
-                        } else {
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            images: prev.images.filter(
-                              (img) => img !== imageSrc,
-                            ),
-                          }));
-                        }
-                      }}
-                      colorName="Default Variants"
-                    />
-                  )}
-                  {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
-                    <div key={sizeIdx} className="mb-2 flex items-center gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Size"
-                        value={sizeObj.size}
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? { ...s, size: e.target.value }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={sizeObj.price === 0 ? "" : sizeObj.price}
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? { ...s, price: Number(e.target.value) }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Discounted Price"
-                        value={
-                          sizeObj.discountedPrice === 0
-                            ? ""
-                            : sizeObj.discountedPrice
-                        }
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? {
-                                    ...s,
-                                    discountedPrice: Number(e.target.value),
-                                  }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-32"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Stock"
-                        value={sizeObj.stock === 0 ? "" : sizeObj.stock}
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? { ...s, stock: Number(e.target.value) }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-20"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.filter((_, si) => si !== sizeIdx),
-                          }))
-                        }
-                      >
-                        Remove Size
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      setDefaultGroup((prev) => ({
-                        ...prev,
-                        sizes: [
-                          ...prev.sizes,
-                          {
-                            size: "",
-                            price: 0,
-                            discountedPrice: 0,
-                            stock: 0,
-                          },
-                        ],
-                      }))
-                    }
-                    className="w-full"
-                  >
-                    Add Default Size
-                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
-        {/* Variant Image Gallery Modal */}
-        {/* This modal is no longer needed as variants are managed directly */}
-      </div>
-    </RichEditor>
+          {/* Variant Image Gallery Modal */}
+          {/* This modal is no longer needed as variants are managed directly */}
+        </div>
+      </RichEditor>
+    </div>
   );
 }
 

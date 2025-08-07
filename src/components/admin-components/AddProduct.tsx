@@ -174,6 +174,7 @@ export default function AddProductForm(_unused?: unknown) {
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [richEditorContent, setRichEditorContent] = useState<string>("");
 
   // Add state for default product color and size
   const [defaultColorName, setDefaultColorName] = useState<string>("");
@@ -757,726 +758,781 @@ export default function AddProductForm(_unused?: unknown) {
   const [quantityStep, setQuantityStep] = useState(1);
 
   return (
-    <RichEditor
-      content=""
-      handleSubmit={handleSubmit}
-      imageId={descriptionImageId}
-      pending={pending}
-      submitButtonText="Add Product"
-    >
-      {/* Variant Label Input */}
-      <div className="flex w-full flex-col space-y-2">
-        <Label className="text-base">
-          Variant Label (e.g. Size, Material, Length)
-        </Label>
-        <Input
-          type="text"
-          placeholder="Variant Label (e.g. Size, Material, Length)"
-          value={variantLabel}
-          onChange={(e) => setVariantLabel(e.target.value)}
-          style={{ width: "100%" }}
-        />
-      </div>
-      {/* Per Unit Text Input */}
-      <div className="flex w-full flex-col space-y-2">
-        <Label className="text-base">
-          Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)
-        </Label>
-        <Input
-          type="text"
-          placeholder="Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)"
-          value={perUnitText}
-          onChange={(e) => setPerUnitText(e.target.value)}
-          style={{ width: "100%" }}
-        />
-      </div>
-      {/* Default Product Color/Size */}
-      <div className="flex w-full flex-col space-y-2">
-        <Label className="text-base">Default Product Color (optional)</Label>
-        <Input
-          type="text"
-          placeholder="Color Name (e.g. Red, Sky Blue)"
-          value={defaultColorName}
-          onChange={(e) => setDefaultColorName(e.target.value)}
-          style={{ width: "100%" }}
-        />
-        <div className="mt-2 flex items-center gap-2">
-          <ColorPicker
-            color={defaultColorHex}
-            onChange={setDefaultColorHex}
-            hideInput={["rgb", "hsv"]}
+    <div className="relative pb-20">
+      <RichEditor
+        content=""
+        handleSubmit={handleSubmit}
+        imageId={descriptionImageId}
+        pending={pending}
+        submitButtonText="Add Product"
+        hideSubmitButton={true}
+        onContentChange={setRichEditorContent}
+      >
+        {/* Variant Label Input */}
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">
+            Variant Label (e.g. Size, Material, Length)
+          </Label>
+          <Input
+            type="text"
+            placeholder="Variant Label (e.g. Size, Material, Length)"
+            value={variantLabel}
+            onChange={(e) => setVariantLabel(e.target.value)}
+            style={{ width: "100%" }}
           />
-          <span
-            style={{
-              display: "inline-block",
-              width: 32,
-              height: 32,
-              backgroundColor: defaultColorHex.hex,
-              borderRadius: "50%",
-              border: "1px solid #ccc",
-            }}
-            aria-label={defaultColorName}
-            title={defaultColorName}
-          />
-          <span>
-            {defaultColorName} ({defaultColorHex.hex})
-          </span>
         </div>
-      </div>
-      {/* Default Product Size (optional) */}
-      <div className="flex w-full flex-col space-y-2">
-        <Label className="text-base">Default Product Size (optional)</Label>
-        <Input
-          type="text"
-          placeholder="Size"
-          value={defaultSize}
-          onChange={(e) => setDefaultSize(e.target.value)}
-          style={{ width: "100%" }}
-        />
-      </div>
-      {/* Variants Toggle */}
-      <div className="flex items-center gap-2">
-        <Switch checked={enableVariants} onCheckedChange={setEnableVariants} />
-        <Label className="text-base">Enable color/size/image variants</Label>
-      </div>
+        {/* Per Unit Text Input */}
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">
+            Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)
+          </Label>
+          <Input
+            type="text"
+            placeholder="Per Unit Text (e.g. PER PIECE, PER KG, PER ROLL, PER POUND)"
+            value={perUnitText}
+            onChange={(e) => setPerUnitText(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </div>
+        {/* Default Product Color/Size */}
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">Default Product Color (optional)</Label>
+          <Input
+            type="text"
+            placeholder="Color Name (e.g. Red, Sky Blue)"
+            value={defaultColorName}
+            onChange={(e) => setDefaultColorName(e.target.value)}
+            style={{ width: "100%" }}
+          />
+          <div className="mt-2 flex items-center gap-2">
+            <ColorPicker
+              color={defaultColorHex}
+              onChange={setDefaultColorHex}
+              hideInput={["rgb", "hsv"]}
+            />
+            <span
+              style={{
+                display: "inline-block",
+                width: 32,
+                height: 32,
+                backgroundColor: defaultColorHex.hex,
+                borderRadius: "50%",
+                border: "1px solid #ccc",
+              }}
+              aria-label={defaultColorName}
+              title={defaultColorName}
+            />
+            <span>
+              {defaultColorName} ({defaultColorHex.hex})
+            </span>
+          </div>
+        </div>
+        {/* Default Product Size (optional) */}
+        <div className="flex w-full flex-col space-y-2">
+          <Label className="text-base">Default Product Size (optional)</Label>
+          <Input
+            type="text"
+            placeholder="Size"
+            value={defaultSize}
+            onChange={(e) => setDefaultSize(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </div>
+        {/* Variants Toggle */}
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={enableVariants}
+            onCheckedChange={setEnableVariants}
+          />
+          <Label className="text-base">Enable color/size/image variants</Label>
+        </div>
 
-      <div className="grid grid-cols-1 gap-x-3 gap-y-4 p-2 md:p-0">
-        {/* Variants UI */}
-        {enableVariants && (
-          <div className="flex flex-col gap-4 rounded-md border bg-gray-50 p-3">
-            <Label className="text-base">Product Variants</Label>
-            {/* Color Groups */}
-            {colorGroups.map((group, groupIdx) => (
-              <ColorGroup
-                key={group.imageId}
-                group={group}
-                groupIdx={groupIdx}
-                onUpdate={(groupIdx, updates) => {
-                  setColorGroups((prev) =>
-                    prev.map((g, i) =>
-                      i === groupIdx ? { ...g, ...updates } : g,
-                    ),
-                  );
-                }}
-                onRemove={(groupIdx) => {
-                  setColorGroups((prev) =>
-                    prev.filter((_, i) => i !== groupIdx),
-                  );
-                }}
-                showImageGallery={showImageGallery}
-                setShowImageGallery={setShowImageGallery}
-              />
-            ))}
-            <Button
-              type="button"
-              onClick={() =>
-                setColorGroups((prev) => [
-                  ...prev,
-                  {
-                    colorName: "",
-                    colorHex: "#ffffff",
-                    imageId: uuid(),
-                    images: [],
-                    sizes: [],
-                  },
-                ])
-              }
-              className="w-full"
-            >
-              Add Color
-            </Button>
+        <div className="grid grid-cols-1 gap-x-3 gap-y-4 p-2 md:p-0">
+          {/* Variants UI */}
+          {enableVariants && (
+            <div className="flex flex-col gap-4 rounded-md border bg-gray-50 p-3">
+              <Label className="text-base">Product Variants</Label>
+              {/* Color Groups */}
+              {colorGroups.map((group, groupIdx) => (
+                <ColorGroup
+                  key={group.imageId}
+                  group={group}
+                  groupIdx={groupIdx}
+                  onUpdate={(groupIdx, updates) => {
+                    setColorGroups((prev) =>
+                      prev.map((g, i) =>
+                        i === groupIdx ? { ...g, ...updates } : g,
+                      ),
+                    );
+                  }}
+                  onRemove={(groupIdx) => {
+                    setColorGroups((prev) =>
+                      prev.filter((_, i) => i !== groupIdx),
+                    );
+                  }}
+                  showImageGallery={showImageGallery}
+                  setShowImageGallery={setShowImageGallery}
+                />
+              ))}
+              <Button
+                type="button"
+                onClick={() =>
+                  setColorGroups((prev) => [
+                    ...prev,
+                    {
+                      colorName: "",
+                      colorHex: "#ffffff",
+                      imageId: uuid(),
+                      images: [],
+                      sizes: [],
+                    },
+                  ])
+                }
+                className="w-full"
+              >
+                Add Color
+              </Button>
 
-            {/* Default Group (variants without colors) */}
-            {(defaultGroup.sizes.length > 0 || colorGroups.length === 0) && (
-              <div className="mt-4 border-t pt-4">
-                <Label className="text-base">Default Variants (No Color)</Label>
-                <div className="mt-2">
-                  <div className="mb-2 space-y-2">
+              {/* Default Group (variants without colors) */}
+              {(defaultGroup.sizes.length > 0 || colorGroups.length === 0) && (
+                <div className="mt-4 border-t pt-4">
+                  <Label className="text-base">
+                    Default Variants (No Color)
+                  </Label>
+                  <div className="mt-2">
+                    <div className="mb-2 space-y-2">
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          setShowImageGallery(defaultGroup.imageId)
+                        }
+                        className="w-full"
+                      >
+                        Select Images for Default Variants
+                      </Button>
+                      {defaultGroup.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-sm text-gray-600">
+                            Selected images: {defaultGroup.images.length}
+                          </span>
+                          {defaultGroup.images.slice(0, 3).map((img, idx) => (
+                            <div key={idx} className="relative">
+                              <Image
+                                src={img}
+                                alt="Default variant"
+                                width={48}
+                                height={48}
+                                className="h-12 w-12 rounded object-cover"
+                              />
+                            </div>
+                          ))}
+                          {defaultGroup.images.length > 3 && (
+                            <span className="text-sm text-gray-500">
+                              +{defaultGroup.images.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {showImageGallery === defaultGroup.imageId && (
+                      <DndImageGallery
+                        imageId={defaultGroup.imageId}
+                        onClose={setShowImageGallery}
+                        variantMode={true}
+                        selectedImages={defaultGroup.images}
+                        onImageSelect={(imageSrc, selected) => {
+                          if (selected) {
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              images: [...prev.images, imageSrc],
+                            }));
+                          } else {
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              images: prev.images.filter(
+                                (img) => img !== imageSrc,
+                              ),
+                            }));
+                          }
+                        }}
+                        colorName="Default Variants"
+                      />
+                    )}
+                    {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
+                      <div
+                        key={sizeIdx}
+                        className="mb-2 flex items-center gap-2"
+                      >
+                        <Input
+                          type="text"
+                          placeholder="Size"
+                          value={sizeObj.size}
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? { ...s, size: e.target.value }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-24"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Price"
+                          value={sizeObj.price === 0 ? "" : sizeObj.price}
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? { ...s, price: Number(e.target.value) }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-24"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Discounted Price"
+                          value={
+                            sizeObj.discountedPrice === 0
+                              ? ""
+                              : sizeObj.discountedPrice
+                          }
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? {
+                                      ...s,
+                                      discountedPrice: Number(e.target.value),
+                                    }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-32"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Stock"
+                          value={sizeObj.stock === 0 ? "" : sizeObj.stock}
+                          onChange={(e) =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.map((s, si) =>
+                                si === sizeIdx
+                                  ? { ...s, stock: Number(e.target.value) }
+                                  : s,
+                              ),
+                            }))
+                          }
+                          className="w-20"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() =>
+                            setDefaultGroup((prev) => ({
+                              ...prev,
+                              sizes: prev.sizes.filter(
+                                (_, si) => si !== sizeIdx,
+                              ),
+                            }))
+                          }
+                        >
+                          Remove Size
+                        </Button>
+                      </div>
+                    ))}
                     <Button
                       type="button"
-                      onClick={() => setShowImageGallery(defaultGroup.imageId)}
+                      onClick={() =>
+                        setDefaultGroup((prev) => ({
+                          ...prev,
+                          sizes: [
+                            ...prev.sizes,
+                            {
+                              size: "",
+                              price: 0,
+                              discountedPrice: 0,
+                              stock: 0,
+                            },
+                          ],
+                        }))
+                      }
                       className="w-full"
                     >
-                      Select Images for Default Variants
+                      Add Default Size
                     </Button>
-                    {defaultGroup.images.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-sm text-gray-600">
-                          Selected images: {defaultGroup.images.length}
-                        </span>
-                        {defaultGroup.images.slice(0, 3).map((img, idx) => (
-                          <div key={idx} className="relative">
-                            <Image
-                              src={img}
-                              alt="Default variant"
-                              width={48}
-                              height={48}
-                              className="h-12 w-12 rounded object-cover"
-                            />
-                          </div>
-                        ))}
-                        {defaultGroup.images.length > 3 && (
-                          <span className="text-sm text-gray-500">
-                            +{defaultGroup.images.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
-                  {showImageGallery === defaultGroup.imageId && (
-                    <DndImageGallery
-                      imageId={defaultGroup.imageId}
-                      onClose={setShowImageGallery}
-                      variantMode={true}
-                      selectedImages={defaultGroup.images}
-                      onImageSelect={(imageSrc, selected) => {
-                        if (selected) {
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            images: [...prev.images, imageSrc],
-                          }));
-                        } else {
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            images: prev.images.filter(
-                              (img) => img !== imageSrc,
-                            ),
-                          }));
-                        }
-                      }}
-                      colorName="Default Variants"
-                    />
-                  )}
-                  {defaultGroup.sizes.map((sizeObj, sizeIdx) => (
-                    <div key={sizeIdx} className="mb-2 flex items-center gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Size"
-                        value={sizeObj.size}
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? { ...s, size: e.target.value }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={sizeObj.price === 0 ? "" : sizeObj.price}
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? { ...s, price: Number(e.target.value) }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Discounted Price"
-                        value={
-                          sizeObj.discountedPrice === 0
-                            ? ""
-                            : sizeObj.discountedPrice
-                        }
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? {
-                                    ...s,
-                                    discountedPrice: Number(e.target.value),
-                                  }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-32"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Stock"
-                        value={sizeObj.stock === 0 ? "" : sizeObj.stock}
-                        onChange={(e) =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.map((s, si) =>
-                              si === sizeIdx
-                                ? { ...s, stock: Number(e.target.value) }
-                                : s,
-                            ),
-                          }))
-                        }
-                        className="w-20"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() =>
-                          setDefaultGroup((prev) => ({
-                            ...prev,
-                            sizes: prev.sizes.filter((_, si) => si !== sizeIdx),
-                          }))
-                        }
-                      >
-                        Remove Size
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      setDefaultGroup((prev) => ({
-                        ...prev,
-                        sizes: [
-                          ...prev.sizes,
-                          {
-                            size: "",
-                            price: 0,
-                            discountedPrice: 0,
-                            stock: 0,
-                          },
-                        ],
-                      }))
-                    }
-                    className="w-full"
-                  >
-                    Add Default Size
-                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
-        {/* Product Title - moved here to be after variants */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Product Title</Label>
-          <Input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={handleTitleChange}
-            className={errors.title ? "border-red-500" : ""}
-            style={{ width: "100%" }}
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-500">{errors.title}</p>
-          )}
-        </div>
-        {/* Slug */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Slug</Label>
-          <Input
-            type="text"
-            placeholder="Slug"
-            value={slug}
-            onChange={handleSlugChange}
-            className={errors.slug ? "border-red-500" : ""}
-            style={{ width: "100%" }}
-          />
-          {errors.slug && (
-            <p className="mt-1 text-sm text-red-500">{errors.slug}</p>
-          )}
-        </div>
-        {/* Short Description */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Short Description</Label>
-          <Textarea
-            placeholder="Short Description"
-            value={shortDescription}
-            onChange={handleShortDescriptionChange}
-            className={errors.shortDescription ? "border-red-500" : ""}
-            style={{ width: "100%" }}
-          />
-          {errors.shortDescription && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.shortDescription}
-            </p>
-          )}
-        </div>
-        {/* Category */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base font-medium">Category</Label>
-          <CategorySelector
-            setAttributes={setAttributes}
-            setCategoryId={setCategoryId}
-            categories={categories}
-            placeholder="Select Category"
-            selectedCategoriesRef={selectedCategoriesRef}
-            onCategoryChange={(level) => {
-              selectedCategoriesRef.current =
-                selectedCategoriesRef.current.slice(0, level + 1);
-            }}
-          />
-          {errors.categoryId && (
-            <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
-          )}
-        </div>
-        {/* Price */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Price</Label>
-          <Input
-            type="number"
-            placeholder="Price"
-            value={price === 0 ? "" : price}
-            onChange={handlePriceChange}
-            className={errors.price ? "border-red-500" : ""}
-            style={{ width: "100%" }}
-          />
-          {errors.price && (
-            <p className="mt-1 text-sm text-red-500">{errors.price}</p>
-          )}
-        </div>
-        {/* Discounted Price */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Discounted Price</Label>
-          <Input
-            type="number"
-            placeholder="Discounted Price"
-            value={discountedPrice === 0 ? "" : discountedPrice}
-            onChange={handleDiscountedPriceChange}
-            style={{ width: "100%" }}
-          />
-        </div>
-        {/* Stock */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Stock</Label>
-          <Input
-            type="number"
-            placeholder="Stock"
-            value={stock === 0 ? "" : stock}
-            onChange={handleStockChange}
-            className={errors.stock ? "border-red-500" : ""}
-            style={{ width: "100%" }}
-          />
-          {errors.stock && (
-            <p className="mt-1 text-sm text-red-500">{errors.stock}</p>
-          )}
-        </div>
-        {/* Brand */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Brand</Label>
-          {brandsLoading ? (
-            <div className="text-sm text-gray-500">Loading brands...</div>
-          ) : (
-            <Select
-              value={isCustomBrand ? "__custom__" : brand}
-              onValueChange={(value) => {
-                if (value === "__custom__") {
-                  setIsCustomBrand(true);
-                  setBrand("");
-                } else {
-                  setIsCustomBrand(false);
-                  setBrand(value);
-                }
-              }}
-            >
-              <SelectTrigger className={errors.brand ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select a brand or add new" />
-              </SelectTrigger>
-              <SelectContent>
-                {brands.filter(Boolean).map((b: string) => (
-                  <SelectItem key={b} value={b} className="w-full">
-                    {b}
-                  </SelectItem>
-                ))}
-                <SelectItem value="__custom__" className="w-full text-blue-600">
-                  Other / New Brand...
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-          {isCustomBrand && (
+          {/* Product Title - moved here to be after variants */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Product Title</Label>
             <Input
               type="text"
-              placeholder="Enter new brand name"
-              value={customBrand}
-              onChange={(e) => {
-                setCustomBrand(e.target.value);
-                setBrand(e.target.value);
-                setErrors((prev) => ({
-                  ...prev,
-                  brand: validateField("brand", e.target.value),
-                }));
-              }}
-              className={errors.brand ? "border-red-500" : ""}
+              placeholder="Title"
+              value={title}
+              onChange={handleTitleChange}
+              className={errors.title ? "border-red-500" : ""}
               style={{ width: "100%" }}
             />
-          )}
-          {errors.brand && (
-            <p className="mt-1 text-sm text-red-500">{errors.brand}</p>
-          )}
-        </div>
-        {/* Estimated Delivery Time */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Estimated Delivery Time (Days)</Label>
-          <Input
-            type="number"
-            placeholder="Delivery Time in Days"
-            min="1"
-            value={estimatedDeliveryTime ?? ""}
-            onChange={handleEstimatedDeliveryTimeChange}
-            style={{ width: "100%" }}
-          />
-        </div>
-        {/* Min Quantity */}
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Min Quantity</Label>
-          <Input
-            type="number"
-            placeholder="Min Quantity"
-            value={minQuantity}
-            min={1}
-            onChange={(e) => setMinQuantity(Number(e.target.value))}
-          />
-        </div>
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Max Quantity</Label>
-          <Input
-            type="number"
-            placeholder="Max Quantity (optional)"
-            value={maxQuantity ?? ""}
-            min={1}
-            onChange={(e) =>
-              setMaxQuantity(
-                e.target.value ? Number(e.target.value) : undefined,
-              )
-            }
-          />
-        </div>
-        <div className="flex w-full flex-col space-y-2">
-          <Label className="text-base">Quantity Step</Label>
-          <Input
-            type="number"
-            placeholder="Quantity Step"
-            value={quantityStep}
-            min={1}
-            onChange={(e) => setQuantityStep(Number(e.target.value))}
-          />
-        </div>
-        {/* Quantity Discount Table UI */}
-        <div className="my-4 flex flex-col space-y-2 rounded-md border border-gray-200 p-4">
-          <Label className="mb-2 text-base">Quantity Discounts</Label>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="px-2 py-1 text-left">Min QTY</th>
-                  <th className="px-2 py-1 text-left">Max QTY</th>
-                  <th className="px-2 py-1 text-left">Discount %</th>
-                  <th className="px-2 py-1"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {quantityDiscounts.map((row, idx) => (
-                  <tr key={idx}>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={1}
-                        value={row.minQty}
-                        onChange={(e) =>
-                          handleDiscountChange(
-                            idx,
-                            "minQty",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-20"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={row.minQty}
-                        value={row.maxQty}
-                        onChange={(e) =>
-                          handleDiscountChange(
-                            idx,
-                            "maxQty",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-20"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={row.discountPercent}
-                        onChange={(e) =>
-                          handleDiscountChange(
-                            idx,
-                            "discountPercent",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-20"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => handleRemoveDiscountRow(idx)}
-                        disabled={quantityDiscounts.length === 1}
-                      >
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-500">{errors.title}</p>
+            )}
           </div>
-          <Button
-            type="button"
-            onClick={handleAddDiscountRow}
-            className="mt-2 w-fit"
-          >
-            Add Discount Row
-          </Button>
-        </div>
-        {/* Images */}
-        <div className="mt-auto flex w-full flex-col gap-y-1">
-          <Label className="text-base">
-            Images
-            <span className="ml-2 text-xs text-gray-500">
-              (Recommended: 1000x1000px or larger, square)
-            </span>
-          </Label>
-          <Button
-            onClick={() => setShowImageGallery(imageId)}
-            className="w-full"
-          >
-            Show Image Gallery
-          </Button>
-          {showImageGallery && (
-            <DndImageGallery imageId={imageId} onClose={setShowImageGallery} />
-          )}
-        </div>
-        {/* Divider */}
-        <div className="col-span-1 my-2 border-b border-gray-200 md:col-span-2" />
-        {/* Category Attribute Fields */}
-        {attributes.length > 0 && (
-          <div className="col-span-1 mt-4 md:col-span-2">
-            <h3 className="mb-3 text-lg font-medium">Category Attributes</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {attributes.map((attr) => (
-                <div key={attr.name} className="flex w-full flex-col gap-2">
-                  <Label htmlFor={attr.name} className="text-base">
-                    {attr.name}{" "}
-                    {attr.required && <span className="text-red-500">*</span>}
-                  </Label>
-                  {attr.type === "select" && attr.options && (
-                    <Select
-                      value={
-                        attributeValues[attr.name]?.toString() === ""
-                          ? "__none__"
-                          : attributeValues[attr.name]?.toString()
-                      }
-                      onValueChange={(value) =>
-                        handleAttributeChange(
-                          attr.name,
-                          value === "__none__" ? "" : value,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={`Select ${attr.name}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">None</SelectItem>
-                        {attr.options.filter(Boolean).map((option) => (
-                          <SelectItem
-                            key={option}
-                            value={option}
-                            className="w-full"
-                          >
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              ))}
-            </div>
+          {/* Slug */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Slug</Label>
+            <Input
+              type="text"
+              placeholder="Slug"
+              value={slug}
+              onChange={handleSlugChange}
+              className={errors.slug ? "border-red-500" : ""}
+              style={{ width: "100%" }}
+            />
+            {errors.slug && (
+              <p className="mt-1 text-sm text-red-500">{errors.slug}</p>
+            )}
           </div>
-        )}
-        {/* Divider */}
-        <div className="col-span-1 my-2 border-b border-gray-200 md:col-span-2" />
-        {/* Specifications */}
-        <div className="col-span-1 w-full md:col-span-2">
-          <Label className="text-base">Specifications</Label>
-          <div className="space-y-2">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-              modifiers={[restrictToVerticalAxis]}
-            >
-              <SortableContext
-                items={specifications.map((_, index) => `spec-${index}`)}
-                strategy={verticalListSortingStrategy}
-              >
-                {specifications.map((spec, index) => (
-                  <SortableSpecificationItem
-                    key={`spec-${index}`}
-                    id={`spec-${index}`}
-                    spec={spec}
-                    index={index}
-                    onChange={handleSpecificationChange}
-                    onRemove={handleRemoveSpecification}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-            <Button onClick={handleAddSpecification} className="w-full">
-              Add Specification
-            </Button>
-            <div className="mt-4">
-              <Label className="mb-1 block text-base">
-                Or paste/write specifications below (format: Key: Value per
-                line)
-              </Label>
-              <Textarea
-                placeholder={`Color: Red
-Size: Large
-Material: Cotton`}
-                value={specTextContent}
-                onChange={(e) => setSpecTextContent(e.target.value)}
-                className="min-h-[100px] w-full"
-              />
-              <Button
-                className="mt-2 w-full"
-                type="button"
-                onClick={() => {
-                  addSpecsFromRichEditor(specTextContent);
-                  setSpecTextContent("");
+          {/* Short Description */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Short Description</Label>
+            <Textarea
+              placeholder="Short Description"
+              value={shortDescription}
+              onChange={handleShortDescriptionChange}
+              className={errors.shortDescription ? "border-red-500" : ""}
+              style={{ width: "100%" }}
+            />
+            {errors.shortDescription && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.shortDescription}
+              </p>
+            )}
+          </div>
+          {/* Category */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base font-medium">Category</Label>
+            <CategorySelector
+              setAttributes={setAttributes}
+              setCategoryId={setCategoryId}
+              categories={categories}
+              placeholder="Select Category"
+              selectedCategoriesRef={selectedCategoriesRef}
+              onCategoryChange={(level) => {
+                selectedCategoriesRef.current =
+                  selectedCategoriesRef.current.slice(0, level + 1);
+              }}
+            />
+            {errors.categoryId && (
+              <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
+            )}
+          </div>
+          {/* Price */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Price</Label>
+            <Input
+              type="number"
+              placeholder="Price"
+              value={price === 0 ? "" : price}
+              onChange={handlePriceChange}
+              className={errors.price ? "border-red-500" : ""}
+              style={{ width: "100%" }}
+            />
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-500">{errors.price}</p>
+            )}
+          </div>
+          {/* Discounted Price */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Discounted Price</Label>
+            <Input
+              type="number"
+              placeholder="Discounted Price"
+              value={discountedPrice === 0 ? "" : discountedPrice}
+              onChange={handleDiscountedPriceChange}
+              style={{ width: "100%" }}
+            />
+          </div>
+          {/* Stock */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Stock</Label>
+            <Input
+              type="number"
+              placeholder="Stock"
+              value={stock === 0 ? "" : stock}
+              onChange={handleStockChange}
+              className={errors.stock ? "border-red-500" : ""}
+              style={{ width: "100%" }}
+            />
+            {errors.stock && (
+              <p className="mt-1 text-sm text-red-500">{errors.stock}</p>
+            )}
+          </div>
+          {/* Brand */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Brand</Label>
+            {brandsLoading ? (
+              <div className="text-sm text-gray-500">Loading brands...</div>
+            ) : (
+              <Select
+                value={isCustomBrand ? "__custom__" : brand}
+                onValueChange={(value) => {
+                  if (value === "__custom__") {
+                    setIsCustomBrand(true);
+                    setBrand("");
+                  } else {
+                    setIsCustomBrand(false);
+                    setBrand(value);
+                  }
                 }}
               >
-                Add from Textarea
+                <SelectTrigger className={errors.brand ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select a brand or add new" />
+                </SelectTrigger>
+                <SelectContent>
+                  {brands.filter(Boolean).map((b: string) => (
+                    <SelectItem key={b} value={b} className="w-full">
+                      {b}
+                    </SelectItem>
+                  ))}
+                  <SelectItem
+                    value="__custom__"
+                    className="w-full text-blue-600"
+                  >
+                    Other / New Brand...
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {isCustomBrand && (
+              <Input
+                type="text"
+                placeholder="Enter new brand name"
+                value={customBrand}
+                onChange={(e) => {
+                  setCustomBrand(e.target.value);
+                  setBrand(e.target.value);
+                  setErrors((prev) => ({
+                    ...prev,
+                    brand: validateField("brand", e.target.value),
+                  }));
+                }}
+                className={errors.brand ? "border-red-500" : ""}
+                style={{ width: "100%" }}
+              />
+            )}
+            {errors.brand && (
+              <p className="mt-1 text-sm text-red-500">{errors.brand}</p>
+            )}
+          </div>
+          {/* Estimated Delivery Time */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Estimated Delivery Time (Days)</Label>
+            <Input
+              type="number"
+              placeholder="Delivery Time in Days"
+              min="1"
+              value={estimatedDeliveryTime ?? ""}
+              onChange={handleEstimatedDeliveryTimeChange}
+              style={{ width: "100%" }}
+            />
+          </div>
+          {/* Min Quantity */}
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Min Quantity</Label>
+            <Input
+              type="number"
+              placeholder="Min Quantity"
+              value={minQuantity}
+              min={1}
+              onChange={(e) => setMinQuantity(Number(e.target.value))}
+            />
+          </div>
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Max Quantity</Label>
+            <Input
+              type="number"
+              placeholder="Max Quantity (optional)"
+              value={maxQuantity ?? ""}
+              min={1}
+              onChange={(e) =>
+                setMaxQuantity(
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+            />
+          </div>
+          <div className="flex w-full flex-col space-y-2">
+            <Label className="text-base">Quantity Step</Label>
+            <Input
+              type="number"
+              placeholder="Quantity Step"
+              value={quantityStep}
+              min={1}
+              onChange={(e) => setQuantityStep(Number(e.target.value))}
+            />
+          </div>
+          {/* Quantity Discount Table UI */}
+          <div className="my-4 flex flex-col space-y-2 rounded-md border border-gray-200 p-4">
+            <Label className="mb-2 text-base">Quantity Discounts</Label>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-2 py-1 text-left">Min QTY</th>
+                    <th className="px-2 py-1 text-left">Max QTY</th>
+                    <th className="px-2 py-1 text-left">Discount %</th>
+                    <th className="px-2 py-1"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quantityDiscounts.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={1}
+                          value={row.minQty}
+                          onChange={(e) =>
+                            handleDiscountChange(
+                              idx,
+                              "minQty",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-20"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={row.minQty}
+                          value={row.maxQty}
+                          onChange={(e) =>
+                            handleDiscountChange(
+                              idx,
+                              "maxQty",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-20"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={row.discountPercent}
+                          onChange={(e) =>
+                            handleDiscountChange(
+                              idx,
+                              "discountPercent",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-20"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => handleRemoveDiscountRow(idx)}
+                          disabled={quantityDiscounts.length === 1}
+                        >
+                          Remove
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Button
+              type="button"
+              onClick={handleAddDiscountRow}
+              className="mt-2 w-fit"
+            >
+              Add Discount Row
+            </Button>
+          </div>
+          {/* Images */}
+          <div className="mt-auto flex w-full flex-col gap-y-1">
+            <Label className="text-base">
+              Images
+              <span className="ml-2 text-xs text-gray-500">
+                (Recommended: 1000x1000px or larger, square)
+              </span>
+            </Label>
+            <Button
+              onClick={() => setShowImageGallery(imageId)}
+              className="w-full"
+            >
+              Show Image Gallery
+            </Button>
+            {showImageGallery && (
+              <DndImageGallery
+                imageId={imageId}
+                onClose={setShowImageGallery}
+              />
+            )}
+          </div>
+          {/* Divider */}
+          <div className="col-span-1 my-2 border-b border-gray-200 md:col-span-2" />
+          {/* Category Attribute Fields */}
+          {attributes.length > 0 && (
+            <div className="col-span-1 mt-4 md:col-span-2">
+              <h3 className="mb-3 text-lg font-medium">Category Attributes</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {attributes.map((attr) => (
+                  <div key={attr.name} className="flex w-full flex-col gap-2">
+                    <Label htmlFor={attr.name} className="text-base">
+                      {attr.name}{" "}
+                      {attr.required && <span className="text-red-500">*</span>}
+                    </Label>
+                    {attr.type === "select" && attr.options && (
+                      <Select
+                        value={
+                          attributeValues[attr.name]?.toString() === ""
+                            ? "__none__"
+                            : attributeValues[attr.name]?.toString()
+                        }
+                        onValueChange={(value) =>
+                          handleAttributeChange(
+                            attr.name,
+                            value === "__none__" ? "" : value,
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={`Select ${attr.name}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {attr.options.filter(Boolean).map((option) => (
+                            <SelectItem
+                              key={option}
+                              value={option}
+                              className="w-full"
+                            >
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Divider */}
+          <div className="col-span-1 my-2 border-b border-gray-200 md:col-span-2" />
+          {/* Specifications */}
+          <div className="col-span-1 w-full md:col-span-2">
+            <Label className="text-base">Specifications</Label>
+            <div className="space-y-2">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <SortableContext
+                  items={specifications.map((_, index) => `spec-${index}`)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {specifications.map((spec, index) => (
+                    <SortableSpecificationItem
+                      key={`spec-${index}`}
+                      id={`spec-${index}`}
+                      spec={spec}
+                      index={index}
+                      onChange={handleSpecificationChange}
+                      onRemove={handleRemoveSpecification}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              <Button onClick={handleAddSpecification} className="w-full">
+                Add Specification
               </Button>
+              <div className="mt-4">
+                <Label className="mb-1 block text-base">
+                  Or paste/write specifications below (format: Key: Value per
+                  line)
+                </Label>
+                <Textarea
+                  placeholder={`Color: Red
+Size: Large
+Material: Cotton`}
+                  value={specTextContent}
+                  onChange={(e) => setSpecTextContent(e.target.value)}
+                  className="min-h-[100px] w-full"
+                />
+                <Button
+                  className="mt-2 w-full"
+                  type="button"
+                  onClick={() => {
+                    addSpecsFromRichEditor(specTextContent);
+                    setSpecTextContent("");
+                  }}
+                >
+                  Add from Textarea
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+      </RichEditor>
+
+      {/* Floating Save Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          onClick={() => void handleSubmit(richEditorContent)}
+          disabled={pending}
+          className="shadow-lg transition-shadow duration-200 hover:shadow-xl"
+        >
+          {pending ? (
+            <>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              Adding Product...
+            </>
+          ) : (
+            <>
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Add Product
+            </>
+          )}
+        </Button>
       </div>
-    </RichEditor>
+    </div>
   );
 }
 
