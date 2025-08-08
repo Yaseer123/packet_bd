@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/admin-components/Navbar";
-import AdminRouteGuard from "@/components/admin-components/AdminRouteGuard";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -16,27 +15,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     if (!session) {
       // Not authenticated, redirect to login
-      console.log("No session found, redirecting to login");
       router.push("/login");
       return;
     }
 
     if (session.user.role !== "ADMIN") {
       // Not admin, redirect to home
-      console.log("User is not admin, redirecting to home:", {
-        userId: session.user.id,
-        userEmail: session.user.email,
-        userRole: session.user.role
-      });
       router.push("/");
       return;
     }
-
-    console.log("Admin session verified:", {
-      userId: session.user.id,
-      userEmail: session.user.email,
-      userRole: session.user.role
-    });
   }, [session, status, router]);
 
   // Show loading while checking authentication
@@ -58,11 +45,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <AdminRouteGuard>
-      <div className="bg-white">
-        <Navbar />
-        {children}
-      </div>
-    </AdminRouteGuard>
+    <div className="bg-white">
+      <Navbar />
+      {children}
+    </div>
   );
 }
