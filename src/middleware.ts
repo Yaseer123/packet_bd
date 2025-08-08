@@ -14,6 +14,14 @@ export default auth(async (req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
 
+  // Redirect www to non-www
+  if (nextUrl.hostname.startsWith("www.")) {
+    const newUrl = new URL(nextUrl.pathname + nextUrl.search, nextUrl);
+    newUrl.hostname = nextUrl.hostname.replace("www.", "");
+    newUrl.protocol = nextUrl.protocol;
+    return NextResponse.redirect(newUrl, 301);
+  }
+
   const isApiAuthRoutes = nextUrl.pathname.startsWith(apiAuthPrefix);
   // const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoutes = authRoutes.includes(nextUrl.pathname);
