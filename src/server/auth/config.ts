@@ -3,6 +3,7 @@ import { getUserById } from "@/utils/getUser";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { env } from "@/env";
 
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -49,6 +50,8 @@ declare module "next-auth/jwt" {
 export const authConfig = {
   providers: [
     GoogleProvider({
+      clientId: env.AUTH_GOOGLE_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
