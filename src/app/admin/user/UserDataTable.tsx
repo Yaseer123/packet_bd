@@ -7,15 +7,12 @@ import { api } from "@/trpc/react";
 export default function UserDataTable() {
   const { data = [], isLoading } = api.user.getAll.useQuery();
 
-  if (isLoading) {
-    return <div>Loading users...</div>;
-  }
-
   return (
     <DataTable
       columns={columns}
       data={data}
       searchPlaceHolder="Filter users by name"
+      isLoading={isLoading}
     />
   );
 }

@@ -64,6 +64,7 @@ interface DataTableProps<TData> {
   onSearch?: (searchTerm: string) => void;
   searchValue?: string;
   isSearching?: boolean;
+  isLoading?: boolean;
 }
 
 type DraggableTableRowProps<TData> = {
@@ -125,6 +126,7 @@ export function DataTable<TData>({
   onSearch,
   searchValue,
   isSearching,
+  isLoading = false,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -220,15 +222,29 @@ export function DataTable<TData>({
                   ))}
                 </TableHeader>
                 <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <DraggableTableRow<TData>
-                        key={row.id}
-                        row={row}
-                        rowId={String(row.original[rowIdKey])}
-                        dragHandleCellIndex={dragHandleCellIndex}
-                      />
-                    ))
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                          Loading products...
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : table.getRowModel().rows?.length ? (
+                    table
+                      .getRowModel()
+                      .rows.map((row) => (
+                        <DraggableTableRow<TData>
+                          key={row.id}
+                          row={row}
+                          rowId={String(row.original[rowIdKey])}
+                          dragHandleCellIndex={dragHandleCellIndex}
+                        />
+                      ))
                   ) : (
                     <TableRow>
                       <TableCell
@@ -264,7 +280,19 @@ export function DataTable<TData>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                      Loading products...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
