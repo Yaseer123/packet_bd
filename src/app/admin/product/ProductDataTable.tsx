@@ -94,6 +94,7 @@ export default function ProductDataTable() {
       onSearch={handleSearch}
       searchValue={search}
       isSearching={isLoading && search !== debouncedSearch}
+      isLoading={isLoading}
     />
   );
 }
