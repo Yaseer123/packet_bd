@@ -367,7 +367,10 @@ export default function EditProductForm({ productId }: { productId: string }) {
     {
       // Refetch on mount to ensure we have the latest data
       refetchOnMount: true,
-      // Removed refetchOnWindowFocus to prevent form state loss when switching tabs
+      // Disable refetch on window focus to prevent form state loss when switching tabs
+      refetchOnWindowFocus: false,
+      // Disable refetch on reconnect to prevent form state loss
+      refetchOnReconnect: false,
     },
   );
 
@@ -550,8 +553,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
       await utils.product.getProductByIdAdmin.invalidate({ id: productId });
       // Also invalidate the product list cache
       await utils.product.getAll.invalidate();
-      // Refetch the current product data to ensure we have the latest
-      await refetch();
+      // Don't refetch since we're navigating away anyway
       router.push("/admin/product");
     },
     onError: (error: { message: string }) => {
@@ -923,9 +925,12 @@ export default function EditProductForm({ productId }: { productId: string }) {
   const { data: brands = [], isLoading: brandsLoading } =
     api.product.getBrandsByCategory.useQuery({});
 
+  // Add a ref to track if we've already initialized
+  const isInitialized = useRef(false);
+
   // Update local state when product data changes (e.g., after refetch)
   useEffect(() => {
-    if (product) {
+    if (product && !isInitialized.current) {
       setTitle(product.title ?? "");
       setShortDescription(product.shortDescription ?? "");
       setPrice(product.price ?? 0);
@@ -1068,6 +1073,9 @@ export default function EditProductForm({ productId }: { productId: string }) {
           sizes: [],
         });
       }
+
+      // Mark as initialized - this prevents form reset on subsequent data changes
+      isInitialized.current = true;
     }
   }, [product, setDefaultColorHex]);
 
