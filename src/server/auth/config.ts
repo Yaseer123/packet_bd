@@ -100,6 +100,7 @@ export const authConfig = {
   pages: {
     signIn: "/login",
   },
+  debug: process.env.NODE_ENV === "development",
   callbacks: {
     // async authorized({ auth, request }) {
     //   console.log(auth?.user.role);
@@ -120,6 +121,19 @@ export const authConfig = {
 
       if (token.role) {
         session.user.role = token.role;
+      } else {
+        // Fallback: try to get role from database if not in token
+        try {
+          if (token.sub) {
+            const user = await getUserById(token.sub);
+            if (user) {
+              session.user.role = user.role;
+              session.user.emailVerified = user.emailVerified;
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user in session callback:", error);
+        }
       }
 
       if (token.emailVerified) {
@@ -135,19 +149,29 @@ export const authConfig = {
       return session;
     },
 
-    async jwt({ token }) {
-      if (!token.sub) {
+    async jwt({ token, user, trigger }) {
+      // If user is provided (during sign in), set the role and emailVerified
+      if (user) {
+        token.role = user.role;
+        token.emailVerified = user.emailVerified;
         return token;
       }
 
-      const existingUser = await getUserById(token.sub);
-
-      if (!existingUser) {
-        return token;
+      // For subsequent requests, try to get user data from database
+      if (token.sub) {
+        try {
+          const existingUser = await getUserById(token.sub);
+          if (existingUser) {
+            token.role = existingUser.role;
+            token.emailVerified = existingUser.emailVerified;
+          } else {
+            console.warn("User not found in database for token.sub:", token.sub);
+          }
+        } catch (error) {
+          console.error("Error fetching user in JWT callback:", error);
+          // Don't fail the request, just continue with existing token
+        }
       }
-
-      token.role = existingUser.role;
-      token.emailVerified = existingUser.emailVerified;
 
       return token;
     },

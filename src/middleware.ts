@@ -55,9 +55,29 @@ export default auth(async (req) => {
   }
 
   if (isAdminRoutes) {
+    console.log("Admin route accessed:", {
+      pathname: nextUrl.pathname,
+      isLoggedIn,
+      userRole: req.auth?.user?.role,
+      userId: req.auth?.user?.id,
+      userEmail: req.auth?.user?.email,
+      authUser: req.auth?.user
+    });
+    
     if (isLoggedIn && req.auth?.user?.role === "ADMIN") {
+      console.log("Admin access granted");
       return NextResponse.next();
     }
+    
+    // Debug logging for admin route access issues
+    console.log("Admin route access denied:", {
+      pathname: nextUrl.pathname,
+      isLoggedIn,
+      userRole: req.auth?.user?.role,
+      userId: req.auth?.user?.id,
+      userEmail: req.auth?.user?.email
+    });
+    
     const loginUrl = new URL(DEFAULT_LOGIN_REDIRECT, nextUrl);
     loginUrl.searchParams.set("redirect", nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
