@@ -109,7 +109,7 @@ export async function GET() {
       const categoryName = getCategoryName(product);
 
       return [
-        product.sku ?? product.id, // id - Use SKU as primary identifier
+        product.productCode ?? product.id, // id - Use numeric productCode for Meta feed
         cleanText(product.title), // title
         cleanText(product.shortDescription ?? product.description), // description
         availability, // availability
@@ -123,7 +123,7 @@ export async function GET() {
         product.stock?.toString() ?? "1", // quantity_to_sell_on_facebook
         product.discountedPrice ? `${product.discountedPrice} BDT` : "", // sale_price
         "", // sale_price_effective_date
-        product.sku ?? product.id, // item_group_id - Same as product ID to group variants
+        product.productCode ?? product.id, // item_group_id - Same as product ID to group variants
         "", // gender
         product.defaultColor ?? "", // color
         product.defaultSize ?? "", // size
@@ -132,7 +132,7 @@ export async function GET() {
         "", // pattern
         "BD:Ground:0.0 BDT", // shipping (free shipping in Bangladesh)
         "", // shipping_weight
-        product.sku ?? "", // gtin
+        product.productCode ?? "", // gtin
         "", // video[0].url
         "", // video[0].tag[0]
         product.featured ? "Featured" : "", // product_tags[0]
