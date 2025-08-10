@@ -136,6 +136,8 @@ function ColorGroup({
   onRemove,
   onShowImageGallery,
   showImageGallery,
+  mainProductImages, // Add this prop
+  mainImageId, // Add this prop
 }: {
   group: VariantGroup;
   groupIdx: number;
@@ -143,6 +145,8 @@ function ColorGroup({
   onRemove: (index: number) => void;
   onShowImageGallery: (imageId: string) => void;
   showImageGallery: string;
+  mainProductImages: string[]; // Add this prop
+  mainImageId: string; // Add this prop
 }) {
   const [color, setColor] = useColor(group.colorHex || "#ffffff");
 
@@ -212,7 +216,8 @@ function ColorGroup({
         {group.images.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <span className="text-sm text-gray-600">
-              Selected images: {group.images.length}
+              Selected images: {group.images.length} of{" "}
+              {mainProductImages.length} available
             </span>
             {group.images.slice(0, 3).map((img, idx) => (
               <div key={idx} className="relative">
@@ -235,7 +240,7 @@ function ColorGroup({
       </div>
       {showImageGallery === group.imageId && (
         <DndImageGallery
-          imageId={group.imageId}
+          imageId={mainImageId} // Always use main product imageId
           onClose={onShowImageGallery}
           variantMode={true}
           selectedImages={group.images}
@@ -407,6 +412,9 @@ export default function EditProductForm({ productId }: { productId: string }) {
   const { loadImages, images } = useProductImageStore();
   const [showImageGallery, setShowImageGallery] = useState("");
 
+  // Get main product images for variants to select from
+  const mainProductImages = images.map((image) => image.src);
+
   // Add state for rich editor content
   const [richEditorContent, setRichEditorContent] = useState("");
 
@@ -519,13 +527,15 @@ export default function EditProductForm({ productId }: { productId: string }) {
 
   const handleShowImageGallery = (state: string) => {
     if (state) {
-      // Clear previous images when opening gallery
       setShowImageGallery(state);
 
-      // Load images for the new gallery
+      // For variants, always load the main product images (imageId) instead of variant-specific images
+      const targetImageId = imageId; // Always use main product imageId
+
       void (async () => {
         try {
-          await loadImages(state, product?.images ?? []);
+          // Load main product images for all variant galleries
+          await loadImages(targetImageId);
         } catch (error) {
           console.error("Failed to load images for gallery:", error);
         }
@@ -1672,6 +1682,8 @@ export default function EditProductForm({ productId }: { productId: string }) {
                   onRemove={handleRemoveVariant}
                   onShowImageGallery={handleShowImageGallery}
                   showImageGallery={showImageGallery}
+                  mainProductImages={mainProductImages}
+                  mainImageId={imageId}
                 />
               ))}
               <Button
@@ -1713,7 +1725,8 @@ export default function EditProductForm({ productId }: { productId: string }) {
                       {defaultGroup.images.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           <span className="text-sm text-gray-600">
-                            Selected images: {defaultGroup.images.length}
+                            Selected images: {defaultGroup.images.length} of{" "}
+                            {mainProductImages.length} available
                           </span>
                           {defaultGroup.images.slice(0, 3).map((img, idx) => (
                             <div key={idx} className="relative">
@@ -1736,7 +1749,7 @@ export default function EditProductForm({ productId }: { productId: string }) {
                     </div>
                     {showImageGallery === defaultGroup.imageId && (
                       <DndImageGallery
-                        imageId={defaultGroup.imageId}
+                        imageId={imageId} // Always use main product imageId
                         onClose={handleShowImageGallery}
                         variantMode={true}
                         selectedImages={defaultGroup.images}
