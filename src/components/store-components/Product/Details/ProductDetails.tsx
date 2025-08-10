@@ -167,6 +167,11 @@ export default function ProductDetails({
 }: {
   productMain: ProductWithCategory;
 }) {
+  // Push product data to GTM data layer immediately for faster event firing
+  if (typeof window !== "undefined" && window.dataLayer) {
+    pushProductToDataLayer(productMain);
+  }
+
   // Generate JSON-LD data for the current product
   const jsonLdData = {
     "@context": "https://schema.org/",
@@ -207,11 +212,6 @@ export default function ProductDetails({
 
   // Use the custom hook to manage JSON-LD
   useJsonLd(jsonLdData, productMain.slug);
-
-  // Push product data to GTM data layer for direct navigation
-  useEffect(() => {
-    pushProductToDataLayer(productMain);
-  }, [productMain]);
 
   console.log("Product :", productMain);
   SwiperCore.use([Navigation, Thumbs]);
