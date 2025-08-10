@@ -19,6 +19,7 @@ import { FileUploader } from "react-drag-drop-files";
 import { BiCheck, BiSolidTrash } from "react-icons/bi";
 import { IoMdClose } from "react-icons/io";
 import { IoCloudUploadOutline } from "react-icons/io5";
+import { toast } from "sonner";
 import { Button } from "../ui/button";
 
 export default function DndImageGallery({
@@ -39,6 +40,11 @@ export default function DndImageGallery({
   const { images, setImages, updateImages, removeOldImage } =
     useProductImageStore();
   const [isUploading, setIsUploading] = useState(false);
+  // State for tracking images selected for deletion
+  const [imagesSelectedForDeletion, setImagesSelectedForDeletion] = useState<
+    string[]
+  >([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleClose = () => {
     onClose("");
@@ -68,6 +74,71 @@ export default function DndImageGallery({
     }
   };
 
+  // Handle selection for deletion
+  const handleDeletionToggle = (imageSrc: string) => {
+    setImagesSelectedForDeletion((prev) =>
+      prev.includes(imageSrc)
+        ? prev.filter((src) => src !== imageSrc)
+        : [...prev, imageSrc],
+    );
+  };
+
+  // Select all images for deletion
+  const handleSelectAllForDeletion = () => {
+    setImagesSelectedForDeletion(images.map((img) => img.src));
+  };
+
+  // Deselect all images for deletion
+  const handleDeselectAllForDeletion = () => {
+    setImagesSelectedForDeletion([]);
+  };
+
+  // Delete selected images
+  const handleDeleteSelected = async () => {
+    if (imagesSelectedForDeletion.length === 0) {
+      toast.error("No images selected for deletion");
+      return;
+    }
+
+    if (
+      !confirm(
+        `Are you sure you want to delete ${imagesSelectedForDeletion.length} image(s)?`,
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const selectedImageObjects = images.filter((img) =>
+        imagesSelectedForDeletion.includes(img.src),
+      );
+
+      // Delete images from S3
+      for (const image of selectedImageObjects) {
+        if (image.id) {
+          console.log("Deleting image:", image.id);
+          await removeImage(image.id);
+          removeOldImage(image.src);
+        }
+      }
+
+      // Clear selection
+      setImagesSelectedForDeletion([]);
+
+      toast.success(
+        `Successfully deleted ${selectedImageObjects.length} image(s)`,
+      );
+    } catch (error) {
+      console.error("Failed to delete selected images:", error);
+      toast.error(
+        `Failed to delete images: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div
       tabIndex={-1}
@@ -94,6 +165,21 @@ export default function DndImageGallery({
             </p>
             <p className="text-sm text-blue-600">
               Selected: {selectedImages.length} images
+            </p>
+          </div>
+        )}
+
+        {/* Deletion mode header */}
+        {!variantMode && (
+          <div className="mb-4 rounded-md bg-red-50 p-3">
+            <h3 className="text-lg font-semibold text-red-900">
+              Image Management
+            </h3>
+            <p className="text-sm text-red-700">
+              Click on images to select/deselect them for deletion
+            </p>
+            <p className="text-sm text-red-600">
+              Selected for deletion: {imagesSelectedForDeletion.length} images
             </p>
           </div>
         )}
@@ -163,19 +249,40 @@ export default function DndImageGallery({
                   image={image}
                   variantMode={variantMode}
                   isSelected={selectedImages.includes(image.src)}
+                  isSelectedForDeletion={imagesSelectedForDeletion.includes(
+                    image.src,
+                  )}
                   onToggle={handleImageToggle}
+                  onDeletionToggle={handleDeletionToggle}
                   onDeleteClick={async () => {
-                    console.log("test");
                     if (confirm("Are you sure?")) {
-                      const id = image.src
-                        .split("/")
-                        .slice(-2)
-                        .join("/")
-                        .split(".")[0];
-                      if (id) {
-                        await removeImage(id);
+                      try {
+                        console.log("Attempting to delete image:", image);
+                        console.log("Image ID:", image.id);
+                        console.log("Image SRC:", image.src);
+
+                        // Use the image.id directly instead of extracting from URL
+                        if (image.id) {
+                          console.log("Calling removeImage with ID:", image.id);
+                          await removeImage(image.id);
+                          console.log(
+                            "S3 deletion completed, updating local state",
+                          );
+                          removeOldImage(image.src);
+                          console.log("Image deleted successfully:", image.id);
+                          toast.success("Image deleted successfully");
+                        } else {
+                          console.error("No image ID found for:", image.src);
+                          toast.error(
+                            "No image ID found. Cannot delete image.",
+                          );
+                        }
+                      } catch (error) {
+                        console.error("Failed to delete image:", error);
+                        toast.error(
+                          `Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}`,
+                        );
                       }
-                      removeOldImage(image.src);
                     }
                   }}
                 />
@@ -214,6 +321,36 @@ export default function DndImageGallery({
             <Button onClick={handleClose}>Done</Button>
           </div>
         )}
+
+        {/* Action buttons for deletion mode */}
+        {!variantMode && (
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSelectAllForDeletion}
+              disabled={isDeleting}
+            >
+              Select All
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDeselectAllForDeletion}
+              disabled={isDeleting}
+            >
+              Deselect All
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+              disabled={imagesSelectedForDeletion.length === 0 || isDeleting}
+            >
+              {isDeleting
+                ? "Deleting..."
+                : `Delete Selected (${imagesSelectedForDeletion.length})`}
+            </Button>
+            <Button onClick={handleClose}>Done</Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -223,13 +360,17 @@ function SortableImage({
   image,
   variantMode = false,
   isSelected = false,
+  isSelectedForDeletion = false,
   onToggle,
+  onDeletionToggle,
   onDeleteClick,
 }: {
   image: ProductImage;
   variantMode?: boolean;
   isSelected?: boolean;
+  isSelectedForDeletion?: boolean;
   onToggle?: (imageSrc: string) => void;
+  onDeletionToggle?: (imageSrc: string) => void;
   onDeleteClick: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -265,16 +406,41 @@ function SortableImage({
         </div>
       )}
 
-      {/* Delete button */}
-      <Button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDeleteClick();
-        }}
-        className="absolute bottom-0 left-0 right-0 z-50 hidden flex-1 items-center justify-center p-2 text-white group-hover:flex group-active:opacity-0"
-      >
-        <BiSolidTrash />
-      </Button>
+      {/* Selection overlay for deletion mode */}
+      {!variantMode && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeletionToggle?.(image.src);
+            }}
+            className={`flex h-full w-full items-center justify-center transition-all ${
+              isSelectedForDeletion
+                ? "bg-red-500 bg-opacity-30"
+                : "bg-black bg-opacity-0 hover:bg-opacity-10"
+            }`}
+          >
+            {isSelectedForDeletion && (
+              <div className="rounded-full bg-red-500 p-1 text-white">
+                <BiCheck size={20} />
+              </div>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Delete button - only show when not in deletion mode */}
+      {!variantMode && !isSelectedForDeletion && (
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteClick();
+          }}
+          className="absolute bottom-0 left-0 right-0 z-50 hidden flex-1 items-center justify-center p-2 text-white group-hover:flex group-active:opacity-0"
+        >
+          <BiSolidTrash />
+        </Button>
+      )}
 
       <div
         ref={setNodeRef}
@@ -283,6 +449,8 @@ function SortableImage({
         {...listeners}
         className={`group relative overflow-hidden rounded-lg bg-white shadow-md ${
           variantMode && isSelected ? "ring-2 ring-blue-500" : ""
+        } ${
+          !variantMode && isSelectedForDeletion ? "ring-2 ring-red-500" : ""
         }`}
       >
         <Image

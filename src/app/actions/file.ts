@@ -130,12 +130,21 @@ export const readImage = async (id: string) => {
 };
 
 export const removeImage = async (id: string) => {
-  await s3Client.send(
-    new DeleteObjectCommand({
-      Bucket: bucketName,
-      Key: id,
-    }),
-  );
+  console.log("Server: Attempting to delete image with ID:", id);
+  console.log("Server: Bucket name:", bucketName);
+
+  try {
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: id,
+      }),
+    );
+    console.log("Server: Image deleted successfully from S3:", id);
+  } catch (error) {
+    console.error("Server: Failed to delete image from S3:", error);
+    throw error;
+  }
 };
 
 // remove image with prefix

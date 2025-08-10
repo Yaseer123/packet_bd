@@ -522,10 +522,10 @@ export default function EditProductForm({ productId }: { productId: string }) {
       // Clear previous images when opening gallery
       setShowImageGallery(state);
 
-      // Load images for the new gallery
+      // Load images for the new gallery - fetch fresh data from S3
       void (async () => {
         try {
-          await loadImages(state, product?.images ?? []);
+          await loadImages(state); // Don't pass existing images to get fresh data
         } catch (error) {
           console.error("Failed to load images for gallery:", error);
         }
