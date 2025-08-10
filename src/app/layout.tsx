@@ -1,3 +1,4 @@
+import GTMDebugger from "@/components/debug/GTMDebugger";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/styles.scss";
 import { TRPCReactProvider } from "@/trpc/react";
@@ -50,6 +51,7 @@ export default function RootLayout({
           <TRPCReactProvider>{children}</TRPCReactProvider>
         </SessionProvider>
         <Toaster />
+        <GTMDebugger />
       </body>
     </html>
   );
