@@ -4,8 +4,35 @@
 declare global {
   interface Window {
     dataLayer: unknown[];
+    productViewFired?: Set<string>;
   }
 }
+
+// Track fired events to prevent duplicates
+const firedEvents = new Set<string>();
+
+/**
+ * Clear fired events tracking (useful for testing)
+ */
+export const clearFiredEvents = () => {
+  firedEvents.clear();
+  if (typeof window !== "undefined" && window.productViewFired) {
+    window.productViewFired.clear();
+  }
+};
+
+/**
+ * Get fired events count (useful for debugging)
+ */
+export const getFiredEventsCount = () => {
+  return {
+    clientSide: firedEvents.size,
+    serverSide:
+      typeof window !== "undefined" && window.productViewFired
+        ? window.productViewFired.size
+        : 0,
+  };
+};
 
 export interface ProductData {
   id: string;
@@ -67,52 +94,76 @@ export interface CartData {
  */
 export const pushProductToDataLayer = (product: ProductData) => {
   if (typeof window !== "undefined" && window.dataLayer) {
-    // Clear previous ecommerce data
-    window.dataLayer.push({ ecommerce: null });
+    // Prevent duplicate events for the same product
+    const eventKey = `product_view_${product.id}`;
+    if (firedEvents.has(eventKey)) {
+      console.log(
+        "GTM: Product view event already fired for product:",
+        product.id,
+      );
+      return;
+    }
 
-    // Push product data to data layer
-    window.dataLayer.push({
-      event: "product_view",
-      ecommerce: {
-        currencyCode: "BDT",
-        detail: {
-          products: [
-            {
-              name: product.title,
-              id: product.id,
-              price: product.discountedPrice ?? product.price,
-              brand: product.brand ?? "Brand",
-              category:
-                typeof product.category === "string"
-                  ? product.category
-                  : product.category?.name,
-              sku: product.sku,
-              productCode: product.productCode,
-            },
-          ],
+    const startTime = performance.now();
+
+    try {
+      // Clear previous ecommerce data
+      window.dataLayer.push({ ecommerce: null });
+
+      // Push product data to data layer
+      window.dataLayer.push({
+        event: "product_view",
+        ecommerce: {
+          currencyCode: "BDT",
+          detail: {
+            products: [
+              {
+                name: product.title,
+                id: product.id,
+                price: product.discountedPrice ?? product.price,
+                brand: product.brand ?? "Brand",
+                category:
+                  typeof product.category === "string"
+                    ? product.category
+                    : product.category?.name,
+                sku: product.sku,
+                productCode: product.productCode,
+              },
+            ],
+          },
         },
-      },
-      // Additional custom dimensions for easy access
-      product_id: product.id,
-      product_code: product.productCode ? [product.productCode] : [],
-      product_sku: product.sku,
-      product_name: product.title,
-      product_price: product.discountedPrice ?? product.price,
-      product_currency: "BDT",
-      product_brand: product.brand,
-      product_category:
-        typeof product.category === "string"
-          ? product.category
-          : product.category?.name,
-      product_slug: product.slug,
-    });
+        // Additional custom dimensions for easy access
+        product_id: product.id,
+        product_code: product.productCode ? [product.productCode] : [],
+        product_sku: product.sku,
+        product_name: product.title,
+        product_price: product.discountedPrice ?? product.price,
+        product_currency: "BDT",
+        product_brand: product.brand,
+        product_category:
+          typeof product.category === "string"
+            ? product.category
+            : product.category?.name,
+        product_slug: product.slug,
+      });
 
-    console.log("GTM: Product data pushed to data layer:", {
-      productCode: product.productCode,
-      id: product.id,
-      name: product.title,
-      price: product.discountedPrice ?? product.price,
-    });
+      // Mark event as fired
+      firedEvents.add(eventKey);
+
+      const endTime = performance.now();
+      console.log(
+        `GTM: Product view event fired in ${(endTime - startTime).toFixed(2)}ms`,
+        {
+          productCode: product.productCode,
+          id: product.id,
+          name: product.title,
+          price: product.discountedPrice ?? product.price,
+          timestamp: new Date().toISOString(),
+        },
+      );
+    } catch (error) {
+      console.error("GTM: Error pushing product view event:", error);
+    }
   }
 };
 
