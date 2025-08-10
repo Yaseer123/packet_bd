@@ -409,11 +409,20 @@ export default function EditProductForm({ productId }: { productId: string }) {
     Array<{ key: string; value: string }>
   >([]);
 
-  const { loadImages, images } = useProductImageStore();
+  const { loadImages, images, setImages } = useProductImageStore();
   const [showImageGallery, setShowImageGallery] = useState("");
 
   // Get main product images for variants to select from
   const mainProductImages = images.map((image) => image.src);
+
+  // Monitor changes in the images store
+  useEffect(() => {
+    console.log("🔄 Images store updated:", {
+      count: images.length,
+      order: images.map((img, idx) => `${idx + 1}. ${img.src}`),
+      images: images,
+    });
+  }, [images]);
 
   // Add state for rich editor content
   const [richEditorContent, setRichEditorContent] = useState("");
@@ -513,18 +522,6 @@ export default function EditProductForm({ productId }: { productId: string }) {
     }));
   };
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        if (imageId && product?.images) {
-          await loadImages(imageId, product.images);
-        }
-      } catch (error) {
-        console.error("Failed to load images:", error);
-      }
-    })();
-  }, [loadImages, imageId, product?.images]);
-
   const handleShowImageGallery = (state: string) => {
     if (state) {
       setShowImageGallery(state);
@@ -534,8 +531,19 @@ export default function EditProductForm({ productId }: { productId: string }) {
 
       void (async () => {
         try {
-          // Load main product images for all variant galleries
-          await loadImages(targetImageId);
+          // Check if we already have images loaded in the store
+          if (images.length > 0) {
+            console.log(
+              "🔄 Modal reopened - preserving current image order:",
+              images.map((img, idx) => `${idx + 1}. ${img.src}`),
+            );
+            // Don't reload images if we already have them - preserve the current order
+            return;
+          } else {
+            console.log("🔄 Modal opened - loading images from database");
+            // Only load images from database if we don't have any in the store
+            await loadImages(targetImageId);
+          }
         } catch (error) {
           console.error("Failed to load images for gallery:", error);
         }
@@ -543,6 +551,12 @@ export default function EditProductForm({ productId }: { productId: string }) {
     } else {
       setShowImageGallery("");
     }
+  };
+
+  // Function to refresh images from database (useful for resetting order)
+  const handleRefreshImages = async () => {
+    console.log("🔄 Refreshing images from database");
+    await loadImages(imageId);
   };
 
   useEffect(() => {
@@ -895,14 +909,26 @@ export default function EditProductForm({ productId }: { productId: string }) {
     }
     // Send specifications as array to preserve order
     const specsArray = specifications.filter((spec) => spec.key.trim() !== "");
+
+    // Get the current image order from the store
+    const currentImageOrder = images.map((image) => image.src);
+
     // Log the image order being submitted to database
     console.log(
-      "Updating product with images in order:",
-      images.map((img) => img.src),
+      "🖼️ Updating product with images in order:",
+      currentImageOrder.map((src, index) => `${index + 1}. ${src}`),
     );
+    console.log(
+      "📊 Total images to save:",
+      currentImageOrder.length,
+      "| Order preserved via drag-and-drop",
+    );
+    console.log("🔍 Current images state:", images);
+    console.log("🔍 Current image order array:", currentImageOrder);
+
     updateProduct.mutate({
       id: productId,
-      images: images.map((image) => image.src),
+      images: currentImageOrder, // Use the ordered array
       descriptionImageId,
       title,
       shortDescription,
@@ -937,9 +963,17 @@ export default function EditProductForm({ productId }: { productId: string }) {
 
   // Add a ref to track if we've already initialized
   const isInitialized = useRef(false);
+  const imagesLoaded = useRef(false);
 
   // Update local state when product data changes (e.g., after refetch)
   useEffect(() => {
+    console.log("🔄 Initialization useEffect triggered:", {
+      hasProduct: !!product,
+      isInitialized: isInitialized.current,
+      imagesLoaded: imagesLoaded.current,
+      productImages: product?.images,
+    });
+
     if (product && !isInitialized.current) {
       setTitle(product.title ?? "");
       setShortDescription(product.shortDescription ?? "");
@@ -1037,57 +1071,86 @@ export default function EditProductForm({ productId }: { productId: string }) {
         const groups: Record<string, VariantGroup> = {};
         (product.variants as Variant[]).forEach((v) => {
           // Only group variants that have color information
-          if (v.colorName || v.colorHex) {
-            const key = (v.colorName ?? "") + "|" + (v.colorHex ?? "");
+          if (v.colorName && v.colorHex) {
+            const key = `${v.colorName}-${v.colorHex}`;
             if (!groups[key]) {
               groups[key] = {
-                colorName: v.colorName ?? "",
-                colorHex: v.colorHex ?? "#ffffff",
+                colorName: v.colorName,
+                colorHex: v.colorHex,
                 imageId: v.imageId ?? uuid(),
                 images: v.images ?? [],
                 sizes: [],
               };
             }
-            if (v.size) {
-              groups[key].sizes.push({
-                size: v.size,
-                price: v.price ?? 0,
-                discountedPrice: v.discountedPrice ?? 0,
-                stock: v.stock ?? 0,
-              });
-            }
+            groups[key].sizes.push({
+              size: v.size,
+              price: v.price ?? 0,
+              discountedPrice: v.discountedPrice ?? 0,
+              stock: v.stock ?? 0,
+            });
           }
         });
-        setColorGroups(Object.values(groups));
 
-        // Process default group (variants without colors)
+        // Convert groups to array
+        const colorGroupsArray = Object.values(groups);
+        setColorGroups(colorGroupsArray);
+
+        // Process default group (variants without color)
         const defaultVariants = (product.variants as Variant[]).filter(
-          (v) => !v.colorName && !v.colorHex,
+          (v) => !v.colorName || !v.colorHex,
         );
-        setDefaultGroup({
-          imageId: defaultVariants[0]?.imageId ?? uuid(),
-          images: defaultVariants[0]?.images ?? [],
-          sizes: defaultVariants.map((v) => ({
-            size: v.size,
-            price: v.price ?? 0,
-            discountedPrice: v.discountedPrice ?? 0,
-            stock: v.stock ?? 0,
-          })),
-        });
-      } else {
-        setEnableVariants(false);
-        setColorGroups([]);
-        setDefaultGroup({
-          imageId: uuid(),
-          images: [],
-          sizes: [],
-        });
+        if (defaultVariants.length > 0) {
+          const defaultGroup: VariantGroup = {
+            colorName: "",
+            colorHex: "",
+            imageId: defaultVariants[0]?.imageId ?? uuid(),
+            images: defaultVariants[0]?.images ?? [],
+            sizes: defaultVariants.map((v) => ({
+              size: v.size,
+              price: v.price ?? 0,
+              discountedPrice: v.discountedPrice ?? 0,
+              stock: v.stock ?? 0,
+            })),
+          };
+          setDefaultGroup(defaultGroup);
+        }
       }
 
-      // Mark as initialized - this prevents form reset on subsequent data changes
+      // Load existing images with their correct order
+      if (
+        product.images &&
+        product.images.length > 0 &&
+        !imagesLoaded.current
+      ) {
+        console.log(
+          "🔄 Loading existing product images with order:",
+          product.images,
+        );
+        console.log("🔍 Product imageId:", product.imageId);
+        console.log("🔍 Product images array:", product.images);
+        console.log("🔍 Product images length:", product.images.length);
+
+        // Call loadImages with the existing images in their saved order
+        void loadImages(product.imageId ?? "", product.images);
+        imagesLoaded.current = true;
+        console.log("✅ Images loaded flag set to true");
+      } else if (!product.images || product.images.length === 0) {
+        console.log("⚠️ No existing images found in product data");
+      } else if (imagesLoaded.current) {
+        console.log("ℹ️ Images already loaded, skipping");
+      }
+
       isInitialized.current = true;
     }
   }, [product, setDefaultColorHex]);
+
+  // Reset imagesLoaded flag when product changes
+  useEffect(() => {
+    if (product) {
+      imagesLoaded.current = false;
+      console.log("🔄 Product changed, resetting imagesLoaded flag");
+    }
+  }, [product?.id]); // Only reset when the product ID changes
 
   useEffect(() => {
     if (
@@ -1388,6 +1451,45 @@ export default function EditProductForm({ productId }: { productId: string }) {
               <Button onClick={() => handleShowImageGallery(imageId)}>
                 Show Image Gallery
               </Button>
+              {images.length > 0 && (
+                <div className="mt-2 text-sm text-gray-600">
+                  <p>📸 {images.length} image(s) loaded</p>
+                  <p className="text-xs text-gray-500">
+                    💡 Tip: You can drag and drop images in the gallery to
+                    reorder them
+                  </p>
+
+                  {/* Image Order Preview */}
+                  <div className="mt-3">
+                    <p className="mb-2 text-xs font-medium text-gray-700">
+                      Current Image Order:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {images.map((image, index) => (
+                        <div key={image.id} className="group relative">
+                          <div className="relative">
+                            <Image
+                              src={image.src}
+                              alt={`Image ${index + 1}`}
+                              width={60}
+                              height={60}
+                              className="h-15 w-15 rounded border-2 border-gray-200 object-cover"
+                            />
+                            <div className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+                              {index + 1}
+                            </div>
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-0 transition-all duration-200 group-hover:bg-opacity-20">
+                            <div className="text-xs text-white opacity-0 group-hover:opacity-100">
+                              Drag to reorder
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
               {showImageGallery && (
                 <DndImageGallery
                   imageId={imageId}
