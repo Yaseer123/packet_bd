@@ -1,8 +1,8 @@
 import {
+  adminProcedure,
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
-  adminProcedure,
   resolveUserId,
 } from "@/server/api/trpc";
 import { Resend } from "resend";
@@ -411,6 +411,7 @@ export const orderRouter = createTRPCRouter({
             <h2 style="margin: 0; color: #007b55;">New Order Placed</h2>
             <p style="font-size: 16px;">A new order has been placed on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
+            <div style="margin-bottom: 8px;"><strong>Customer:</strong> ${user?.name ? user.name : "Guest User"} (${user?.email ?? address?.email ?? "No email"})</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${productTotal}</div>
             <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${shippingCost}</div>
             <div style="margin-bottom: 16px;"><strong>Total:</strong> ৳${order.total}</div>
@@ -426,6 +427,11 @@ export const orderRouter = createTRPCRouter({
         </div>
       `;
       // Send admin email (outside transaction)
+      console.log("Admin email - User data:", {
+        name: user?.name,
+        email: user?.email,
+        addressEmail: address?.email,
+      });
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
         from: "no-reply@packetbd.com",
@@ -944,6 +950,7 @@ export const orderRouter = createTRPCRouter({
             <h2 style="margin: 0; color: #007b55;">New Guest Order Placed</h2>
             <p style="font-size: 16px;">A new guest order has been placed on Packet BD.</p>
             <div style="margin-bottom: 16px;"><strong>Order ID:</strong> ${order.id}</div>
+            <div style="margin-bottom: 8px;"><strong>Customer:</strong> ${address?.name ? address.name : "Guest User"} (${address?.email ?? "No email"})</div>
             <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> ৳${guestProductTotal}</div>
             <div style="margin-bottom: 8px;"><strong>Shipping:</strong> ৳${guestShippingCost}</div>
             <div style="margin-bottom: 16px;"><strong>Total:</strong> ৳${guestTotal}</div>
@@ -958,6 +965,10 @@ export const orderRouter = createTRPCRouter({
           ${emailFooter}
         </div>
       `;
+      console.log("Guest order admin email - Address data:", {
+        name: address?.name,
+        email: address?.email,
+      });
       console.log("EMAIL HTML:", html);
       await resend.emails.send({
         from: "no-reply@packetbd.com",
