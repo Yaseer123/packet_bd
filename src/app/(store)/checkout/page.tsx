@@ -262,11 +262,14 @@ const Checkout = () => {
     let sum = 0;
     for (const item of checkoutItems) {
       const product = productMap[item.productId];
-      // Use discountedPrice if available, else price from cart item (which has variant price)
+      // Use discountedPrice if available, else price
       const unit =
-        typeof item.discountedPrice === "number"
-          ? item.discountedPrice
-          : item.price;
+        product?.discountedPrice && typeof product.discountedPrice === "number"
+          ? product.discountedPrice
+          : typeof product?.discountedPrice === "undefined" &&
+              typeof item.discountedPrice === "number"
+            ? item.discountedPrice
+            : item.price;
       sum +=
         getDiscountedUnitPrice(
           item.quantity,
@@ -790,9 +793,13 @@ const Checkout = () => {
       products: checkoutItems.map((item) => {
         const productData = productMap[item.productId];
         const unit =
-          typeof item.discountedPrice === "number"
-            ? item.discountedPrice
-            : item.price;
+          productData?.discountedPrice &&
+          typeof productData.discountedPrice === "number"
+            ? productData.discountedPrice
+            : typeof productData?.discountedPrice === "undefined" &&
+                typeof item.discountedPrice === "number"
+              ? item.discountedPrice
+              : item.price;
 
         return {
           id: item.productId,
@@ -1082,11 +1089,13 @@ const Checkout = () => {
                         error: "",
                       };
                       const productData = productMap[product.productId];
-                      // Use discountedPrice if available, else price from cart item (which has variant price)
+                      // Use discountedPrice if available, else price
                       const unit =
                         typeof product.discountedPrice === "number"
                           ? product.discountedPrice
-                          : product.price;
+                          : typeof productData?.discountedPrice === "number"
+                            ? productData.discountedPrice
+                            : product.price;
                       const discountsArr = normalizeQuantityDiscounts(
                         productData?.quantityDiscounts,
                       );
