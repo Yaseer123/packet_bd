@@ -1020,7 +1020,7 @@ export default function ProductDetails({
         // ignore
       }
     }
-    if (normalized.length === 0) return basePrice;
+    if (normalized.length === 0) return Math.round(basePrice * 100) / 100; // Round to 2 decimal places
 
     // Sort discounts by minQty to ensure we find the highest applicable tier
     const sortedDiscounts = [...normalized].sort((a, b) => a.minQty - b.minQty);
@@ -1032,9 +1032,11 @@ export default function ProductDetails({
       .pop(); // Get the highest tier that applies
 
     if (applicableDiscount) {
-      return basePrice - (basePrice * applicableDiscount.discountPercent) / 100;
+      const discountedPrice =
+        basePrice - (basePrice * applicableDiscount.discountPercent) / 100;
+      return Math.round(discountedPrice * 100) / 100; // Round to 2 decimal places
     }
-    return basePrice;
+    return Math.round(basePrice * 100) / 100; // Round to 2 decimal places
   }
 
   return (
