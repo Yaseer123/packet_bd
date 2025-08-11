@@ -411,18 +411,10 @@ export default function ProductDetails({
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     // --- Calculate correct discounted price based on quantityDiscounts ---
     const qty = productQuantity;
-    const baseUnitPrice =
-      typeof activeVariant?.discountedPrice === "number"
-        ? activeVariant.discountedPrice
-        : typeof productMain.discountedPrice === "number"
-          ? productMain.discountedPrice
-          : typeof activeVariant?.price === "number"
-            ? activeVariant.price
-            : productMain.price;
     const discountsArr = normalizeQuantityDiscounts(
       productMain.quantityDiscounts,
     );
-    const unit = getDiscountedUnitPrice(qty, baseUnitPrice, discountsArr);
+    const unit = getDiscountedUnitPrice(qty, displayPrice, discountsArr);
     const discountPercent = (() => {
       if (!discountsArr.length) return 0;
       // Sort discounts by minQty to ensure we find the highest applicable tier
@@ -610,51 +602,83 @@ export default function ProductDetails({
     const error = validateQuantity(productQuantity);
     setQuantityError(error);
     if (error || typeof productQuantity !== "number") return;
+
     // Determine if a variant is selected
     const isVariantSelected = !!(selectedColorHex && selectedSize);
-    // Build buy-now product object
-    const buyNowProduct = {
-      id: isVariantSelected
-        ? `${productMain.id}-${selectedColorHex}-${selectedSize}`
-        : productMain.id,
+    const displaySKU = generateSKU({
+      categoryName: categoryHierarchy?.[0]?.name ?? "XX",
+      productId: productMain.id,
+      color: selectedColorName,
+      size: selectedSize,
+    });
+
+    // Calculate unit price with quantity discounts
+    const unit = getDiscountedUnitPrice(
+      productQuantity,
+      typeof activeVariant?.price === "number"
+        ? activeVariant.price
+        : (productMain.discountedPrice ?? productMain.price),
+      productMain.quantityDiscounts,
+    );
+
+    // Calculate discount percent for display
+    const discountPercent =
+      unit < (productMain.discountedPrice ?? productMain.price)
+        ? Math.round(
+            (((productMain.discountedPrice ?? productMain.price) - unit) /
+              (productMain.discountedPrice ?? productMain.price)) *
+              100,
+          )
+        : undefined;
+
+    // Build cart item object
+    const cartItem = {
+      id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
       price:
         typeof activeVariant?.price === "number"
           ? activeVariant.price
           : (productMain.discountedPrice ?? productMain.price),
-      discountedPrice:
-        typeof activeVariant?.discountedPrice === "number"
-          ? activeVariant.discountedPrice
-          : typeof productMain.discountedPrice === "number"
-            ? productMain.discountedPrice
-            : undefined,
+      discountedPrice: unit, // <-- use the calculated unit price
       quantity: productQuantity,
       coverImage:
         activeVariant?.images?.[0] ??
         productMain.images?.[0] ??
         "/images/product/1000x1000.png",
-      sku: generateSKU({
-        categoryName: categoryHierarchy?.[0]?.name ?? "XX",
-        productId: productMain.id,
-        color: selectedColorName,
-        size: selectedSize,
-      }),
+      sku: displaySKU,
       color: selectedColorHex, // for swatch
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      productCode: productMain.productCode ?? undefined, // Add this line
       minQuantity: productMain.minQuantity ?? 1,
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
       variantLabel: productMain.variantLabel, // <-- added
+      discountPercent, // <-- add this for modal cart display
     };
-    // Store in sessionStorage for checkout page
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(
-        "buyNowProduct",
-        JSON.stringify(buyNowProduct),
-      );
+
+    // Add to cart (allow multiple variants)
+    if (!cartArray.find((item) => item.id === cartItem.id)) {
+      addToCart(cartItem);
+      updateCart(cartItem.id, productQuantity);
+    } else {
+      updateCart(cartItem.id, productQuantity);
     }
+
+    // Push add to cart event to GTM data layer for Facebook Pixel
+    pushAddToCartToDataLayer({
+      id: cartItem.id,
+      name: cartItem.name,
+      price: cartItem.price,
+      discountedPrice: cartItem.discountedPrice,
+      quantity: cartItem.quantity,
+      productCode: cartItem.productCode,
+      sku: cartItem.sku,
+      brand: undefined, // Add brand if available
+      category: undefined, // Add category if available
+    });
+
     // Redirect to checkout
     router.push("/checkout");
   };
@@ -996,7 +1020,7 @@ export default function ProductDetails({
         // ignore
       }
     }
-    if (normalized.length === 0) return basePrice;
+    if (normalized.length === 0) return Math.round(basePrice * 100) / 100; // Round to 2 decimal places
 
     // Sort discounts by minQty to ensure we find the highest applicable tier
     const sortedDiscounts = [...normalized].sort((a, b) => a.minQty - b.minQty);
@@ -1008,9 +1032,11 @@ export default function ProductDetails({
       .pop(); // Get the highest tier that applies
 
     if (applicableDiscount) {
-      return basePrice - (basePrice * applicableDiscount.discountPercent) / 100;
+      const discountedPrice =
+        basePrice - (basePrice * applicableDiscount.discountPercent) / 100;
+      return Math.round(discountedPrice * 100) / 100; // Round to 2 decimal places
     }
-    return basePrice;
+    return Math.round(basePrice * 100) / 100; // Round to 2 decimal places
   }
 
   return (
@@ -1358,17 +1384,10 @@ export default function ProductDetails({
                           productMain.quantityDiscounts,
                         ).map((row, idx) => {
                           // Calculate the discounted unit price for the minQty in this range
-                          const baseUnitPrice =
-                            typeof activeVariant?.discountedPrice === "number"
-                              ? activeVariant.discountedPrice
-                              : typeof productMain.discountedPrice === "number"
-                                ? productMain.discountedPrice
-                                : typeof activeVariant?.price === "number"
-                                  ? activeVariant.price
-                                  : productMain.price;
+                          // Use displayPrice to ensure consistency with the displayed price
                           const unit = getDiscountedUnitPrice(
                             row.minQty,
-                            baseUnitPrice,
+                            displayPrice,
                             productMain.quantityDiscounts,
                           );
                           return (
@@ -1448,20 +1467,12 @@ export default function ProductDetails({
                         typeof productQuantity === "number"
                           ? productQuantity
                           : 0;
-                      const baseUnitPrice =
-                        typeof activeVariant?.discountedPrice === "number"
-                          ? activeVariant.discountedPrice
-                          : typeof productMain.discountedPrice === "number"
-                            ? productMain.discountedPrice
-                            : typeof activeVariant?.price === "number"
-                              ? activeVariant.price
-                              : productMain.price;
                       const discountsArr = normalizeQuantityDiscounts(
                         productMain.quantityDiscounts,
                       );
                       const unit = getDiscountedUnitPrice(
                         qty,
-                        baseUnitPrice,
+                        displayPrice,
                         discountsArr,
                       );
                       const total = unit * qty;

@@ -86,9 +86,6 @@ const ModalCart = () => {
       pushCartViewToDataLayer(cartData);
     }
 
-    if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem("buyNowProduct");
-    }
     if (pathname === "/checkout") {
       e.preventDefault();
       window.location.reload();
