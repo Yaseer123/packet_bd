@@ -4,7 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCartStore } from "@/context/store-context/CartContext";
 import { api } from "@/trpc/react";
 import { pushPurchaseToDataLayer, type PurchaseData } from "@/utils/gtm";
-import { Minus, Plus } from "@phosphor-icons/react/dist/ssr";
+import { Minus, Plus, Trash } from "@phosphor-icons/react/dist/ssr";
 import type { Order } from "@prisma/client";
 import { HomeIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -124,7 +124,7 @@ function getDiscountedUnitPrice(
       // ignore
     }
   }
-  if (normalized.length === 0) return basePrice;
+  if (normalized.length === 0) return Math.round(basePrice * 100) / 100; // Round to 2 decimal places
 
   // Sort discounts by minQty to ensure we find the highest applicable tier
   const sortedDiscounts = [...normalized].sort((a, b) => a.minQty - b.minQty);
@@ -136,11 +136,12 @@ function getDiscountedUnitPrice(
     .pop(); // Get the highest tier that applies
 
   if (applicableDiscount) {
-    return (
-      basePrice - (basePrice * (applicableDiscount?.discountPercent ?? 0)) / 100
-    );
+    const discountedPrice =
+      basePrice -
+      (basePrice * (applicableDiscount?.discountPercent ?? 0)) / 100;
+    return Math.round(discountedPrice * 100) / 100; // Round to 2 decimal places
   }
-  return basePrice;
+  return Math.round(basePrice * 100) / 100; // Round to 2 decimal places
 }
 
 // Helper to normalize quantityDiscounts to always be an array of the correct type
@@ -209,23 +210,8 @@ const Checkout = () => {
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessType>(null);
   const [orderError, setOrderError] = useState("");
 
-  // Buy Now support
-  const [buyNowProduct, setBuyNowProduct] = useState<CartItem | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const buyNow = window.sessionStorage.getItem("buyNowProduct");
-      if (buyNow) {
-        setBuyNowProduct(JSON.parse(buyNow) as CartItem);
-      }
-    }
-  }, []);
-
-  // Use buyNowProduct if present, else cartArray
-  const checkoutItems = useMemo(
-    () => (buyNowProduct ? [buyNowProduct] : cartArray),
-    [buyNowProduct, cartArray],
-  );
+  // Use cartArray directly since Buy Now now adds to cart
+  const checkoutItems = useMemo(() => cartArray, [cartArray]);
 
   const utils = api.useUtils();
   // --- Fetch product data for all cart items ---
@@ -290,27 +276,10 @@ const Checkout = () => {
     let quantity = Math.max(newQuantity, min);
     if (max !== undefined) quantity = Math.min(quantity, max);
 
-    if (buyNowProduct && buyNowProduct.id === itemId) {
-      if (quantity > 0) {
-        setBuyNowProduct({ ...buyNowProduct, quantity });
-        if (typeof window !== "undefined") {
-          window.sessionStorage.setItem(
-            "buyNowProduct",
-            JSON.stringify({ ...buyNowProduct, quantity }),
-          );
-        }
-      } else {
-        setBuyNowProduct(null);
-        if (typeof window !== "undefined") {
-          window.sessionStorage.removeItem("buyNowProduct");
-        }
-      }
+    if (quantity > 0) {
+      updateCart(itemId, quantity);
     } else {
-      if (quantity > 0) {
-        updateCart(itemId, quantity);
-      } else {
-        removeFromCart(itemId);
-      }
+      removeFromCart(itemId);
     }
   };
 
@@ -389,9 +358,6 @@ const Checkout = () => {
       setOrderSuccess(data);
       setOrderError("");
       useCartStore.getState().clearCart();
-      if (typeof window !== "undefined") {
-        window.sessionStorage.removeItem("buyNowProduct");
-      }
     },
     onError: (err: { message: string }) => {
       setOrderError(err.message ?? "Order failed. Please try again.");
@@ -770,9 +736,6 @@ const Checkout = () => {
       setOrderSuccess(data);
       setOrderError("");
       useCartStore.getState().clearCart();
-      if (typeof window !== "undefined") {
-        window.sessionStorage.removeItem("buyNowProduct");
-      }
     },
     onError: (err: { message: string }) => {
       setOrderError(err.message ?? "Order failed. Please try again.");
@@ -1169,92 +1132,109 @@ const Checkout = () => {
                               )}
                             </div>
 
-                            <div className="mt-2 flex items-center gap-2">
-                              <button
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-                                onClick={() => {
-                                  const current =
-                                    Number(inputState.value) || min;
-                                  const next = Math.max(current - step, min);
-                                  setInputStates((prev) => ({
-                                    ...prev,
-                                    [product.id]: {
-                                      value: String(next),
-                                      error: "",
-                                    },
-                                  }));
-                                  handleQuantityChange(product.id, next);
-                                }}
-                                disabled={Number(inputState.value) === min}
-                              >
-                                <Minus size={16} />
-                              </button>
-                              <input
-                                type="text"
-                                className="w-14 border-none bg-transparent text-center text-base font-medium outline-none"
-                                min={min}
-                                max={max}
-                                step={step}
-                                value={inputState.value}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const error = validateQuantity(val, min, max);
-                                  setInputStates((prev) => ({
-                                    ...prev,
-                                    [product.id]: {
-                                      value: val,
-                                      error,
-                                    },
-                                  }));
-                                  if (!error) {
-                                    handleQuantityChange(
-                                      product.id,
-                                      Number(val),
+                            <div className="mt-2 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                                  onClick={() => {
+                                    const current =
+                                      Number(inputState.value) || min;
+                                    const next = Math.max(current - step, min);
+                                    setInputStates((prev) => ({
+                                      ...prev,
+                                      [product.id]: {
+                                        value: String(next),
+                                        error: "",
+                                      },
+                                    }));
+                                    handleQuantityChange(product.id, next);
+                                  }}
+                                  disabled={Number(inputState.value) === min}
+                                >
+                                  <Minus size={16} />
+                                </button>
+                                <input
+                                  type="text"
+                                  className="w-14 border-none bg-transparent text-center text-base font-medium outline-none"
+                                  min={min}
+                                  max={max}
+                                  step={step}
+                                  value={inputState.value}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const error = validateQuantity(
+                                      val,
+                                      min,
+                                      max,
                                     );
-                                  }
-                                }}
-                                onBlur={() => {
-                                  const val = inputState.value;
-                                  const error = validateQuantity(val, min, max);
-                                  setInputStates((prev) => ({
-                                    ...prev,
-                                    [product.id]: {
-                                      value: val,
-                                      error,
-                                    },
-                                  }));
-                                  if (!error) {
-                                    handleQuantityChange(
-                                      product.id,
-                                      Number(val),
+                                    setInputStates((prev) => ({
+                                      ...prev,
+                                      [product.id]: {
+                                        value: val,
+                                        error,
+                                      },
+                                    }));
+                                    if (!error) {
+                                      handleQuantityChange(
+                                        product.id,
+                                        Number(val),
+                                      );
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    const val = inputState.value;
+                                    const error = validateQuantity(
+                                      val,
+                                      min,
+                                      max,
                                     );
+                                    setInputStates((prev) => ({
+                                      ...prev,
+                                      [product.id]: {
+                                        value: val,
+                                        error,
+                                      },
+                                    }));
+                                    if (!error) {
+                                      handleQuantityChange(
+                                        product.id,
+                                        Number(val),
+                                      );
+                                    }
+                                  }}
+                                />
+                                <button
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                                  onClick={() => {
+                                    const current =
+                                      Number(inputState.value) || min;
+                                    const next =
+                                      max !== undefined
+                                        ? Math.min(current + step, max)
+                                        : current + step;
+                                    setInputStates((prev) => ({
+                                      ...prev,
+                                      [product.id]: {
+                                        value: String(next),
+                                        error: "",
+                                      },
+                                    }));
+                                    handleQuantityChange(product.id, next);
+                                  }}
+                                  disabled={
+                                    max !== undefined &&
+                                    Number(inputState.value) === max
                                   }
-                                }}
-                              />
+                                >
+                                  <Plus size={16} />
+                                </button>
+                              </div>
                               <button
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-                                onClick={() => {
-                                  const current =
-                                    Number(inputState.value) || min;
-                                  const next =
-                                    max !== undefined
-                                      ? Math.min(current + step, max)
-                                      : current + step;
-                                  setInputStates((prev) => ({
-                                    ...prev,
-                                    [product.id]: {
-                                      value: String(next),
-                                      error: "",
-                                    },
-                                  }));
-                                  handleQuantityChange(product.id, next);
-                                }}
-                                disabled={
-                                  max !== undefined &&
-                                  Number(inputState.value) === max
-                                }
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-red-300 transition-colors hover:bg-red-50"
+                                onClick={() => removeFromCart(product.id)}
+                                title="Remove item"
                               >
-                                <Plus size={16} />
+                                <Trash size={16} className="text-red-500" />
                               </button>
                             </div>
                             {inputState.error && (
