@@ -4,7 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCartStore } from "@/context/store-context/CartContext";
 import { api } from "@/trpc/react";
 import { pushPurchaseToDataLayer, type PurchaseData } from "@/utils/gtm";
-import { Minus, Plus } from "@phosphor-icons/react/dist/ssr";
+import { Minus, Plus, Trash } from "@phosphor-icons/react/dist/ssr";
 import type { Order } from "@prisma/client";
 import { HomeIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -209,23 +209,8 @@ const Checkout = () => {
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessType>(null);
   const [orderError, setOrderError] = useState("");
 
-  // Buy Now support
-  const [buyNowProduct, setBuyNowProduct] = useState<CartItem | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const buyNow = window.sessionStorage.getItem("buyNowProduct");
-      if (buyNow) {
-        setBuyNowProduct(JSON.parse(buyNow) as CartItem);
-      }
-    }
-  }, []);
-
-  // Use buyNowProduct if present, else cartArray
-  const checkoutItems = useMemo(
-    () => (buyNowProduct ? [buyNowProduct] : cartArray),
-    [buyNowProduct, cartArray],
-  );
+  // Use cartArray directly since Buy Now now adds to cart
+  const checkoutItems = useMemo(() => cartArray, [cartArray]);
 
   const utils = api.useUtils();
   // --- Fetch product data for all cart items ---
@@ -290,27 +275,10 @@ const Checkout = () => {
     let quantity = Math.max(newQuantity, min);
     if (max !== undefined) quantity = Math.min(quantity, max);
 
-    if (buyNowProduct && buyNowProduct.id === itemId) {
-      if (quantity > 0) {
-        setBuyNowProduct({ ...buyNowProduct, quantity });
-        if (typeof window !== "undefined") {
-          window.sessionStorage.setItem(
-            "buyNowProduct",
-            JSON.stringify({ ...buyNowProduct, quantity }),
-          );
-        }
-      } else {
-        setBuyNowProduct(null);
-        if (typeof window !== "undefined") {
-          window.sessionStorage.removeItem("buyNowProduct");
-        }
-      }
+    if (quantity > 0) {
+      updateCart(itemId, quantity);
     } else {
-      if (quantity > 0) {
-        updateCart(itemId, quantity);
-      } else {
-        removeFromCart(itemId);
-      }
+      removeFromCart(itemId);
     }
   };
 
@@ -389,9 +357,6 @@ const Checkout = () => {
       setOrderSuccess(data);
       setOrderError("");
       useCartStore.getState().clearCart();
-      if (typeof window !== "undefined") {
-        window.sessionStorage.removeItem("buyNowProduct");
-      }
     },
     onError: (err: { message: string }) => {
       setOrderError(err.message ?? "Order failed. Please try again.");
@@ -770,9 +735,6 @@ const Checkout = () => {
       setOrderSuccess(data);
       setOrderError("");
       useCartStore.getState().clearCart();
-      if (typeof window !== "undefined") {
-        window.sessionStorage.removeItem("buyNowProduct");
-      }
     },
     onError: (err: { message: string }) => {
       setOrderError(err.message ?? "Order failed. Please try again.");
@@ -1133,13 +1095,22 @@ const Checkout = () => {
                               <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                                 {product.name}
                               </div>
-                              <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
-                                {formatPrice(unit)}
-                                {discountPercent > 0 && (
-                                  <span className="ml-2 text-xs text-green-600">
-                                    ({discountPercent}% off)
-                                  </span>
-                                )}
+                              <div className="flex items-center gap-2">
+                                <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
+                                  {formatPrice(unit)}
+                                  {discountPercent > 0 && (
+                                    <span className="ml-2 text-xs text-green-600">
+                                      ({discountPercent}% off)
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-red-300 hover:bg-red-50"
+                                  onClick={() => removeFromCart(product.id)}
+                                  title="Remove item"
+                                >
+                                  <Trash size={14} className="text-red-500" />
+                                </button>
                               </div>
                             </div>
 

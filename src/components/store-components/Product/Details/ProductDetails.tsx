@@ -602,51 +602,83 @@ export default function ProductDetails({
     const error = validateQuantity(productQuantity);
     setQuantityError(error);
     if (error || typeof productQuantity !== "number") return;
+
     // Determine if a variant is selected
     const isVariantSelected = !!(selectedColorHex && selectedSize);
-    // Build buy-now product object
-    const buyNowProduct = {
-      id: isVariantSelected
-        ? `${productMain.id}-${selectedColorHex}-${selectedSize}`
-        : productMain.id,
+    const displaySKU = generateSKU({
+      categoryName: categoryHierarchy?.[0]?.name ?? "XX",
+      productId: productMain.id,
+      color: selectedColorName,
+      size: selectedSize,
+    });
+
+    // Calculate unit price with quantity discounts
+    const unit = getDiscountedUnitPrice(
+      productQuantity,
+      typeof activeVariant?.price === "number"
+        ? activeVariant.price
+        : (productMain.discountedPrice ?? productMain.price),
+      productMain.quantityDiscounts,
+    );
+
+    // Calculate discount percent for display
+    const discountPercent =
+      unit < (productMain.discountedPrice ?? productMain.price)
+        ? Math.round(
+            (((productMain.discountedPrice ?? productMain.price) - unit) /
+              (productMain.discountedPrice ?? productMain.price)) *
+              100,
+          )
+        : undefined;
+
+    // Build cart item object
+    const cartItem = {
+      id: displaySKU, // Use SKU as unique cart item id
       name: productMain.title,
       price:
         typeof activeVariant?.price === "number"
           ? activeVariant.price
           : (productMain.discountedPrice ?? productMain.price),
-      discountedPrice:
-        typeof activeVariant?.discountedPrice === "number"
-          ? activeVariant.discountedPrice
-          : typeof productMain.discountedPrice === "number"
-            ? productMain.discountedPrice
-            : undefined,
+      discountedPrice: unit, // <-- use the calculated unit price
       quantity: productQuantity,
       coverImage:
         activeVariant?.images?.[0] ??
         productMain.images?.[0] ??
         "/images/product/1000x1000.png",
-      sku: generateSKU({
-        categoryName: categoryHierarchy?.[0]?.name ?? "XX",
-        productId: productMain.id,
-        color: selectedColorName,
-        size: selectedSize,
-      }),
+      sku: displaySKU,
       color: selectedColorHex, // for swatch
       colorName: selectedColorName, // for display
       size: selectedSize,
       productId: productMain.id,
+      productCode: productMain.productCode ?? undefined, // Add this line
       minQuantity: productMain.minQuantity ?? 1,
       maxQuantity: productMain.maxQuantity ?? undefined,
       quantityStep: productMain.quantityStep ?? 1,
       variantLabel: productMain.variantLabel, // <-- added
+      discountPercent, // <-- add this for modal cart display
     };
-    // Store in sessionStorage for checkout page
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(
-        "buyNowProduct",
-        JSON.stringify(buyNowProduct),
-      );
+
+    // Add to cart (allow multiple variants)
+    if (!cartArray.find((item) => item.id === cartItem.id)) {
+      addToCart(cartItem);
+      updateCart(cartItem.id, productQuantity);
+    } else {
+      updateCart(cartItem.id, productQuantity);
     }
+
+    // Push add to cart event to GTM data layer for Facebook Pixel
+    pushAddToCartToDataLayer({
+      id: cartItem.id,
+      name: cartItem.name,
+      price: cartItem.price,
+      discountedPrice: cartItem.discountedPrice,
+      quantity: cartItem.quantity,
+      productCode: cartItem.productCode,
+      sku: cartItem.sku,
+      brand: undefined, // Add brand if available
+      category: undefined, // Add category if available
+    });
+
     // Redirect to checkout
     router.push("/checkout");
   };
