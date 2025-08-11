@@ -411,18 +411,10 @@ export default function ProductDetails({
     const primaryCategoryName = categoryHierarchy?.[0]?.name ?? "XX";
     // --- Calculate correct discounted price based on quantityDiscounts ---
     const qty = productQuantity;
-    const baseUnitPrice =
-      typeof activeVariant?.discountedPrice === "number"
-        ? activeVariant.discountedPrice
-        : typeof productMain.discountedPrice === "number"
-          ? productMain.discountedPrice
-          : typeof activeVariant?.price === "number"
-            ? activeVariant.price
-            : productMain.price;
     const discountsArr = normalizeQuantityDiscounts(
       productMain.quantityDiscounts,
     );
-    const unit = getDiscountedUnitPrice(qty, baseUnitPrice, discountsArr);
+    const unit = getDiscountedUnitPrice(qty, displayPrice, discountsArr);
     const discountPercent = (() => {
       if (!discountsArr.length) return 0;
       // Sort discounts by minQty to ensure we find the highest applicable tier
@@ -1358,17 +1350,10 @@ export default function ProductDetails({
                           productMain.quantityDiscounts,
                         ).map((row, idx) => {
                           // Calculate the discounted unit price for the minQty in this range
-                          const baseUnitPrice =
-                            typeof activeVariant?.discountedPrice === "number"
-                              ? activeVariant.discountedPrice
-                              : typeof productMain.discountedPrice === "number"
-                                ? productMain.discountedPrice
-                                : typeof activeVariant?.price === "number"
-                                  ? activeVariant.price
-                                  : productMain.price;
+                          // Use displayPrice to ensure consistency with the displayed price
                           const unit = getDiscountedUnitPrice(
                             row.minQty,
-                            baseUnitPrice,
+                            displayPrice,
                             productMain.quantityDiscounts,
                           );
                           return (
@@ -1448,20 +1433,12 @@ export default function ProductDetails({
                         typeof productQuantity === "number"
                           ? productQuantity
                           : 0;
-                      const baseUnitPrice =
-                        typeof activeVariant?.discountedPrice === "number"
-                          ? activeVariant.discountedPrice
-                          : typeof productMain.discountedPrice === "number"
-                            ? productMain.discountedPrice
-                            : typeof activeVariant?.price === "number"
-                              ? activeVariant.price
-                              : productMain.price;
                       const discountsArr = normalizeQuantityDiscounts(
                         productMain.quantityDiscounts,
                       );
                       const unit = getDiscountedUnitPrice(
                         qty,
-                        baseUnitPrice,
+                        displayPrice,
                         discountsArr,
                       );
                       const total = unit * qty;
