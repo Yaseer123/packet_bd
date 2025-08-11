@@ -1096,22 +1096,13 @@ const Checkout = () => {
                               <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                                 {product.name}
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
-                                  {formatPrice(unit)}
-                                  {discountPercent > 0 && (
-                                    <span className="ml-2 text-xs text-green-600">
-                                      ({discountPercent}% off)
-                                    </span>
-                                  )}
-                                </div>
-                                <button
-                                  className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 transition-colors hover:border-red-300 hover:bg-red-50"
-                                  onClick={() => removeFromCart(product.id)}
-                                  title="Remove item"
-                                >
-                                  <Trash size={14} className="text-red-500" />
-                                </button>
+                              <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
+                                {formatPrice(unit)}
+                                {discountPercent > 0 && (
+                                  <span className="ml-2 text-xs text-green-600">
+                                    ({discountPercent}% off)
+                                  </span>
+                                )}
                               </div>
                             </div>
 
