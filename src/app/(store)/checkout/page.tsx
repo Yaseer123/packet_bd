@@ -1074,6 +1074,10 @@ const Checkout = () => {
                           .pop(); // Get the highest tier that applies
                         return applicableDiscount?.discountPercent ?? 0;
                       })();
+
+                      // Calculate total price per product (unit price × quantity)
+                      const totalPricePerProduct = unit * product.quantity;
+
                       return (
                         <div
                           key={product.id}
@@ -1097,9 +1101,14 @@ const Checkout = () => {
                                 {product.name}
                               </div>
                               <div className="hidden text-right text-base font-medium capitalize leading-6 md:block md:text-base md:leading-5">
-                                {formatPrice(unit)}
+                                <div className="text-sm text-gray-500">
+                                  {formatPrice(unit)} × {product.quantity}
+                                </div>
+                                <div className="font-semibold">
+                                  {formatPrice(totalPricePerProduct)}
+                                </div>
                                 {discountPercent > 0 && (
-                                  <span className="ml-2 text-xs text-green-600">
+                                  <span className="text-xs text-green-600">
                                     ({discountPercent}% off)
                                   </span>
                                 )}
@@ -1124,9 +1133,14 @@ const Checkout = () => {
                             )}
 
                             <div className="mt-2 text-base font-medium capitalize leading-6 md:hidden md:text-base md:leading-5">
-                              {formatPrice(unit)}
+                              <div className="text-sm text-gray-500">
+                                {formatPrice(unit)} × {product.quantity}
+                              </div>
+                              <div className="font-semibold">
+                                {formatPrice(totalPricePerProduct)}
+                              </div>
                               {discountPercent > 0 && (
-                                <span className="ml-2 text-xs text-green-600">
+                                <span className="text-xs text-green-600">
                                   ({discountPercent}% off)
                                 </span>
                               )}
@@ -1248,14 +1262,15 @@ const Checkout = () => {
                     })
                   )}
                 </div>
-                <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
+
+                {/* <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     Discounts
                   </div>
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     -{formatPrice(discountValue)}
                   </div>
-                </div>
+                </div> */}
                 <div className="flex justify-between border-b border-[#ddd] py-5 focus:border-[#ddd]">
                   <div className="text-base font-medium capitalize leading-6 md:text-base md:leading-5">
                     Shipping
