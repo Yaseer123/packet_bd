@@ -129,27 +129,23 @@ const ModalQuickView = () => {
           color,
           size,
         });
-      if (!cartArray.find((item) => item.id === selectedProduct.id)) {
-        // Create a new item to add to cart
-        addToCart({
-          id: selectedProduct.id,
-          name: selectedProduct.title,
-          price: selectedProduct.price,
-          discountedPrice: selectedProduct.discountedPrice ?? undefined,
-          quantity,
-          coverImage: selectedProduct.images[0] ?? "",
-          sku,
-          color,
-          size,
-          productId: selectedProduct.id,
-          productCode: selectedProduct.productCode ?? undefined, // Add this line
-          minQuantity: minQuantity,
-          maxQuantity: maxQuantity,
-          quantityStep: quantityStep,
-        });
-      }
-      // Always update the quantity whether it's a new item or existing one
-      updateCart(selectedProduct.id, quantity);
+      // Create a new item to add to cart (will replace existing item if same ID exists)
+      addToCart({
+        id: selectedProduct.id,
+        name: selectedProduct.title,
+        price: selectedProduct.price,
+        discountedPrice: selectedProduct.discountedPrice ?? undefined,
+        quantity,
+        coverImage: selectedProduct.images[0] ?? "",
+        sku,
+        color,
+        size,
+        productId: selectedProduct.id,
+        productCode: selectedProduct.productCode ?? undefined, // Add this line
+        minQuantity: minQuantity,
+        maxQuantity: maxQuantity,
+        quantityStep: quantityStep,
+      });
 
       // Push add to cart event to GTM data layer for Facebook Pixel
       pushAddToCartToDataLayer({
@@ -209,25 +205,23 @@ const ModalQuickView = () => {
       const color = getVariantField("colorName");
       const size = getVariantField("size");
       const sku = getVariantField("sku") ?? "";
-      if (!cartArray.find((item) => item.id === selectedProduct.id)) {
-        addToCart({
-          id: selectedProduct.id,
-          name: selectedProduct.title,
-          price: selectedProduct.price,
-          discountedPrice: selectedProduct.discountedPrice ?? undefined,
-          quantity,
-          coverImage: selectedProduct.images[0] ?? "",
-          sku,
-          color,
-          size,
-          productId: selectedProduct.id,
-          productCode: selectedProduct.productCode ?? undefined, // Add this line
-          minQuantity: minQuantity,
-          maxQuantity: maxQuantity,
-          quantityStep: quantityStep,
-        });
-      }
-      updateCart(selectedProduct.id, quantity);
+      // Add to cart (will replace existing item if same ID exists)
+      addToCart({
+        id: selectedProduct.id,
+        name: selectedProduct.title,
+        price: selectedProduct.price,
+        discountedPrice: selectedProduct.discountedPrice ?? undefined,
+        quantity,
+        coverImage: selectedProduct.images[0] ?? "",
+        sku,
+        color,
+        size,
+        productId: selectedProduct.id,
+        productCode: selectedProduct.productCode ?? undefined, // Add this line
+        minQuantity: minQuantity,
+        maxQuantity: maxQuantity,
+        quantityStep: quantityStep,
+      });
 
       // Push add to cart event to GTM data layer for Facebook Pixel
       pushAddToCartToDataLayer({

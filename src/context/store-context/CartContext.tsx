@@ -36,14 +36,13 @@ export const useCartStore = create<CartState>()(
 
       addToCart: (item: CartItem) =>
         set((state) => {
-          const existingItem = state.cartArray.find(
-            (cartItem) => cartItem.id === item.id,
+          // Remove existing item with the same ID if it exists
+          const filteredCart = state.cartArray.filter(
+            (cartItem) => cartItem.id !== item.id,
           );
-          if (existingItem) {
-            return state; // Return unchanged state if item exists
-          }
+          // Add the new item
           return {
-            cartArray: [...state.cartArray, { ...item }],
+            cartArray: [...filteredCart, { ...item }],
           };
         }),
 
