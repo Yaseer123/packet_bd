@@ -468,13 +468,8 @@ export default function ProductDetails({
       "cartItem:",
       cartItem,
     );
-    // Add to cart (allow multiple variants)
-    if (!cartArray.find((item) => item.id === cartItem.id)) {
-      addToCart(cartItem);
-      updateCart(cartItem.id, productQuantity);
-    } else {
-      updateCart(cartItem.id, productQuantity);
-    }
+    // Add to cart (will replace existing item if same ID exists)
+    addToCart(cartItem);
 
     // Push add to cart event to GTM data layer for Facebook Pixel
     pushAddToCartToDataLayer({
