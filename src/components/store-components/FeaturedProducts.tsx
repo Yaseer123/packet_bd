@@ -3,6 +3,7 @@
 import { api } from "@/trpc/react";
 import { type ProductWithCategory } from "@/types/ProductType";
 import Product from "./Product/Product";
+import ProductSkeleton from "./Product/ProductSkeleton";
 
 function isProductWithCategory(val: unknown): val is ProductWithCategory {
   if (!val || typeof val !== "object") return false;
@@ -23,14 +24,13 @@ export default function FeaturedProducts() {
       { refetchOnWindowFocus: false },
     );
 
-  if (featuredProducts.length === 0) {
-    return null;
-  }
-
   return (
     <div className="container mx-auto mt-8 px-4">
       <div className="mb-6 flex flex-col items-center justify-center md:mb-10">
-        <h2 className="mb-1 text-2xl font-semibold sm:text-2xl md:mb-2 md:text-3xl">
+        <h2
+          id="featured-products"
+          className="mb-1 text-2xl font-semibold sm:text-2xl md:mb-2 md:text-3xl"
+        >
           Featured Products
         </h2>
         <p className="px-4 text-center text-sm text-gray-500 sm:text-base">
@@ -39,8 +39,14 @@ export default function FeaturedProducts() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-10">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-black sm:h-10 sm:w-10"></div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <ProductSkeleton key={index} />
+          ))}
+        </div>
+      ) : featuredProducts.length === 0 ? (
+        <div className="py-10 text-center text-gray-500">
+          No featured products available at the moment.
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
