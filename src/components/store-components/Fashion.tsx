@@ -55,21 +55,6 @@ const RecentlyAdded = () => {
     }
   }, [categories, activeTab]);
 
-  // Scroll active tab into view when changed
-  useEffect(() => {
-    if (activeTab) {
-      const activeElement = document.getElementById(`tab-${activeTab}`);
-      if (activeElement) {
-        // Scroll the element into view with smooth behavior
-        activeElement.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "center",
-        });
-      }
-    }
-  }, [activeTab]);
-
   if (isCategoriesLoading) {
     return (
       <div className="tab-features-block pt-8 md:pt-20">

@@ -27,7 +27,10 @@ export default function FeaturedProducts() {
   return (
     <div className="container mx-auto mt-8 px-4">
       <div className="mb-6 flex flex-col items-center justify-center md:mb-10">
-        <h2 className="mb-1 text-2xl font-semibold sm:text-2xl md:mb-2 md:text-3xl">
+        <h2
+          id="featured-products"
+          className="mb-1 text-2xl font-semibold sm:text-2xl md:mb-2 md:text-3xl"
+        >
           Featured Products
         </h2>
         <p className="px-4 text-center text-sm text-gray-500 sm:text-base">
