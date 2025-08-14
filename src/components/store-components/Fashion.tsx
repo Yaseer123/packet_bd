@@ -6,6 +6,7 @@ import type { Category } from "@prisma/client";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Product from "./Product/Product";
+import ProductSkeleton from "./Product/ProductSkeleton";
 
 function isProductWithCategory(val: unknown): val is ProductWithCategory {
   if (!val || typeof val !== "object") return false;
@@ -71,11 +72,26 @@ const RecentlyAdded = () => {
 
   if (isCategoriesLoading) {
     return (
-      <div className="flex items-center justify-center py-10">
-        <div className="flex animate-pulse space-x-2">
-          <div className="h-3 w-3 rounded-full bg-gray-400"></div>
-          <div className="h-3 w-3 rounded-full bg-gray-400"></div>
-          <div className="h-3 w-3 rounded-full bg-gray-400"></div>
+      <div className="tab-features-block pt-8 md:pt-20">
+        <div className="container">
+          <div className="heading flex flex-col justify-between gap-4 md:flex-row md:items-center md:gap-5">
+            <div className="heading3 mb-2 md:mb-0">Recently Added</div>
+            <div className="relative w-full overflow-hidden md:w-auto">
+              <div className="menu-tab scrollbar-hide bg-surface flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl p-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex-shrink-0 px-5 py-2">
+                    <div className="h-4 w-16 animate-pulse rounded bg-gray-300"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="list-product hide-product-sold mt-6 grid grid-cols-2 gap-[20px] sm:grid-cols-2 sm:gap-[30px] md:mt-10 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <ProductSkeleton key={index} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -124,9 +140,9 @@ const RecentlyAdded = () => {
           </div>
 
           {isProductsLoading ? (
-            <div className="mt-6 grid animate-pulse grid-cols-2 gap-[20px] sm:gap-[30px] md:mt-10 lg:grid-cols-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[250px] rounded-lg bg-gray-200"></div>
+            <div className="list-product hide-product-sold mt-6 grid grid-cols-2 gap-[20px] sm:grid-cols-2 sm:gap-[30px] md:mt-10 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <ProductSkeleton key={index} />
               ))}
             </div>
           ) : isProductsError ? (
