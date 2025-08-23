@@ -891,21 +891,15 @@ const Checkout = () => {
           deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
           variantLabel: item.variantLabel, // <-- add this line
           price: (() => {
-            // Use the same logic as the displayed price
+            // Use the same logic as totalPricePerProduct for consistency
             const product = productMap[item.productId];
             const unit =
-              product?.discountedPrice &&
-              typeof product.discountedPrice === "number"
-                ? product.discountedPrice
-                : typeof product?.discountedPrice === "undefined" &&
-                    typeof item.discountedPrice === "number"
-                  ? item.discountedPrice
+              typeof item.discountedPrice === "number"
+                ? item.discountedPrice
+                : typeof product?.discountedPrice === "number"
+                  ? product.discountedPrice
                   : item.price;
-            return getDiscountedUnitPrice(
-              item.quantity,
-              unit,
-              product?.quantityDiscounts,
-            );
+            return unit; // Return unit price, not discounted unit price
           })(),
         })),
         addressId,
@@ -923,21 +917,15 @@ const Checkout = () => {
           deliveryMethod: deliveryMethod, // Use deliveryMethod for deliveryMethod
           variantLabel: item.variantLabel, // <-- add this line
           price: (() => {
-            // Use the same logic as the displayed price
+            // Use the same logic as totalPricePerProduct for consistency
             const product = productMap[item.productId];
             const unit =
-              product?.discountedPrice &&
-              typeof product.discountedPrice === "number"
-                ? product.discountedPrice
-                : typeof product?.discountedPrice === "undefined" &&
-                    typeof item.discountedPrice === "number"
-                  ? item.discountedPrice
+              typeof item.discountedPrice === "number"
+                ? item.discountedPrice
+                : typeof product?.discountedPrice === "number"
+                  ? product.discountedPrice
                   : item.price;
-            return getDiscountedUnitPrice(
-              item.quantity,
-              unit,
-              product?.quantityDiscounts,
-            );
+            return unit; // Return unit price, not discounted unit price
           })(),
         })),
         addressId,
