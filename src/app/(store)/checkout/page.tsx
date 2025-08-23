@@ -242,28 +242,45 @@ const Checkout = () => {
     return map;
   }, [productQueries, uniqueProductIds]);
 
-  // --- Calculate total using quantity-based discounts ---
+  // --- Calculate total using totalPricePerProduct ---
   const [totalCart, setTotalCart] = useState<number>(0);
-  useEffect(() => {
+
+  // Calculate total from totalPricePerProduct values
+  const calculateTotalFromProductPrices = () => {
+    console.log("🛒 Starting totalPricePerProduct calculation...");
+    console.log("📦 Checkout items:", checkoutItems);
+
     let sum = 0;
-    for (const item of checkoutItems) {
-      const product = productMap[item.productId];
-      // Use discountedPrice if available, else price
+    for (const product of checkoutItems) {
+      const productData = productMap[product.productId];
+
+      // Use the same logic as in the render section for totalPricePerProduct
       const unit =
-        product?.discountedPrice && typeof product.discountedPrice === "number"
+        typeof product.discountedPrice === "number"
           ? product.discountedPrice
-          : typeof product?.discountedPrice === "undefined" &&
-              typeof item.discountedPrice === "number"
-            ? item.discountedPrice
-            : item.price;
-      sum +=
-        getDiscountedUnitPrice(
-          item.quantity,
-          unit,
-          product?.quantityDiscounts,
-        ) * item.quantity;
+          : typeof productData?.discountedPrice === "number"
+            ? productData.discountedPrice
+            : product.price;
+
+      const totalPricePerProduct = unit * product.quantity;
+
+      console.log(`📋 Product: ${product.name}`, {
+        unit,
+        quantity: product.quantity,
+        totalPricePerProduct,
+      });
+
+      sum += totalPricePerProduct;
+      console.log("📊 Running total:", sum);
     }
-    setTotalCart(sum);
+
+    console.log("🎯 Final cart total from totalPricePerProduct:", sum);
+    return sum;
+  };
+
+  useEffect(() => {
+    const total = calculateTotalFromProductPrices();
+    setTotalCart(total);
   }, [checkoutItems, productMap]);
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
