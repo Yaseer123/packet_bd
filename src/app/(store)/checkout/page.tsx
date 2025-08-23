@@ -398,7 +398,7 @@ const Checkout = () => {
     "inside",
   );
   // Calculate home delivery cost based on area
-  const homeDeliveryCost = shippingArea === "inside" ? 80 : 120;
+  const homeDeliveryCost = shippingArea === "inside" ? 80 : 130;
   const [shippingCost, setShippingCost] = useState<number>(homeDeliveryCost);
 
   // Update shipping cost based on delivery method and shipping area
@@ -558,7 +558,7 @@ const Checkout = () => {
           </label>
           <label className="flex cursor-pointer items-center gap-2">
             <RadioGroupItem value="outside" id="shipping-outside" />
-            <span>Outside Dhaka - 120৳</span>
+            <span>Outside Dhaka - 130৳</span>
           </label>
         </RadioGroup>
       </div>
