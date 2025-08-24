@@ -15,14 +15,12 @@ export default async function layout({
   const session = await auth();
 
   return (
-    <>
-      <HydrateClient>
-        <Menu isAuthenticated={!!session?.user} />
-        {children}
-        <WhatsAppWidget />
-        <Footer />
-        <ModalWrapper />
-      </HydrateClient>
-    </>
+    <HydrateClient>
+      <Menu isAuthenticated={!!session?.user} />
+      {children}
+      <WhatsAppWidget />
+      <Footer />
+      <ModalWrapper />
+    </HydrateClient>
   );
 }
