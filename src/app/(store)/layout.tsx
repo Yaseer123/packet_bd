@@ -5,6 +5,7 @@ import WhatsAppWidget from "@/components/WhatsAppWidget";
 import { auth } from "@/server/auth";
 import "@/styles/styles.scss";
 import React from "react";
+import { HydrateClient } from "@/trpc/server";
 
 export default async function layout({
   children,
@@ -15,11 +16,13 @@ export default async function layout({
 
   return (
     <>
-      <Menu isAuthenticated={!!session?.user} />
-      {children}
-      <WhatsAppWidget />
-      <Footer />
-      <ModalWrapper />
+      <HydrateClient>
+        <Menu isAuthenticated={!!session?.user} />
+        {children}
+        <WhatsAppWidget />
+        <Footer />
+        <ModalWrapper />
+      </HydrateClient>
     </>
   );
 }
