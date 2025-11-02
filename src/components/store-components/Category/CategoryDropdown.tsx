@@ -47,7 +47,13 @@ const CategoryDropdown = () => {
                     className="flex w-full items-center justify-between text-nowrap px-5 py-2.5 text-sm font-medium hover:bg-gray-200"
                     onMouseEnter={() => handleCategoryHover(sub.id, level)}
                   >
-                    <Link href={`/products?category=${sub.id}`}>
+                    <Link
+                      href={
+                        sub.slug
+                          ? `/products/${sub.slug}`
+                          : `/products?category=${sub.id}`
+                      }
+                    >
                       {toTitleCase(sub.name)}
                     </Link>
                     <CaretRight className="ms-3 h-3 w-3 text-gray-600" />
@@ -57,7 +63,11 @@ const CategoryDropdown = () => {
                 </>
               ) : (
                 <Link
-                  href={`/products?category=${sub.id}`}
+                  href={
+                    sub.slug
+                      ? `/products/${sub.slug}`
+                      : `/products?category=${sub.id}`
+                  }
                   className="block px-5 py-2.5 text-sm font-medium hover:bg-gray-200"
                   onMouseEnter={() =>
                     setActiveCategories((prev) => prev.slice(0, level))
@@ -105,7 +115,13 @@ const CategoryDropdown = () => {
                     className="flex w-full items-center justify-between text-nowrap px-5 py-2.5 text-sm font-medium hover:bg-gray-200"
                     onMouseEnter={() => handleCategoryHover(category.id, 0)}
                   >
-                    <Link href={`/products?category=${category.id}`}>
+                    <Link
+                      href={
+                        category.slug
+                          ? `/products/${category.slug}`
+                          : `/products?category=${category.id}`
+                      }
+                    >
                       {toTitleCase(category.name)}
                     </Link>
                     <CaretRight className="ms-3 h-3 w-3 text-gray-600" />
@@ -115,7 +131,11 @@ const CategoryDropdown = () => {
                 </div>
               ) : (
                 <Link
-                  href={`/products?category=${category.id}`}
+                  href={
+                    category.slug
+                      ? `/products/${category.slug}`
+                      : `/products?category=${category.id}`
+                  }
                   className="block px-5 py-2.5 text-sm font-medium hover:bg-gray-200"
                   onMouseEnter={() => setActiveCategories([])}
                 >

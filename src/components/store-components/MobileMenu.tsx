@@ -52,7 +52,7 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                   width={120}
                   height={40}
                   priority
-                  className="mx-auto h-auto ml-[-10px] w-[200px] object-contain"
+                  className="mx-auto ml-[-10px] h-auto w-[200px] object-contain"
                 />
               </div>
             </div>
@@ -94,7 +94,11 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                       {topCategories.map((cat) => (
                         <li key={cat.id} className="mb-1">
                           <Link
-                            href={`/products?category=${cat.id}`}
+                            href={
+                              cat.slug
+                                ? `/products/${cat.slug}`
+                                : `/products?category=${cat.id}`
+                            }
                             onClick={(e) => {
                               e.stopPropagation();
                               handleMenuMobile();
@@ -161,9 +165,7 @@ const MobileMenu = ({ openMenuMobile, handleMenuMobile }: MobileMenuProps) => {
                       <div className="icon-facebook text-2xl text-black"></div>
                     </Link>
                     <Link
-                      href={
-                        "https://www.instagram.com/packetbd3"
-                      }
+                      href={"https://www.instagram.com/packetbd3"}
                       target="_blank"
                     >
                       <div className="icon-instagram text-2xl text-black"></div>

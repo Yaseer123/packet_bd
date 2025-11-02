@@ -1,0 +1,14 @@
+{
+    "workbench.colorCustomizations": {
+        "editorCursor.foreground": "#fbff00",
+        "terminalCursor.background": "#fbff00",
+        "terminalCursor.foreground": "#fbff00",
+        "[Andromeda Italic Bordered]": {},
+        "activityBar.background": "#5C0140",
+        "titleBar.activeBackground": "#810159",
+        "titleBar.inactiveBackground": "#810159",
+        "titleBar.activeForeground": "#FFFAFD",
+        "statusBar.background": "#810159",
+        "statusBar.foreground": "#FFFAFD"
+    }
+}

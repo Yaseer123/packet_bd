@@ -20,7 +20,8 @@ import "rc-slider/assets/index.css";
 import { useEffect, useMemo, useState } from "react";
 import { formatPrice } from "../../../utils/format";
 
-export default function ProductsPage() {
+export default function ProductsPage(props?: { initialCategorySlug?: string }) {
+  const { initialCategorySlug } = props ?? {};
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -28,7 +29,10 @@ export default function ProductsPage() {
   const [showMobileFilter, setShowMobileFilter] = useState(false);
 
   // Extract filter parameters from URL
-  const categoryId = searchParams?.get("category") ?? "";
+  // Use initialCategorySlug if provided (from path parameter), otherwise use searchParams
+  const categorySlugParam =
+    initialCategorySlug ?? searchParams?.get("categorySlug") ?? "";
+  const categoryIdParam = searchParams?.get("category") ?? "";
   // Remove onSale parameter
   const brandParam = searchParams?.get("brand") ?? "";
   const minPrice = searchParams?.get("minPrice")
@@ -50,10 +54,23 @@ export default function ProductsPage() {
   const [brands, setBrands] = useState<string[]>(
     brandParam ? brandParam.split(",") : [],
   );
+  // Fetch category by slug if categorySlug is provided
+  const { data: categoryBySlug } = api.category.getBySlug.useQuery(
+    { slug: categorySlugParam },
+    {
+      enabled: !!categorySlugParam,
+    },
+  );
+
+  // Determine the categoryId - use slug-based lookup if available, otherwise use ID param
+  const categoryId = categoryBySlug?.id ?? categoryIdParam ?? "";
+
   const [category, setCategory] = useState<{
     id: string;
     name: string;
-  } | null>(categoryId ? { id: categoryId, name: "" } : null);
+  } | null>(
+    categoryId ? { id: categoryId, name: categoryBySlug?.name ?? "" } : null,
+  );
 
   // Add state for category attributes
   type AttributeFilterValue = string | string[];
