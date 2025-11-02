@@ -5,6 +5,67 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Generate a URL-friendly slug from a string
+ * Converts to lowercase, replaces spaces/special chars with hyphens, removes duplicates
+ */
+export function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "") // Remove special characters
+    .replace(/[\s_-]+/g, "-") // Replace spaces, underscores, and hyphens with single hyphen
+    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+}
+
+/**
+ * Generate a unique slug by appending a number if needed
+ */
+export async function generateUniqueSlug(
+  db: {
+    category: {
+      findFirst: (args: {
+        where: { slug?: string | { startsWith: string } };
+        select: { slug: true };
+        orderBy?: { slug: "desc" };
+      }) => Promise<{ slug: string | null } | null>;
+    };
+  },
+  baseSlug: string,
+): Promise<string> {
+  // Check if slug already exists
+  const existing = await db.category.findFirst({
+    where: { slug: baseSlug },
+    select: { slug: true },
+  });
+
+  if (!existing) {
+    return baseSlug;
+  }
+
+  // Find the highest numbered slug
+  const numberedSlugs = await db.category.findFirst({
+    where: {
+      slug: {
+        startsWith: `${baseSlug}-`,
+      },
+    },
+    select: { slug: true },
+    orderBy: { slug: "desc" },
+  });
+
+  if (!numberedSlugs?.slug) {
+    return `${baseSlug}-1`;
+  }
+
+  // Extract the number from the slug
+  const regex = /-(\d+)$/;
+  const match = regex.exec(numberedSlugs.slug);
+  const nextNumber = match ? parseInt(match[1] ?? "0", 10) + 1 : 1;
+
+  return `${baseSlug}-${nextNumber}`;
+}
+
 export function getCategoryPrefix(categoryName?: string) {
   if (!categoryName) return "XX";
   const mapping: Record<string, string> = {
@@ -24,6 +85,20 @@ export function getCategoryPrefix(categoryName?: string) {
 export function generateProductCode(): string {
   // Generate a 5-digit number (10000-99999)
   return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
+/**
+ * Generate category URL - uses slug if available, otherwise falls back to ID
+ */
+export function getCategoryUrl(category: {
+  id: string;
+  slug?: string | null;
+}): string {
+  if (category.slug) {
+    return `/products/${category.slug}`;
+  }
+  // Fallback to ID-based URL for backwards compatibility
+  return `/products?category=${category.id}`;
 }
 
 export function generateSKU({

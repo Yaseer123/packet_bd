@@ -6,7 +6,12 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
-  output: "standalone",
+  // Only use standalone output in Docker/CI environments (not on Windows local builds)
+  // Windows requires admin privileges or Developer Mode for symlinks
+  // Docker builds run on Linux, so standalone will be enabled there
+  ...(process.platform !== "win32" || process.env.FORCE_STANDALONE === "true"
+    ? { output: "standalone" }
+    : {}),
   async redirects() {
     return [
       {

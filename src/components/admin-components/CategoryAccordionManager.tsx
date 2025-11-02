@@ -60,10 +60,9 @@ export default function CategoryAccordionManager() {
       <h2 className="text-xl font-bold">Categories</h2>
       <p className="text-sm text-gray-500">Drag categories to reorder them</p>
       <CategoryAccordion
-        categories={categories.map((cat) => ({
-          ...cat,
-          description: cat.description ?? null,
-        }))}
+        categories={
+          categories as Parameters<typeof CategoryAccordion>[0]["categories"]
+        }
         onDelete={handleDelete}
         onReorder={handleReorder}
       />

@@ -53,12 +53,20 @@ const BreadcrumbProduct: React.FC<Props> = ({ data }) => {
               <CaretRight size={12} className="text-secondary2" />
               {categoryHierarchy?.map(
                 (
-                  cat: { id: React.Key | null | undefined; name: string },
+                  cat: {
+                    id: React.Key | null | undefined;
+                    name: string;
+                    slug?: string | null;
+                  },
                   index: number,
                 ) => (
                   <React.Fragment key={cat.id}>
                     <Link
-                      href={`/products?category=${cat.id}`}
+                      href={
+                        cat.slug
+                          ? `/products/${cat.slug}`
+                          : `/products?category=${cat.id}`
+                      }
                       className="text-secondary2 truncate text-base font-normal capitalize leading-6 hover:underline md:text-base"
                     >
                       {cat.name}

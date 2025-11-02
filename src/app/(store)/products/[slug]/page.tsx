@@ -2,6 +2,8 @@ import BreadcrumbProduct from "@/components/store-components/Breadcrumb/Breadcru
 import ProductDetails from "@/components/store-components/Product/Details/ProductDetails";
 import { api } from "@/trpc/server";
 import type { ProductWithCategory } from "@/types/ProductType";
+import Link from "next/link";
+import CategoryProductsWrapper from "./CategoryProductsWrapper";
 
 export async function generateMetadata({
   params,
@@ -9,42 +11,81 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const productData = await api.product.getProductBySlug({ slug });
 
-  if (!productData) {
+  // Check if it's a category first
+  try {
+    const category = await api.category.getBySlug({ slug });
     return {
-      title: "Product Not Found",
-      description: "The product you are looking for does not exist.",
+      title: category.name,
+      description:
+        category.description ?? `Browse our ${category.name} collection`,
+    };
+  } catch {
+    // Not a category, check if it's a product
+    const productData = await api.product.getProductBySlug({ slug });
+
+    if (!productData) {
+      return {
+        title: "Product Not Found",
+        description: "The product you are looking for does not exist.",
+      };
+    }
+
+    return {
+      title: productData.title,
+      description: productData.description,
+      openGraph: {
+        title: productData.title,
+        description: productData.description,
+        images: productData.images,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: productData.title,
+        description: productData.description,
+        images: productData.images[0],
+      },
     };
   }
-
-  return {
-    title: productData.title,
-    description: productData.description,
-    openGraph: {
-      title: productData.title,
-      description: productData.description,
-      images: productData.images,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: productData.title,
-      description: productData.description,
-      images: productData.images[0],
-    },
-  };
 }
 
-const ProductPage = async ({
+const ProductOrCategoryPage = async ({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) => {
   const { slug } = await params;
+
+  // Check if it's a category first
+  try {
+    const categoryData = await api.category.getBySlug({ slug });
+    // If category is found, render products page with this category
+    // Keep the SEO-friendly URL: /products/{slug}
+    return <CategoryProductsWrapper categorySlug={slug} />;
+  } catch (error) {
+    // Category not found - this is expected for product slugs
+    // Continue to check for product
+  }
+
+  // Not a category, try product
   const productData = await api.product.getProductBySlug({ slug });
 
   if (!productData) {
-    return <div>Product not found</div>;
+    // Neither category nor product found
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="mb-4 text-2xl font-bold">Not Found</h1>
+        <p className="mb-8 text-gray-600">
+          The category or product you are looking for does not exist.
+        </p>
+        <Link
+          href="/products"
+          className="hover:bg-brand-primary/90 inline-block rounded bg-brand-primary px-6 py-3 text-white transition-colors"
+        >
+          Browse Products
+        </Link>
+      </div>
+    );
   }
 
   // productData is now already processed by toProductWithCategory
@@ -132,4 +173,4 @@ const ProductPage = async ({
   );
 };
 
-export default ProductPage;
+export default ProductOrCategoryPage;

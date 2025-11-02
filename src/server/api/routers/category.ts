@@ -9,6 +9,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
+import { generateSlug, generateUniqueSlug } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -26,23 +27,36 @@ export const buildCategoryTree = (
 
 export const categoryRouter = createTRPCRouter({
   getHierarchy: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.string().optional(), slug: z.string().optional() }))
     .query(async ({ ctx, input }) => {
+      if (!input.id && !input.slug) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Either id or slug must be provided",
+        });
+      }
+
       const hierarchy = [];
-      let currentCategory = await ctx.db.category.findUnique({
-        where: { id: input.id },
-        select: { id: true, name: true, parentId: true },
-      });
+      let currentCategory = input.id
+        ? await ctx.db.category.findUnique({
+            where: { id: input.id },
+            select: { id: true, name: true, slug: true, parentId: true },
+          })
+        : await ctx.db.category.findUnique({
+            where: { slug: input.slug ?? "" },
+            select: { id: true, name: true, slug: true, parentId: true },
+          });
 
       while (currentCategory) {
         hierarchy.unshift({
           id: currentCategory.id,
           name: currentCategory.name,
+          slug: currentCategory.slug,
         });
         currentCategory = currentCategory.parentId
           ? await ctx.db.category.findUnique({
               where: { id: currentCategory.parentId },
-              select: { id: true, name: true, parentId: true },
+              select: { id: true, name: true, slug: true, parentId: true },
             })
           : null;
       }
@@ -137,10 +151,15 @@ export const categoryRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Generate slug from name
+      const baseSlug = generateSlug(input.name);
+      const uniqueSlug = await generateUniqueSlug(ctx.db, baseSlug);
+
       // Create the category in the database
       const category = await ctx.db.category.create({
         data: {
           name: input.name,
+          slug: uniqueSlug,
           parentId: input.parentId ?? null,
           imageId: input.imageId,
           image: input.imageUrl,
@@ -162,10 +181,24 @@ export const categoryRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Get existing category to check if name changed
+      const existingCategory = await ctx.db.category.findUnique({
+        where: { id: input.id },
+        select: { name: true, slug: true },
+      });
+
+      // Update slug if name changed
+      let slug = existingCategory?.slug;
+      if (existingCategory?.name !== input.name) {
+        const baseSlug = generateSlug(input.name);
+        slug = await generateUniqueSlug(ctx.db, baseSlug);
+      }
+
       const category = await ctx.db.category.update({
         where: { id: input.id },
         data: {
           name: input.name,
+          slug: slug ?? undefined,
           imageId: input.imageId,
           image: input.image,
           description: input.description,
@@ -187,6 +220,23 @@ export const categoryRouter = createTRPCRouter({
       const category = await ctx.db.category.findUnique({
         where: { id: input.id },
       });
+
+      return category;
+    }),
+
+  getBySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const category = await ctx.db.category.findUnique({
+        where: { slug: input.slug },
+      });
+
+      if (!category) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Category not found",
+        });
+      }
 
       return category;
     }),

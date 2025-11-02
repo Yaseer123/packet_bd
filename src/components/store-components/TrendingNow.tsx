@@ -11,8 +11,15 @@ const TrendingNow = () => {
   const [categories] = api.category.getAll.useSuspenseQuery();
   const router = useRouter();
 
-  const handleCategoryClick = (categoryId: string) => {
-    router.push(`/products?category=${categoryId}`);
+  const handleCategoryClick = (category: {
+    id: string;
+    slug?: string | null;
+  }) => {
+    if (category.slug) {
+      router.push(`/products/${category.slug}`);
+    } else {
+      router.push(`/products?category=${category.id}`);
+    }
   };
 
   return (
@@ -65,7 +72,7 @@ const TrendingNow = () => {
               >
                 <div
                   className="trending-item group relative mx-auto block max-w-[150px] cursor-pointer transition-all duration-300 hover:-translate-y-1 md:max-w-[220px]"
-                  onClick={() => handleCategoryClick(category.id)}
+                  onClick={() => handleCategoryClick(category)}
                 >
                   <div className="bg-img aspect-square overflow-hidden rounded-full border-4 border-white shadow-lg transition-all duration-300 group-hover:border-brand-primary group-hover:shadow-xl">
                     <Image

@@ -20,6 +20,7 @@ export type CategoryAttribute = z.infer<typeof categoryAttributeSchema>;
 export const categorySchema = z.object({
   id: z.string(),
   name: z.string(),
+  slug: z.string().nullable().optional(),
   parentId: z.string().nullable(),
   imageId: z.string().nullable(),
   image: z.string().nullable(),
