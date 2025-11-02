@@ -81,7 +81,11 @@ const Footer = () => {
                     <Link
                       key={cat.id}
                       className={`caption1 has-line-before w-fit${idx !== 0 ? "pt-2" : ""} duration-300`}
-                      href={`/products?category=${cat.id}&page=0`}
+                      href={
+                        cat.slug
+                          ? `/products/${cat.slug}`
+                          : `/products?category=${cat.id}&page=0`
+                      }
                     >
                       {cat.name}
                     </Link>

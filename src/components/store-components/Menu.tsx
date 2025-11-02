@@ -430,12 +430,16 @@ export default function Menu({
                         name: string;
                       }[];
                     }[];
-                  },
+                  } & { slug?: string | null },
                   idx: number,
                 ) => (
                   <div key={category.id} className="group relative h-full">
                     <Link
-                      href={`/products?category=${category.id}`}
+                      href={
+                        category.slug
+                          ? `/products/${category.slug}`
+                          : `/products?category=${category.id}`
+                      }
                       className="relative flex h-full items-center px-4 text-sm font-medium text-gray-700 transition-colors hover:text-brand-primary"
                     >
                       <span className="py-3.5">
@@ -456,16 +460,22 @@ export default function Menu({
                             subcat: {
                               id: Key | null | undefined;
                               name: string;
+                              slug?: string | null;
                               subcategories: {
                                 id: Key | null | undefined;
                                 name: string;
+                                slug?: string | null;
                               }[];
                             },
                             subIdx: number,
                           ) => (
                             <div key={subcat.id} className="group/sub relative">
                               <Link
-                                href={`/products?category=${subcat.id}`}
+                                href={
+                                  subcat.slug
+                                    ? `/products/${subcat.slug}`
+                                    : `/products?category=${subcat.id}`
+                                }
                                 className="flex w-full items-center justify-between whitespace-nowrap px-5 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-brand-primary"
                               >
                                 {toTitleCase(subcat.name)}
@@ -483,12 +493,17 @@ export default function Menu({
                                       childCat: {
                                         id: Key | null | undefined;
                                         name: string;
+                                        slug?: string | null;
                                       },
                                       childIdx: number,
                                     ) => (
                                       <Link
                                         key={childCat.id}
-                                        href={`/products?category=${childCat.id}`}
+                                        href={
+                                          childCat.slug
+                                            ? `/products/${childCat.slug}`
+                                            : `/products?category=${childCat.id}`
+                                        }
                                         className="block whitespace-nowrap px-5 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-brand-primary"
                                       >
                                         {toTitleCase(childCat.name)}

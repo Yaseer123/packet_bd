@@ -1587,7 +1587,13 @@ export default function ProductDetails({
                   <div className="mt-3 flex items-center gap-1">
                     <div className="text-title">Categories:</div>
                     <Link
-                      href={`/products?category=${productMain.category?.id}`}
+                      href={
+                        productMain.category?.slug
+                          ? `/products/${productMain.category.slug}`
+                          : productMain.category?.id
+                            ? `/products?category=${productMain.category.id}`
+                            : "#"
+                      }
                       className="text-secondary hover:underline"
                     >
                       {productMain.category?.name}

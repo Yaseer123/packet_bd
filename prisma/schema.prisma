@@ -159,6 +159,7 @@ model Review {
 model Category {
     id            String     @id @default(cuid())
     name          String
+    slug          String?    @unique // SEO-friendly URL slug
     parentId      String?
     imageId       String?
     image         String?
@@ -170,6 +171,8 @@ model Category {
     description   String?    // Optional description for SEO
     createdAt     DateTime   @default(now())
     updatedAt     DateTime   @updatedAt
+
+    @@index([slug])
 }
 
 // Necessary for Next auth
